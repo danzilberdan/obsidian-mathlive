@@ -123,6 +123,7 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
+		console.log("Running onClose", this.renderedResult)
 		if (!!this.renderedResult)
 			this.app.workspace.getActiveViewOfType(MarkdownView)?.editor.replaceSelection(this.renderedResult);
 	}
