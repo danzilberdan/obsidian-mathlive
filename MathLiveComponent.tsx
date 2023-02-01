@@ -16,8 +16,9 @@ export const MathLiveComponent = ({initialLatex, onLatexChange}: {initialLatex: 
         });
 
         divRef.current!.innerHTML = "";
-        divRef.current?.appendChild(mfe);
+        divRef.current!.appendChild(mfe);
+        mfe.focus();
     }, [])
 
-    return <div ref={divRef} />;
+    return <div className="math-live-container" ref={divRef} />;
 }

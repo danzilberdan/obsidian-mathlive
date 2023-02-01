@@ -60,7 +60,7 @@ class MathLiveModal extends Modal {
 	parseSelection(selectionText: string) : { resultRenderTemplate: (result: string) => string, initialLatex: string } | null {
 		if (selectionText.length === 0) {
 			return {
-				resultRenderTemplate: result => result,
+				resultRenderTemplate: result => "$$" + result + "$$",
 				initialLatex: ""
 			}
 		}
