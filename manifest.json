@@ -1,6 +1,6 @@
 {
 	"id": "mathlive",
-	"name": "MathLive Plugin",
+	"name": "MathLive",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Faster and more intuitive MathJax editing using MathLive.",
