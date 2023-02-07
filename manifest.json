@@ -5,7 +5,7 @@
 	"minAppVersion": "0.15.0",
 	"description": "Faster and more intuitive MathJax editing using MathLive.",
 	"author": "Dan Zilberman",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"authorUrl": "https://github.com/danzilberdan",
+	"fundingUrl": "https://www.buymeacoffee.com/danzilberdan",
+	"isDesktopOnly": true
 }
