@@ -6,7 +6,6 @@ export const MathLiveComponent = ({initialLatex, onLatexChange}: {initialLatex: 
     const divRef = createRef<HTMLDivElement>();
     
     useEffect(() => {
-        console.log("Rendering MathLive into the the div.");
         const mfe = new MathfieldElement({
             soundsDirectory: null
         });
