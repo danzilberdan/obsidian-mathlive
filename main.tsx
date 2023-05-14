@@ -4,22 +4,11 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { MathLiveComponent } from "./MathLiveComponent";
 
-interface MyPluginSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
-
 export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
 
 	async onload() {
-		await this.loadSettings();
-		
 		this.addCommand({
-			id: 'open-mathlive-modal-line',
+			id: 'open-modal',
 			name: 'Edit in MathLive',
 			checkCallback: (checking: boolean) => {
 				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -35,18 +24,6 @@ export default class MyPlugin extends Plugin {
 				return false
 			}
 		});
-	}
-
-	onunload() {
-
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
 	}
 }
 
@@ -101,7 +78,6 @@ class MathLiveModal extends Modal {
 		const selectionText = markdownView?.editor.getSelection();
 
 		const parseResult = this.parseSelection(selectionText ?? "");
-		console.log("The parsing result is", parseResult);
 		if (!parseResult) {
 			new Notice("Please select a $$ text (MathJax).");
 			this.close();
@@ -123,7 +99,6 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
-		console.log("Running onClose", this.renderedResult)
 		if (!!this.renderedResult)
 			this.app.workspace.getActiveViewOfType(MarkdownView)?.editor.replaceSelection(this.renderedResult);
 	}
