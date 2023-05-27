@@ -1,10 +1,10 @@
 module.exports = {
     mode: "development",
-    entry: "./main.tsx",
+    entry: "./main.ts",
     module: {
       rules: [
         {
-          test: /\.(ts|tsx)$/,
+          test: /\.(ts)$/,
           use: "ts-loader",
           exclude: /node_modules/,
         },
@@ -15,7 +15,7 @@ module.exports = {
       ],
     },
     resolve: {
-        extensions: [".js", ".jsx", ".json", ".ts", ".tsx"],
+        extensions: [".js", ".jsx", ".json", ".ts"],
     },
     externals: {
       obsidian: "commonjs obsidian",

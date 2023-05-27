@@ -10,7 +10,6 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "isolatedModules": true,
-    "jsx": "react",
 	"strictNullChecks": true,
     "lib": [
       "DOM",
@@ -19,7 +18,5 @@
       "ES7"
     ]
   },
-  "include": [
-    "**/*.ts"
-, "main.tsx"  ]
+  "include": ["**/*.ts"]
 }

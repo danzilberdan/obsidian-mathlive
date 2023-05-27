@@ -1,8 +1,6 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import { createRoot } from "react-dom/client";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import { MathLiveComponent } from "./MathLiveComponent";
+import { MathfieldElement } from 'mathlive';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
+import { MarkdownFileInfo } from 'obsidian';
 
 export default class MathLivePlugin extends Plugin {
 
@@ -10,8 +8,8 @@ export default class MathLivePlugin extends Plugin {
 		this.addCommand({
 			id: 'open-modal',
 			name: 'Edit in MathLive',
-			editorCallback: (editor: Editor, ctx: MarkdownView) => {
-				new MathLiveModal(this.app).open();
+			editorCallback: (editor: Editor, ctx: MarkdownFileInfo) => {
+				new MathLiveModal(this.app, editor).open();
 			}
 		});
 	}
@@ -19,9 +17,11 @@ export default class MathLivePlugin extends Plugin {
 
 class MathLiveModal extends Modal {
 	renderedResult?: string
+	editor: Editor
 	
-	constructor(app: App) {
+	constructor(app: App, editor: Editor) {
 		super(app);
+		this.editor = editor
 	}
 
 	parseSelection(selectionText: string) : { resultRenderTemplate: (result: string) => string, initialLatex: string } | null {
@@ -64,6 +64,11 @@ class MathLiveModal extends Modal {
 	}
 
 	onOpen() {
+		this.initMathlive()
+		this.initSubmitButton()
+	}
+
+	initMathlive() {
 		const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const selectionText = markdownView?.editor.getSelection();
 
@@ -77,19 +82,32 @@ class MathLiveModal extends Modal {
 		const {initialLatex, resultRenderTemplate} = parseResult;
 
 		this.renderedResult = resultRenderTemplate(initialLatex);
-		
-		const root = createRoot(this.containerEl.children[1]);
-		root.render(
-			<React.StrictMode>
-				<MathLiveComponent initialLatex={initialLatex} onLatexChange={latexValue => {
-					this.renderedResult = resultRenderTemplate(latexValue)
-				}} />
-			</React.StrictMode>
-		);
+
+		const mfe = new MathfieldElement({
+            soundsDirectory: null
+        });
+        mfe.value = initialLatex;
+        mfe.addEventListener('input', () => {
+            this.renderedResult = resultRenderTemplate(mfe.value);
+        });
+
+		const modalContent = this.containerEl.querySelector('.modal-content')
+		modalContent?.appendChild(mfe)
+		mfe.focus();
+	}
+
+	initSubmitButton() {
+		const submitButton = document.createElement('button')
+		submitButton.innerText = 'Insert'
+		submitButton.addClass('submit')
+		submitButton.addEventListener('click', this.close.bind(this))
+
+		const modalContent = this.containerEl.querySelector('.modal-content')
+		modalContent?.appendChild(submitButton)
 	}
 
 	onClose() {
 		if (!!this.renderedResult)
-			this.app.workspace.getActiveViewOfType(MarkdownView)?.editor.replaceSelection(this.renderedResult);
+			this.editor.replaceSelection(this.renderedResult);
 	}
 }
