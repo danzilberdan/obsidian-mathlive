@@ -4,24 +4,14 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { MathLiveComponent } from "./MathLiveComponent";
 
-export default class MyPlugin extends Plugin {
+export default class MathLivePlugin extends Plugin {
 
 	async onload() {
 		this.addCommand({
 			id: 'open-modal',
 			name: 'Edit in MathLive',
-			checkCallback: (checking: boolean) => {
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-
-				if (markdownView) {
-					if (!checking) {
-						new MathLiveModal(this.app).open();
-					}
-
-					return true;
-				}
-
-				return false
+			editorCallback: (editor: Editor, ctx: MarkdownView) => {
+				new MathLiveModal(this.app).open();
 			}
 		});
 	}
