@@ -83,15 +83,14 @@ class MathLiveModal extends Modal {
 
 		this.renderedResult = resultRenderTemplate(initialLatex);
 
-		const mfe = new MathfieldElement({
-            soundsDirectory: null
-        });
+		const mfe = new MathfieldElement();
         mfe.value = initialLatex;
         mfe.addEventListener('input', () => {
             this.renderedResult = resultRenderTemplate(mfe.value);
         });
 
 		const modalContent = this.containerEl.querySelector('.modal-content')
+		modalContent?.addClass("mathlive-modal-content")
 		modalContent?.appendChild(mfe)
 		mfe.focus();
 	}

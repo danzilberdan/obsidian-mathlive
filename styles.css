@@ -1,5 +1,16 @@
+.mathlive-modal-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: end;
+  padding-top: 1rem;
+}
+
 math-field {
   font-size: 2rem;
+  min-width: 10rem;
+  max-width: 80%;
+  overflow: visible;
 }
 
 .submit {
