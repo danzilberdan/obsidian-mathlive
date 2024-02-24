@@ -1,7 +1,7 @@
 # Obsidian MathLive
 Edit Latex math formulas visually in Obsidian.
 
-https://github.com/danzilberdan/obsidian-mathlive/assets/54420075/af247fb3-3d87-44dd-9e17-dc66f62550a4
+![](./example.gif)
 
 ## Usage
 1. When creating new math content, an *Edit in MathLive* action is used to start creating the math visually.

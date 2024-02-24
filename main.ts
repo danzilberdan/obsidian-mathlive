@@ -35,14 +35,16 @@ class MathLiveModal extends Modal {
 		const mathPreviewStartIndex = selectionText.indexOf("$$");
 		if (mathPreviewStartIndex >= 0) {
 			const mathPreviewEndIndex = selectionText.indexOf("$$", mathPreviewStartIndex + 2);
-			return {
-				resultRenderTemplate: result => 
-					selectionText.substring(0, mathPreviewStartIndex) 
-					+ "$$" 
-					+ result 
-					+ "$$"
-					+ selectionText.substring(mathPreviewEndIndex + 2, selectionText.length),
-				initialLatex: selectionText.substring(mathPreviewStartIndex + 2, mathPreviewEndIndex),
+			if (mathPreviewEndIndex >= 0) {
+				return {
+					resultRenderTemplate: result => 
+						selectionText.substring(0, mathPreviewStartIndex) 
+						+ "$$" 
+						+ result 
+						+ "$$"
+						+ selectionText.substring(mathPreviewEndIndex + 2, selectionText.length),
+					initialLatex: selectionText.substring(mathPreviewStartIndex + 2, mathPreviewEndIndex),
+				}
 			}
 		}
 

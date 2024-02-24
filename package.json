@@ -27,6 +27,6 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"dependencies": {
-		"mathlive": "^0.95.0"
+		"mathlive": "^0.98.6"
 	}
 }

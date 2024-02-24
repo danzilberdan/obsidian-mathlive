@@ -11,6 +11,13 @@ math-field {
   min-width: 10rem;
   max-width: 80%;
   overflow: visible;
+
+  --selection-background-color: var(--text-selection);
+}
+
+math-field::part(content) {
+  --_text-highlight-background-color: #1e1e1e;
+  --_contains-highlight-background-color: #1e1e1e;
 }
 
 .submit {
