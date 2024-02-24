@@ -1,18 +1,35 @@
+:root {
+  --selection-background-color: rgba(0,0,0,0.5);
+  --selection-color: rgb(73, 201, 206);
+  --highlight-text: rgb(73, 201, 206);
+  --contains-highlight-background-color: rgba(0,0,0,0.5);;
+}
+
 .mathlive-modal-content {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: end;
-  padding-top: 1rem;
+  align-items: start;
+
+  padding: 0;
 }
 
 math-field {
   font-size: 2rem;
-  min-width: 10rem;
-  max-width: 80%;
-  overflow: visible;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 15px 15px 0 0;
+}
 
-  --selection-background-color: var(--text-selection);
+.submit {
+  background-color: green !important;
+  font-weight: bold;
+  color: white;
+  height: 100%;
+  width: 100%;
+  height: 2rem;
+  margin-top:1px;
+  border-radius: 0 0 15px 15px;
 }
 
 math-field::part(content) {
@@ -20,9 +37,20 @@ math-field::part(content) {
   --_contains-highlight-background-color: #1e1e1e;
 }
 
-.submit {
-  float: right;
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: space-between;
+  gap: 1rem;
 
-  background-color: green !important;
+  margin-bottom: 2rem;
+}
+
+.badge {
+  background-color: rgb(48, 48, 48);
   color: white;
+  padding: 4px 8px;
+  text-align: center;
+  border-radius: 5px;
 }

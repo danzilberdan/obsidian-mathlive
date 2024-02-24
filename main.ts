@@ -66,6 +66,9 @@ class MathLiveModal extends Modal {
 	}
 
 	onOpen() {
+		this.initHeader()
+		this.initMadeByButton()
+		this.initSupportButton()
 		this.initMathlive()
 		this.initSubmitButton()
 	}
@@ -95,6 +98,38 @@ class MathLiveModal extends Modal {
 		modalContent?.addClass("mathlive-modal-content")
 		modalContent?.appendChild(mfe)
 		mfe.focus();
+	}
+
+	initHeader() {
+		const header = document.createElement('div')
+		header.addClass('header')
+
+		const modalContent = this.containerEl.querySelector('.modal-content')
+		modalContent?.appendChild(header)
+	}
+
+	initMadeByButton() {
+		const link = document.createElement('a')
+		link.innerText = '👱‍♂️ Made by Dan Zilberman'
+		link.addClass('badge')
+		link.setAttr('href', 'https://danzilberdan.github.io/')
+		link.setAttr('target', '_blank')
+		link.addClass('external-link')
+
+		const modalContent = this.containerEl.querySelector('.header')
+		modalContent?.appendChild(link)
+	}
+
+	initSupportButton() {
+		const link = document.createElement('a')
+		link.innerText = '☕ Support'
+		link.addClass('badge')
+		link.setAttr('href', 'https://www.buymeacoffee.com/danzilberdan')
+		link.setAttr('target', '_blank')
+		link.addClass('external-link')
+
+		const modalContent = this.containerEl.querySelector('.header')
+		modalContent?.appendChild(link)
 	}
 
 	initSubmitButton() {
