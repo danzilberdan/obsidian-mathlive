@@ -66,14 +66,19 @@ class MathLiveModal extends Modal {
 	}
 
 	onOpen() {
-		this.initHeader()
-		this.initMadeByButton()
-		this.initSupportButton()
-		this.initMathlive()
-		this.initSubmitButton()
+		const modalContent = this.containerEl.querySelector('.modal-content')!;
+
+		const header = this.initHeader(modalContent)
+		this.initMadeByButton(header)
+		this.initSupportButton(header)
+
+		this.initMathlive(modalContent)
+		this.initSubmitButton(modalContent)
+		
+		this.initAnalytics(modalContent)
 	}
 
-	initMathlive() {
+	initMathlive(modalContent: Element) {
 		const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const selectionText = markdownView?.editor.getSelection();
 
@@ -94,21 +99,20 @@ class MathLiveModal extends Modal {
             this.renderedResult = resultRenderTemplate(mfe.value);
         });
 
-		const modalContent = this.containerEl.querySelector('.modal-content')
-		modalContent?.addClass("mathlive-modal-content")
-		modalContent?.appendChild(mfe)
+		modalContent.addClass("mathlive-modal-content")
+		modalContent.appendChild(mfe)
 		mfe.focus();
 	}
 
-	initHeader() {
+	initHeader(modalContent: Element) {
 		const header = document.createElement('div')
 		header.addClass('header')
 
-		const modalContent = this.containerEl.querySelector('.modal-content')
-		modalContent?.appendChild(header)
+		modalContent.appendChild(header)
+		return header;
 	}
 
-	initMadeByButton() {
+	initMadeByButton(modalContent: Element) {
 		const link = document.createElement('a')
 		link.innerText = '👱‍♂️ Made by Dan Zilberman'
 		link.addClass('badge')
@@ -116,11 +120,10 @@ class MathLiveModal extends Modal {
 		link.setAttr('target', '_blank')
 		link.addClass('external-link')
 
-		const modalContent = this.containerEl.querySelector('.header')
-		modalContent?.appendChild(link)
+		modalContent.appendChild(link)
 	}
 
-	initSupportButton() {
+	initSupportButton(modalContent: Element) {
 		const link = document.createElement('a')
 		link.innerText = '☕ Support'
 		link.addClass('badge')
@@ -128,18 +131,24 @@ class MathLiveModal extends Modal {
 		link.setAttr('target', '_blank')
 		link.addClass('external-link')
 
-		const modalContent = this.containerEl.querySelector('.header')
-		modalContent?.appendChild(link)
+		modalContent.appendChild(link)
 	}
 
-	initSubmitButton() {
+	initSubmitButton(modalContent: Element) {
 		const submitButton = document.createElement('button')
 		submitButton.innerText = 'Insert'
 		submitButton.addClass('submit')
 		submitButton.addEventListener('click', this.close.bind(this))
 
-		const modalContent = this.containerEl.querySelector('.modal-content')
-		modalContent?.appendChild(submitButton)
+		modalContent.appendChild(submitButton)
+	}
+
+	initAnalytics(modalContent: Element) {
+		const tempoDiv = document.createElement('div');
+		tempoDiv.innerHTML = "<script src=\"https://umami.danz.blog/script.js\" data-website-id=\"4509eba9-785b-4520-a98c-1415b5c42155\"></script>";
+		const scriptTag = tempoDiv.firstChild as Node;
+
+		document.head.appendChild(scriptTag);
 	}
 
 	onClose() {
