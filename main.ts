@@ -74,8 +74,8 @@ class MathLiveModal extends Modal {
 
 		this.initMathlive(modalContent)
 		this.initSubmitButton(modalContent)
-		
-		this.initAnalytics(modalContent)
+
+		this.initFileDropZone(modalContent)
 	}
 
 	initMathlive(modalContent: Element) {
@@ -143,12 +143,23 @@ class MathLiveModal extends Modal {
 		modalContent.appendChild(submitButton)
 	}
 
-	initAnalytics(modalContent: Element) {
-		const tempoDiv = document.createElement('div');
-		tempoDiv.innerHTML = "<script src=\"https://umami.danz.blog/script.js\" data-website-id=\"4509eba9-785b-4520-a98c-1415b5c42155\"></script>";
-		const scriptTag = tempoDiv.firstChild as Node;
+	initFileDropZone(modalContent: Element) {
+		const zone = document.createElement('div')
+		zone.innerText = 'Scan images to MathJax'
+		zone.addClass('drop-zone')
+		zone.ondrop = this.onDrop
+		zone.ondragover = this.onDragOver
 
-		document.head.appendChild(scriptTag);
+		modalContent.appendChild(zone)
+	}
+
+	onDrop() {
+
+	}
+
+	onDragOver(ev: Event) {
+		console.log("File(s) in drop zone");
+		ev.preventDefault();
 	}
 
 	onClose() {
