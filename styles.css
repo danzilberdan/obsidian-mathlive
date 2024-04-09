@@ -30,6 +30,7 @@ math-field {
   height: 2rem;
   margin-top:1px;
   border-radius: 0 0 15px 15px;
+  cursor: pointer;
 }
 
 math-field::part(content) {
@@ -53,4 +54,17 @@ math-field::part(content) {
   padding: 4px 8px;
   text-align: center;
   border-radius: 5px;
+}
+
+.scan-button {
+  margin-top: 1.5rem !important;
+  background-color: rgb(14, 133, 141) !important;
+  font-weight: bold;
+  color: white;
+  height: 100%;
+  width: 100%;
+  height: 2rem;
+  margin-top:1px;
+  border-radius: 10px 10px 10px 10px;
+  cursor: pointer;
 }

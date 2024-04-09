@@ -1,27 +1,119 @@
 import { MathfieldElement } from 'mathlive';
 import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
 import { MarkdownFileInfo } from 'obsidian';
+import { PluginSettingTab, Setting } from "obsidian";
+
+interface PluginSettings {
+	apiKey: string;
+	useLocalInference: boolean;
+}
+
+const DEFAULT_SETTINGS = {
+	apiKey: null,
+	selfHosted: false
+}
 
 export default class MathLivePlugin extends Plugin {
+	settings: PluginSettings;
 
 	async onload() {
 		this.addCommand({
 			id: 'open-modal',
 			name: 'Edit in MathLive',
 			editorCallback: (editor: Editor, ctx: MarkdownFileInfo) => {
-				new MathLiveModal(this.app, editor).open();
+				new MathLiveModal(this.app, editor, this).open();
 			}
 		});
+		await this.loadSettings();
+		this.addSettingTab(new MathliveSettingTab(this.app, this))
 	}
+
+	async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+}
+
+export class MathliveSettingTab extends PluginSettingTab {
+  plugin: MathLivePlugin;
+
+  constructor(app: App, plugin: MathLivePlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display(): void {
+    let { containerEl } = this;
+
+    containerEl.empty();
+
+	const title = document.createElement('h2')
+	title.textContent = 'Obsidian Mathlive'
+	title.setCssStyles({
+		fontSize: '28px'
+	})
+	containerEl.appendChild(title);
+    
+	const intro = `This plugins currently has 2 main features, visual formula editor, and image to MathJax scanner.
+The MathJax image scanner is available for free when self hosting.
+In addition, there is a cloud option that requires no setup.
+
+* Self hosting the image scanner may require technical knowledge of docker and requires background processing resources. For most people, the cloud options is better.`
+	const introEl = document.createElement('p');
+	introEl.textContent = intro;
+	introEl.style.whiteSpace = 'pre-wrap'
+	containerEl.appendChild(introEl);
+
+	new Setting(containerEl);
+	const cloudTitle = document.createElement('h2')
+	cloudTitle.textContent = 'Cloud Settings'
+	cloudTitle.setCssStyles({
+		fontSize: '24px'
+	})
+	containerEl.appendChild(cloudTitle);
+
+	new Setting(containerEl)
+		.setName('API key')
+		.addText(tc => tc.setValue(this.plugin.settings.apiKey).onChange(async val => {
+			this.plugin.settings.apiKey = val;
+			await this.plugin.saveSettings()
+		}))
+    
+	const homepageLink = document.createElement('a')
+	homepageLink.href = 'https://mathlive.danz.blog'
+	homepageLink.text = 'Create an API key here'
+	containerEl.appendChild(homepageLink)
+
+	new Setting(containerEl);
+
+	const selfHostTitle = document.createElement('h2')
+	selfHostTitle.textContent = 'Self Hosting Settings'
+	selfHostTitle.setCssStyles({
+		fontSize: '24px'
+	})
+	containerEl.appendChild(selfHostTitle);
+
+	new Setting(containerEl)
+		.setName('Self hosted')
+		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
+			this.plugin.settings.useLocalInference = val;
+			await this.plugin.saveSettings()
+		}))
+  }
 }
 
 class MathLiveModal extends Modal {
 	renderedResult?: string
 	editor: Editor
+	plugin: MathLivePlugin
 	
-	constructor(app: App, editor: Editor) {
+	constructor(app: App, editor: Editor, plugin: MathLivePlugin) {
 		super(app);
 		this.editor = editor
+		this.plugin = plugin
 	}
 
 	parseSelection(selectionText: string) : { resultRenderTemplate: (result: string) => string, initialLatex: string } | null {
@@ -75,7 +167,7 @@ class MathLiveModal extends Modal {
 		this.initMathlive(modalContent)
 		this.initSubmitButton(modalContent)
 
-		this.initFileDropZone(modalContent)
+		this.initImageScanner(modalContent)
 	}
 
 	initMathlive(modalContent: Element) {
@@ -94,14 +186,16 @@ class MathLiveModal extends Modal {
 		this.renderedResult = resultRenderTemplate(initialLatex);
 
 		const mfe = new MathfieldElement();
+		mfe.id = "mathfield"
         mfe.value = initialLatex;
         mfe.addEventListener('input', () => {
             this.renderedResult = resultRenderTemplate(mfe.value);
         });
 
-		modalContent.addClass("mathlive-modal-content")
-		modalContent.appendChild(mfe)
+		modalContent.addClass("mathlive-modal-content");
+		modalContent.appendChild(mfe);
 		mfe.focus();
+		setTimeout(() => document.getElementById("mathfield")!.focus(), 10)
 	}
 
 	initHeader(modalContent: Element) {
@@ -143,23 +237,65 @@ class MathLiveModal extends Modal {
 		modalContent.appendChild(submitButton)
 	}
 
-	initFileDropZone(modalContent: Element) {
-		const zone = document.createElement('div')
-		zone.innerText = 'Scan images to MathJax'
-		zone.addClass('drop-zone')
-		zone.ondrop = this.onDrop
-		zone.ondragover = this.onDragOver
+	initImageScanner(modalContent: Element) {
+		const scan = document.createElement('button')
+		scan.innerText = 'Scan MathJax from Clipboard'
+		scan.addClass('scan-button')
+		scan.onclick = this.onImageScanRequest.bind(this)
 
-		modalContent.appendChild(zone)
+		modalContent.appendChild(scan)
 	}
 
-	onDrop() {
-
+	async onImageScanRequest() {
+		try {
+			const clipboardItems = await navigator.clipboard.read();
+			for (const item of clipboardItems) {
+				for (const type of item.types) {
+					const blob = await item.getType(type)
+					const imageData = URL.createObjectURL(blob);
+          
+					const jpegImageData = await this.convertToJPEG(imageData);
+					const mathjax = await this.scanImage(jpegImageData);
+					new Notice(`Got result ${mathjax}`)
+					return
+				}
+			}
+			console.error('No image found in clipboard.');
+		} catch (error) {
+			console.error('Error reading clipboard or uploading image:', error);
+		}	
 	}
 
-	onDragOver(ev: Event) {
-		console.log("File(s) in drop zone");
-		ev.preventDefault();
+	async scanImage(imageData: string) {
+		let address = 'http://localhost:8502'
+		if (this.plugin.settings.useLocalInference) {
+			address = 'http://localhost:8502'
+		}
+
+		const formData = new FormData();
+		formData.append('image', imageData);
+		
+		return await fetch(address + '/predict/', {
+			headers: {
+				'Api-key': this.plugin.settings.apiKey			
+			},
+			method: 'POST',
+			body: formData,
+		});
+	}
+
+	async convertToJPEG(imageData: string) {
+		const img = new Image();
+		img.src = imageData;
+		await new Promise((resolve) => { img.onload = resolve; });
+		
+		const canvas = document.createElement('canvas');
+		canvas.width = img.width;
+		canvas.height = img.height;
+		const ctx = canvas.getContext('2d');
+		ctx!.drawImage(img, 0, 0);
+		
+		return canvas.toDataURL('image/jpeg', 0.8);
 	}
 
 	onClose() {
