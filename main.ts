@@ -250,33 +250,36 @@ class MathLiveModal extends Modal {
 	}
 
 	async onImageScanRequest() {
+		if (!this.plugin.settings.apiKey) {
+			new Notice('Please open plugin settings to create API key.')
+			return
+		}
 		try {
 			const clipboardItems = await navigator.clipboard.read();
 			for (const item of clipboardItems) {
 				for (const type of item.types) {
 					if (item.types.includes('image/png')) {
 						const blob = await item.getType(type)
-						// const imageData = URL.createObjectURL(blob);
-			
-						// const jpegImageData = await this.convertToJPEG(imageData);
+						new Notice('Scanning MathJax image')
 						const mathjax = await this.scanImage(blob);
 						this.mfe!.value = mathjax;
 						this.renderedResult = this.resultRenderTemplate(this.mfe?.value ?? '');
 
-						new Notice(`Got result ${mathjax}`)
+						new Notice(`Got scan result for MathJax`)
 						return
 					}
 					
 				}
 			}
-			console.error('No image found in clipboard.');
+			new Notice('No image found in clipboard.');
 		} catch (error) {
 			console.error('Error reading clipboard or uploading image:', error);
+			new Notice(`Failed to scan image. See console for details.`)
 		}	
 	}
 
 	async scanImage(imageData: Blob) {
-		let address = 'http://localhost:8502'
+		let address = 'http://mathlive-ocr.danz.blog:8502'
 		if (this.plugin.settings.useLocalInference) {
 			address = 'http://localhost:8502'
 		}
@@ -291,7 +294,7 @@ class MathLiveModal extends Modal {
 			method: 'POST',
 			body: formData
 		});
-		return await res.text()
+		return await res.json()
 	}
 
 	async convertToJPEG(imageData: string) {
