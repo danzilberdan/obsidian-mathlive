@@ -109,6 +109,8 @@ class MathLiveModal extends Modal {
 	renderedResult?: string
 	editor: Editor
 	plugin: MathLivePlugin
+	mfe?: MathfieldElement
+	resultRenderTemplate: (res: string) => string
 	
 	constructor(app: App, editor: Editor, plugin: MathLivePlugin) {
 		super(app);
@@ -182,19 +184,20 @@ class MathLiveModal extends Modal {
 		}
 
 		const {initialLatex, resultRenderTemplate} = parseResult;
+		this.resultRenderTemplate = resultRenderTemplate
 
 		this.renderedResult = resultRenderTemplate(initialLatex);
 
-		const mfe = new MathfieldElement();
-		mfe.id = "mathfield"
-        mfe.value = initialLatex;
-        mfe.addEventListener('input', () => {
-            this.renderedResult = resultRenderTemplate(mfe.value);
+		this.mfe = new MathfieldElement();
+		this.mfe.id = "mathfield"
+        this.mfe.value = initialLatex;
+        this.mfe.addEventListener('input', () => {
+            this.renderedResult = resultRenderTemplate(this.mfe?.value ?? '');
         });
 
 		modalContent.addClass("mathlive-modal-content");
-		modalContent.appendChild(mfe);
-		mfe.focus();
+		modalContent.appendChild(this.mfe);
+		this.mfe.focus();
 		setTimeout(() => document.getElementById("mathfield")!.focus(), 10)
 	}
 
@@ -251,13 +254,19 @@ class MathLiveModal extends Modal {
 			const clipboardItems = await navigator.clipboard.read();
 			for (const item of clipboardItems) {
 				for (const type of item.types) {
-					const blob = await item.getType(type)
-					const imageData = URL.createObjectURL(blob);
-          
-					const jpegImageData = await this.convertToJPEG(imageData);
-					const mathjax = await this.scanImage(jpegImageData);
-					new Notice(`Got result ${mathjax}`)
-					return
+					if (item.types.includes('image/png')) {
+						const blob = await item.getType(type)
+						// const imageData = URL.createObjectURL(blob);
+			
+						// const jpegImageData = await this.convertToJPEG(imageData);
+						const mathjax = await this.scanImage(blob);
+						this.mfe!.value = mathjax;
+						this.renderedResult = this.resultRenderTemplate(this.mfe?.value ?? '');
+
+						new Notice(`Got result ${mathjax}`)
+						return
+					}
+					
 				}
 			}
 			console.error('No image found in clipboard.');
@@ -266,22 +275,23 @@ class MathLiveModal extends Modal {
 		}	
 	}
 
-	async scanImage(imageData: string) {
+	async scanImage(imageData: Blob) {
 		let address = 'http://localhost:8502'
 		if (this.plugin.settings.useLocalInference) {
 			address = 'http://localhost:8502'
 		}
 
 		const formData = new FormData();
-		formData.append('image', imageData);
+		formData.append('file', imageData);
 		
-		return await fetch(address + '/predict/', {
+		const res = await fetch(address + '/predict/', {
 			headers: {
 				'Api-key': this.plugin.settings.apiKey			
 			},
 			method: 'POST',
-			body: formData,
+			body: formData
 		});
+		return await res.text()
 	}
 
 	async convertToJPEG(imageData: string) {
