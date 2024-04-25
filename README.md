@@ -1,3 +1,4 @@
+![](./banner.svg)
 # Obsidian MathLive
 Edit Latex math formulas visually in Obsidian.
 
