@@ -19,6 +19,8 @@ The problem is that it is very common to forget the material. Each course is a v
 
 So I started using Obsidian as a notebook for my courses. I quickly found out math was possible but not in an efficient way. I realised that a plugin that would focus on math convenience and speed would be valuable to Obsidian's community.
 
+Here is a [blog post](https://danz.blog/math-in-obsidian/) I wrote about it.
+
 # Usage
 1. When creating new math content, an *Edit in MathLive* action is used to start creating the math visually.
 1. Editing existing math content is also supported by selecting math content and using the *Edit in MathLive* action.
