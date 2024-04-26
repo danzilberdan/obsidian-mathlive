@@ -13,7 +13,7 @@
 For the past few years I have been taking math and computer science courses while also working in a full time job as a software engineer.
 The material is not a must for most programming jobs. I have decided to continue studying because of my interest and in order to open doors for working on more research oriented tasks.
 
-Most students who persue a degree, do it as a means to get a job. In contrast, I persue a degree solely to understand math and computers on a deeper level. To me, it is very important to keep the knowledge I aquire for future use.
+Most students who persue a degree, do it as a means to get a job. In contrast, I persue a degree solely to understand math and computers on a deeper level. To me, it is very important to keep the knowledge I acquire for future use.
 
 The problem is that it is very common to forget the material. Each course is a very dense and concentrated effort on a very specific topic. But in order to keep the knowledge for a lifetime, it is required to keep interacting with it even after the test. This is why Obsidian's ecosystem and philosophy seemed promising to me.
 
