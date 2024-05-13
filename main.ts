@@ -279,7 +279,7 @@ class MathLiveModal extends Modal {
 	}
 
 	async scanImage(imageData: Blob) {
-		let address = 'http://mathlive-ocr.danz.blog:8502'
+		let address = 'https://mathlive-ocr.danz.blog'
 		if (this.plugin.settings.useLocalInference) {
 			address = 'http://localhost:8502'
 		}
