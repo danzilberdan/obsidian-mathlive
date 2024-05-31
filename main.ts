@@ -17,6 +17,9 @@ export default class MathLivePlugin extends Plugin {
 	settings: PluginSettings;
 
 	async onload() {
+		if (customElements.get("math-field") === undefined)
+			customElements.define("math-field", MathfieldElement);
+
 		this.addCommand({
 			id: 'open-modal',
 			name: 'Add full-line math',
@@ -208,7 +211,7 @@ class MathLiveModal extends Modal {
 
 		this.renderedResult = resultRenderTemplate(initialLatex);
 
-		this.mfe = new MathfieldElement();
+		this.mfe = document.createElement("math-field") as MathfieldElement;
 		this.mfe.id = "mathfield"
         this.mfe.value = initialLatex;
         this.mfe.addEventListener('input', () => {
