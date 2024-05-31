@@ -15,7 +15,7 @@
 }
 
 math-field {
-  font-size: 2rem;
+  font-size: 1.5rem;
   width: 100%;
   overflow: hidden;
   border-radius: 15px 15px 0 0;
@@ -67,4 +67,23 @@ math-field::part(content) {
   margin-top:1px;
   border-radius: 10px 10px 10px 10px;
   cursor: pointer;
+}
+
+.mathlive-modal-root {
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+}
+
+.mathlive-modal-root > .modal-bg {
+  opacity: 0 !important;
+}
+
+.virt-keyboard {
+  overflow: overlay;
+}
+
+.virt-keyboard > div {
+  height: 40vh;
+  width: 100vw;
 }

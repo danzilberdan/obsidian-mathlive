@@ -19,9 +19,17 @@ export default class MathLivePlugin extends Plugin {
 	async onload() {
 		this.addCommand({
 			id: 'open-modal',
-			name: 'Edit in MathLive',
+			name: 'Add full-line math',
 			editorCallback: (editor: Editor, ctx: MarkdownFileInfo) => {
 				new MathLiveModal(this.app, editor, this).open();
+			}
+		});
+		
+		this.addCommand({
+			id: 'open-modal-inline',
+			name: 'Add inline math',
+			editorCallback: (editor: Editor, ctx: MarkdownFileInfo) => {
+				new MathLiveModal(this.app, editor, this, true).open();
 			}
 		});
 		await this.loadSettings();
@@ -110,18 +118,21 @@ class MathLiveModal extends Modal {
 	editor: Editor
 	plugin: MathLivePlugin
 	mfe?: MathfieldElement
+	inline: boolean 
 	resultRenderTemplate: (res: string) => string
 	
-	constructor(app: App, editor: Editor, plugin: MathLivePlugin) {
+	constructor(app: App, editor: Editor, plugin: MathLivePlugin, inline=false) {
 		super(app);
 		this.editor = editor
 		this.plugin = plugin
+		this.inline = inline;
 	}
 
 	parseSelection(selectionText: string) : { resultRenderTemplate: (result: string) => string, initialLatex: string } | null {
 		if (selectionText.length === 0) {
+			const wrapper = this.inline ? "$" : "$$";
 			return {
-				resultRenderTemplate: result => result.length > 0 ? "$$" + result + "$$" : "",
+				resultRenderTemplate: result => result.length > 0 ? wrapper + result + wrapper : "",
 				initialLatex: ""
 			}
 		}
@@ -156,7 +167,10 @@ class MathLiveModal extends Modal {
 			}
 		}
 
-		return null
+		return {
+			resultRenderTemplate: result => result,
+			initialLatex: selectionText
+		}
 	}
 
 	onOpen() {
@@ -173,12 +187,18 @@ class MathLiveModal extends Modal {
 	}
 
 	initMathlive(modalContent: Element) {
+		const mathliveModalRoot = modalContent.parentElement?.parentElement
+		mathliveModalRoot?.addClass("mathlive-modal-root")
+		const keyboardContainer = window.createEl('div')
+		keyboardContainer.addClass("virt-keyboard")
+		mathliveModalRoot?.append(keyboardContainer)
+
 		const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const selectionText = markdownView?.editor.getSelection();
 
 		const parseResult = this.parseSelection(selectionText ?? "");
 		if (!parseResult) {
-			new Notice("Please select a $$ text (MathJax).");
+			new Notice("MathLive: Failed to parse the selected text");
 			this.close();
 			return;
 		}
@@ -194,6 +214,7 @@ class MathLiveModal extends Modal {
         this.mfe.addEventListener('input', () => {
             this.renderedResult = resultRenderTemplate(this.mfe?.value ?? '');
         });
+		window.mathVirtualKeyboard.container = keyboardContainer
 
 		modalContent.addClass("mathlive-modal-content");
 		modalContent.appendChild(this.mfe);
@@ -262,7 +283,7 @@ class MathLiveModal extends Modal {
 						const blob = await item.getType(type)
 						new Notice('Scanning MathJax image')
 						const mathjax = await this.scanImage(blob);
-						this.mfe!.value = mathjax;
+						this.mfe!.value += mathjax;
 						this.renderedResult = this.resultRenderTemplate(this.mfe?.value ?? '');
 
 						new Notice(`Got scan result for MathJax`)
