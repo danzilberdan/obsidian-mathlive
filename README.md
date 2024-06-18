@@ -61,7 +61,7 @@ MathLive is a powerful Obsidian plugin that simplifies the process of creating a
 
 For any issues or feature requests, please open an issue on our [GitHub repository](https://github.com/danzilberdan/obsidian-mathlive).
 
-# Background of this project
+## Background of this project
 For the past few years I have been taking math and computer science courses while also working in a full time job as a software engineer.
 The material is not a must for most programming jobs. I have decided to continue studying because of my interest and in order to open doors for working on more research oriented tasks.
 
