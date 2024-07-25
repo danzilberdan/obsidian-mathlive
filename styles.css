@@ -84,6 +84,6 @@ math-field::part(content) {
 }
 
 .virt-keyboard > div {
-  height: 40vh;
+  height: var(--_keyboard-height);
   width: 100vw;
 }
