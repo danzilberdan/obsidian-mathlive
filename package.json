@@ -5,6 +5,8 @@
 	"main": "main.js",
 	"scripts": {
 		"build": "webpack",
+		"dev": "webpack --watch",
+		"link-vault": "node scripts/link-vault.mjs",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
@@ -27,6 +29,9 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"dependencies": {
-		"mathlive": "0.101.0"
+		"@codemirror/language": "^6.12.3",
+		"@codemirror/state": "^6.6.0",
+		"@codemirror/view": "^6.41.0",
+		"mathlive": "^0.109.1"
 	}
 }

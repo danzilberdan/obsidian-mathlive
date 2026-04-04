@@ -1,24 +1,54 @@
-import { MathfieldElement } from 'mathlive';
-import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
-import { MarkdownFileInfo } from 'obsidian';
-import { PluginSettingTab, Setting } from "obsidian";
+import {
+	App,
+	Editor,
+	type EditorPosition,
+	MarkdownFileInfo,
+	Modal,
+	Notice,
+	Platform,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+	setIcon,
+	type KeymapEventHandler,
+} from "obsidian";
+import type { MathfieldElement } from "mathlive";
+import { createInlineMathEditorExtension } from "./mathlive-inline";
+import {
+	createMathfield,
+	ensureMathfieldElementRegistered,
+	parseMathSelection,
+} from "./mathlive-shared";
+import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 
-interface PluginSettings {
-	apiKey: string;
-	useLocalInference: boolean;
-}
+const CLOUD_OCR_AUTH_NOTICE =
+	'Open Settings -> MathLive and configure your API key. If you use cloud OCR, make sure your remote account is funded. More info is available in settings.';
 
-const DEFAULT_SETTINGS = {
-	apiKey: null,
-	selfHosted: false
+function isCloudOcrAuthorizationError(error: unknown): boolean {
+	if (!(error instanceof Error)) {
+		return false;
+	}
+
+	if (error.message === CLOUD_OCR_AUTH_NOTICE) {
+		return true;
+	}
+
+	if (/status 4\d\d/.test(error.message)) {
+		return true;
+	}
+
+	// Some browser/Electron fetch failures never expose the 4xx response and only surface
+	// a generic network error to the plugin. Treat those cloud OCR failures as auth/setup
+	// guidance rather than falling back to the console-only notice.
+	return error.name === 'TypeError' && /Failed to fetch|Load failed|NetworkError/i.test(error.message);
 }
 
 export default class MathLivePlugin extends Plugin {
 	settings: PluginSettings;
 
 	async onload() {
-		if (customElements.get("math-field") === undefined)
-			customElements.define("math-field", MathfieldElement);
+		await ensureMathfieldElementRegistered();
+		await this.loadSettings();
 
 		this.addCommand({
 			id: 'open-modal',
@@ -35,8 +65,16 @@ export default class MathLivePlugin extends Plugin {
 				new MathLiveModal(this.app, editor, this, true).open();
 			}
 		});
-		await this.loadSettings();
-		this.addSettingTab(new MathliveSettingTab(this.app, this))
+		this.registerEditorExtension(
+			createInlineMathEditorExtension(() => this.settings)
+		);
+		this.addSettingTab(new MathliveSettingTab(this.app, this));
+		this.updateMathJaxVisibility();
+	}
+
+	onunload() {
+		document.body.removeClass("mathlive-hide-rendered-inline");
+		document.body.removeClass("mathlive-hide-rendered-block");
 	}
 
 	async loadSettings() {
@@ -45,6 +83,34 @@ export default class MathLivePlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		this.updateMathJaxVisibility();
+		this.refreshMarkdownEditors();
+	}
+
+	updateMathJaxVisibility() {
+		document.body.toggleClass(
+			"mathlive-hide-rendered-inline",
+			this.settings.enableInlineEditorMode && this.settings.hideRenderedInlineMath
+		);
+		document.body.toggleClass(
+			"mathlive-hide-rendered-block",
+			this.settings.enableInlineEditorMode && this.settings.hideRenderedBlockMath
+		);
+	}
+
+	refreshMarkdownEditors() {
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			const view = leaf.view as {
+				editor?: Editor;
+			};
+			const editor = view.editor;
+			if (!editor) {
+				continue;
+			}
+
+			const cursor = editor.getCursor();
+			editor.setCursor(cursor);
+		}
 	}
 }
 
@@ -88,7 +154,7 @@ In addition, there is a cloud option that requires no setup.
 
 	new Setting(containerEl)
 		.setName('API key')
-		.addText(tc => tc.setValue(this.plugin.settings.apiKey).onChange(async val => {
+		.addText(tc => tc.setValue(this.plugin.settings.apiKey ?? "").onChange(async val => {
 			this.plugin.settings.apiKey = val;
 			await this.plugin.saveSettings()
 		}))
@@ -97,6 +163,11 @@ In addition, there is a cloud option that requires no setup.
 	homepageLink.href = 'https://mathlive.danz.blog'
 	homepageLink.text = 'Create an API key here'
 	containerEl.appendChild(homepageLink)
+
+	const cloudHelp = document.createElement('p');
+	cloudHelp.textContent = 'If cloud OCR returns any 4xx error, open these settings, configure your API key, and make sure your remote account is funded.';
+	cloudHelp.style.whiteSpace = 'pre-wrap';
+	containerEl.appendChild(cloudHelp);
 
 	new Setting(containerEl);
 
@@ -112,7 +183,75 @@ In addition, there is a cloud option that requires no setup.
 		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
 			this.plugin.settings.useLocalInference = val;
 			await this.plugin.saveSettings()
-		}))
+		}));
+
+	new Setting(containerEl);
+	const editorModeTitle = document.createElement("h2");
+	editorModeTitle.textContent = "Inline Editor Mode";
+	editorModeTitle.setCssStyles({
+		fontSize: "24px",
+	});
+	containerEl.appendChild(editorModeTitle);
+
+	new Setting(containerEl)
+		.setName("Enable inline editor mode")
+		.setDesc("Render editable MathLive widgets directly in the editor for existing math expressions.")
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.enableInlineEditorMode).onChange(async (val) => {
+				this.plugin.settings.enableInlineEditorMode = val;
+				await this.plugin.saveSettings();
+			})
+		);
+
+	new Setting(containerEl)
+		.setName("Enable inline math widgets")
+		.setDesc("Show MathLive widgets for `$...$` expressions when inline editor mode is enabled.")
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.enableInlineMathWidgets).onChange(async (val) => {
+				this.plugin.settings.enableInlineMathWidgets = val;
+				await this.plugin.saveSettings();
+			})
+		);
+
+	new Setting(containerEl)
+		.setName("Enable block math widgets")
+		.setDesc("Show MathLive widgets for `$$...$$` expressions when inline editor mode is enabled.")
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.enableBlockMathWidgets).onChange(async (val) => {
+				this.plugin.settings.enableBlockMathWidgets = val;
+				await this.plugin.saveSettings();
+			})
+		);
+
+	new Setting(containerEl)
+		.setName("Hide rendered inline math")
+		.setDesc("Hide Obsidian's rendered inline MathJax preview while inline MathLive widgets are enabled.")
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.hideRenderedInlineMath).onChange(async (val) => {
+				this.plugin.settings.hideRenderedInlineMath = val;
+				await this.plugin.saveSettings();
+			})
+		);
+
+	new Setting(containerEl)
+		.setName("Hide rendered block math")
+		.setDesc("Hide Obsidian's rendered block MathJax preview while inline MathLive widgets are enabled.")
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.hideRenderedBlockMath).onChange(async (val) => {
+				this.plugin.settings.hideRenderedBlockMath = val;
+				await this.plugin.saveSettings();
+			})
+		);
+
+	new Setting(containerEl)
+		.setName("Update inline widgets immediately")
+		.setDesc("When disabled, inline widget edits update the Markdown source on blur instead of on every input.")
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.immediateInlineUpdate).onChange(async (val) => {
+				this.plugin.settings.immediateInlineUpdate = val;
+				await this.plugin.saveSettings();
+			})
+		);
   }
 }
 
@@ -123,6 +262,10 @@ class MathLiveModal extends Modal {
 	mfe?: MathfieldElement
 	inline: boolean 
 	resultRenderTemplate: (res: string) => string
+	private insertHotkey?: KeymapEventHandler
+	private menuOutsideListener?: (e: MouseEvent) => void
+	private replaceFrom?: EditorPosition
+	private replaceTo?: EditorPosition
 	
 	constructor(app: App, editor: Editor, plugin: MathLivePlugin, inline=false) {
 		super(app);
@@ -131,62 +274,22 @@ class MathLiveModal extends Modal {
 		this.inline = inline;
 	}
 
-	parseSelection(selectionText: string) : { resultRenderTemplate: (result: string) => string, initialLatex: string } | null {
-		if (selectionText.length === 0) {
-			const wrapper = this.inline ? "$" : "$$";
-			return {
-				resultRenderTemplate: result => result.length > 0 ? wrapper + result + wrapper : "",
-				initialLatex: ""
-			}
-		}
-
-		const mathPreviewStartIndex = selectionText.indexOf("$$");
-		if (mathPreviewStartIndex >= 0) {
-			const mathPreviewEndIndex = selectionText.indexOf("$$", mathPreviewStartIndex + 2);
-			if (mathPreviewEndIndex >= 0) {
-				return {
-					resultRenderTemplate: result => 
-						selectionText.substring(0, mathPreviewStartIndex) 
-						+ "$$" 
-						+ result 
-						+ "$$"
-						+ selectionText.substring(mathPreviewEndIndex + 2, selectionText.length),
-					initialLatex: selectionText.substring(mathPreviewStartIndex + 2, mathPreviewEndIndex),
-				}
-			}
-		}
-
-		const mathInlineStartIndex = selectionText.indexOf("$");
-		if (mathInlineStartIndex >= 0) {
-			const mathInlineEndIndex = selectionText.indexOf("$", mathInlineStartIndex + 1);
-			return {
-				resultRenderTemplate: result => 
-					selectionText.substring(0, mathInlineStartIndex) 
-					+ "$" 
-					+ result 
-					+ "$"
-					+ selectionText.substring(mathInlineEndIndex + 1, selectionText.length),
-				initialLatex: selectionText.substring(mathInlineStartIndex + 1, mathInlineEndIndex),
-			}
-		}
-
-		return {
-			resultRenderTemplate: result => result,
-			initialLatex: selectionText
-		}
-	}
-
 	onOpen() {
-		const modalContent = this.containerEl.querySelector('.modal-content')!;
+		const modalContent = this.contentEl;
 
 		const header = this.initHeader(modalContent)
-		this.initMadeByButton(header)
-		this.initSupportButton(header)
+		this.initOverflowMenu(header)
+
+		this.insertHotkey = this.scope.register(["Mod"], "Enter", () => {
+			this.close();
+			return false;
+		});
 
 		this.initMathlive(modalContent)
-		this.initSubmitButton(modalContent)
-
-		this.initImageScanner(modalContent)
+		
+		const actionsContainer = modalContent.createDiv({ cls: "mathlive-modal-actions" });
+		this.initSubmitButton(actionsContainer)
+		this.initImageScanner(actionsContainer)
 	}
 
 	initMathlive(modalContent: Element) {
@@ -196,86 +299,247 @@ class MathLiveModal extends Modal {
 		keyboardContainer.addClass("virt-keyboard")
 		mathliveModalRoot?.append(keyboardContainer)
 
-		const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-		const selectionText = markdownView?.editor.getSelection();
-
-		const parseResult = this.parseSelection(selectionText ?? "");
-		if (!parseResult) {
-			new Notice("MathLive: Failed to parse the selected text");
-			this.close();
-			return;
-		}
-
+		const selectionTarget = this.resolveSelectionTarget();
+		this.replaceFrom = selectionTarget.from;
+		this.replaceTo = selectionTarget.to;
+		const parseResult = parseMathSelection(selectionTarget.text, this.inline);
 		const {initialLatex, resultRenderTemplate} = parseResult;
 		this.resultRenderTemplate = resultRenderTemplate
 
 		this.renderedResult = resultRenderTemplate(initialLatex);
 
-		this.mfe = document.createElement("math-field") as MathfieldElement;
-		this.mfe.id = "mathfield"
-        this.mfe.value = initialLatex;
-        this.mfe.addEventListener('input', () => {
-            this.renderedResult = resultRenderTemplate(this.mfe?.value ?? '');
-        });
+		this.mfe = createMathfield({
+			initialValue: initialLatex,
+			inline: this.inline,
+			id: "mathlive-modal-field",
+			onInput: (value) => {
+				this.renderedResult = resultRenderTemplate(value);
+			},
+		});
+		this.mfe.addEventListener("keydown", (event: KeyboardEvent) => {
+			if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey)) {
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+			this.close();
+		}, { capture: true });
 		window.mathVirtualKeyboard.container = keyboardContainer
 
 		modalContent.addClass("mathlive-modal-content");
 		modalContent.appendChild(this.mfe);
 		this.mfe.focus();
-		setTimeout(() => document.getElementById("mathfield")!.focus(), 10)
+		setTimeout(() => this.mfe?.focus(), 10)
+	}
+
+	private resolveSelectionTarget() {
+		const selectionText = this.editor.getSelection();
+		const from = this.editor.getCursor("from");
+		const to = this.editor.getCursor("to");
+
+		if (selectionText.length > 0) {
+			return { text: selectionText, from, to };
+		}
+
+		const cursor = this.editor.getCursor();
+		const enclosingRange = this.findEnclosingMathRange(cursor);
+		if (!enclosingRange) {
+			return { text: "", from, to };
+		}
+
+		return {
+			text: this.editor.getRange(enclosingRange.from, enclosingRange.to),
+			from: enclosingRange.from,
+			to: enclosingRange.to,
+		};
+	}
+
+	private findEnclosingMathRange(cursor: EditorPosition) {
+		const doc = this.editor.getValue();
+		const cursorOffset = this.editor.posToOffset(cursor);
+		let inlineStart: number | null = null;
+		let blockStart: number | null = null;
+
+		for (let index = 0; index < doc.length; ) {
+			if (doc[index] !== "$" || this.isEscapedDollar(doc, index)) {
+				index += 1;
+				continue;
+			}
+
+			const isBlockDelimiter = doc[index + 1] === "$";
+			if (blockStart !== null) {
+				if (isBlockDelimiter) {
+					const end = index + 2;
+					if (cursorOffset > blockStart && cursorOffset < end) {
+						return {
+							from: this.editor.offsetToPos(blockStart),
+							to: this.editor.offsetToPos(end),
+						};
+					}
+					blockStart = null;
+					index = end;
+					continue;
+				}
+
+				index += 1;
+				continue;
+			}
+
+			if (inlineStart !== null) {
+				const end = index + 1;
+				if (cursorOffset > inlineStart && cursorOffset < end) {
+					return {
+						from: this.editor.offsetToPos(inlineStart),
+						to: this.editor.offsetToPos(end),
+					};
+				}
+				inlineStart = null;
+				index = end;
+				continue;
+			}
+
+			if (isBlockDelimiter) {
+				blockStart = index;
+				index += 2;
+				continue;
+			}
+
+			inlineStart = index;
+			index += 1;
+		}
+
+		return null;
+	}
+
+	private isEscapedDollar(text: string, index: number) {
+		let backslashCount = 0;
+		for (let cursor = index - 1; cursor >= 0 && text[cursor] === "\\"; cursor -= 1) {
+			backslashCount += 1;
+		}
+
+		return backslashCount % 2 === 1;
 	}
 
 	initHeader(modalContent: Element) {
-		const header = document.createElement('div')
-		header.addClass('header')
-
-		modalContent.appendChild(header)
+		const header = modalContent.createDiv({ cls: "header mathlive-modal-header" });
+		const title = header.createEl("h2", { 
+			text: this.inline ? "Edit Inline Math" : "Edit Math Block", 
+			cls: "mathlive-modal-title" 
+		});
 		return header;
 	}
 
-	initMadeByButton(modalContent: Element) {
-		const link = document.createElement('a')
-		link.innerText = '👱‍♂️ Made by Dan Zilberman'
-		link.addClass('badge')
-		link.setAttr('href', 'https://danzilberdan.github.io/')
-		link.setAttr('target', '_blank')
-		link.addClass('external-link')
+	initOverflowMenu(header: HTMLElement) {
+		const wrap = header.createDiv({ cls: "mathlive-modal-menu" });
+		const trigger = wrap.createEl("button", {
+			cls: "mathlive-modal-menu-trigger",
+			attr: {
+				type: "button",
+				"aria-label": "More options",
+				"aria-expanded": "false",
+				"aria-haspopup": "true",
+			},
+		});
+		setIcon(trigger, "more-vertical");
 
-		modalContent.appendChild(link)
-	}
+		const dropdown = wrap.createDiv({ cls: "mathlive-modal-menu-dropdown" });
+		const link = dropdown.createEl("a", {
+			cls: "mathlive-modal-menu-item external-link",
+			text: "Made by Dan Zilberman",
+			href: "https://danz.blog",
+		});
+		link.setAttr("target", "_blank");
+		link.setAttr("rel", "noopener noreferrer");
 
-	initSupportButton(modalContent: Element) {
-		const link = document.createElement('a')
-		link.innerText = '☕ Support'
-		link.addClass('badge')
-		link.setAttr('href', 'https://www.buymeacoffee.com/danzilberdan')
-		link.setAttr('target', '_blank')
-		link.addClass('external-link')
+		const closeMenu = () => {
+			dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
+			trigger.setAttr("aria-expanded", "false");
+			if (this.menuOutsideListener) {
+				document.removeEventListener("click", this.menuOutsideListener);
+				this.menuOutsideListener = undefined;
+			}
+		};
 
-		modalContent.appendChild(link)
+		const openMenu = () => {
+			dropdown.removeClass("mathlive-modal-menu-dropdown--hidden");
+			trigger.setAttr("aria-expanded", "true");
+			window.setTimeout(() => {
+				this.menuOutsideListener = (e: MouseEvent) => {
+					if (!wrap.contains(e.target as Node)) {
+						closeMenu();
+					}
+				};
+				document.addEventListener("click", this.menuOutsideListener);
+			}, 0);
+		};
+
+		trigger.addEventListener("click", (e) => {
+			e.stopPropagation();
+			if (dropdown.hasClass("mathlive-modal-menu-dropdown--hidden")) {
+				openMenu();
+			} else {
+				closeMenu();
+			}
+		});
+
+		dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
 	}
 
 	initSubmitButton(modalContent: Element) {
-		const submitButton = document.createElement('button')
-		submitButton.innerText = 'Insert'
-		submitButton.addClass('submit')
-		submitButton.addEventListener('click', this.close.bind(this))
-
-		modalContent.appendChild(submitButton)
+		const row = window.createDiv({ cls: "mathlive-button-row" });
+		const submitButton = row.createEl("button", {
+			cls: "submit mathlive-action-btn",
+			attr: { type: "button" },
+		});
+		
+		const iconSpan = submitButton.createSpan({ cls: "mathlive-btn-icon" });
+		setIcon(iconSpan, "check");
+		
+		const textWrap = submitButton.createDiv({ cls: "mathlive-btn-text-wrap" });
+		textWrap.createSpan({
+			cls: "mathlive-btn-title",
+			text: "Insert into note",
+		});
+		textWrap.createSpan({
+			cls: "mathlive-btn-hint",
+			text: Platform.isMacOS ? "⌘ Enter" : "Ctrl+Enter",
+		});
+		
+		submitButton.addEventListener("click", () => this.close());
+		modalContent.appendChild(row);
 	}
 
 	initImageScanner(modalContent: Element) {
-		const scan = document.createElement('button')
-		scan.innerText = 'Scan MathJax from Clipboard'
-		scan.addClass('scan-button')
-		scan.onclick = this.onImageScanRequest.bind(this)
+		const row = window.createDiv({ cls: "mathlive-button-row" });
+		const scan = row.createEl("button", {
+			cls: "scan-button mathlive-action-btn",
+			attr: { type: "button" },
+		});
+		
+		const iconSpan = scan.createSpan({ cls: "mathlive-btn-icon" });
+		setIcon(iconSpan, "image");
+		
+		const textWrap = scan.createDiv({ cls: "mathlive-btn-text-wrap" });
+		textWrap.createSpan({
+			cls: "mathlive-btn-title",
+			text: "Add LaTeX from clipboard image",
+		});
+		textWrap.createSpan({
+			cls: "mathlive-btn-desc",
+			text: "Paste a formula screenshot as editable math",
+		});
+		
+		scan.addEventListener("click", () => {
+			void this.onImageScanRequest();
+		});
 
-		modalContent.appendChild(scan)
+		modalContent.appendChild(row);
 	}
 
 	async onImageScanRequest() {
 		if (!this.plugin.settings.apiKey) {
-			new Notice('Please open plugin settings to create API key.')
+			new Notice(CLOUD_OCR_AUTH_NOTICE, 10000)
 			return
 		}
 		try {
@@ -297,6 +561,10 @@ class MathLiveModal extends Modal {
 			}
 			new Notice('No image found in clipboard.');
 		} catch (error) {
+			if (!this.plugin.settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
+				new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
+				return;
+			}
 			console.error('Error reading clipboard or uploading image:', error);
 			new Notice(`Failed to scan image. See console for details.`)
 		}	
@@ -310,14 +578,31 @@ class MathLiveModal extends Modal {
 
 		const formData = new FormData();
 		formData.append('file', imageData);
-		
-		const res = await fetch(address + '/predict/', {
-			headers: {
-				'Api-key': this.plugin.settings.apiKey			
-			},
-			method: 'POST',
-			body: formData
-		});
+
+		let res: Response;
+		try {
+			res = await fetch(address + '/predict/', {
+				headers: {
+					'Api-key': this.plugin.settings.apiKey ?? ""			
+				},
+				method: 'POST',
+				body: formData
+			});
+		} catch (error) {
+			if (!this.plugin.settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
+				throw new Error(CLOUD_OCR_AUTH_NOTICE);
+			}
+			throw error;
+		}
+
+		if (!res.ok) {
+			if (res.status >= 400 && res.status < 500) {
+				throw new Error(CLOUD_OCR_AUTH_NOTICE);
+			}
+
+			throw new Error(`OCR request failed with status ${res.status}.`);
+		}
+
 		return await res.json()
 	}
 
@@ -336,7 +621,18 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
-		if (!!this.renderedResult)
-			this.editor.replaceSelection(this.renderedResult);
+		if (this.menuOutsideListener) {
+			document.removeEventListener("click", this.menuOutsideListener);
+			this.menuOutsideListener = undefined;
+		}
+		if (this.insertHotkey) {
+			this.scope.unregister(this.insertHotkey);
+			this.insertHotkey = undefined;
+		}
+		if (this.renderedResult === undefined || !this.replaceFrom || !this.replaceTo) {
+			return;
+		}
+
+		this.editor.replaceRange(this.renderedResult, this.replaceFrom, this.replaceTo);
 	}
 }

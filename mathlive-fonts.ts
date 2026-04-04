@@ -1,0 +1,43 @@
+import katexAmsRegular from "./node_modules/mathlive/fonts/KaTeX_AMS-Regular.woff2";
+import katexCaligraphicBold from "./node_modules/mathlive/fonts/KaTeX_Caligraphic-Bold.woff2";
+import katexCaligraphicRegular from "./node_modules/mathlive/fonts/KaTeX_Caligraphic-Regular.woff2";
+import katexFrakturBold from "./node_modules/mathlive/fonts/KaTeX_Fraktur-Bold.woff2";
+import katexFrakturRegular from "./node_modules/mathlive/fonts/KaTeX_Fraktur-Regular.woff2";
+import katexMainBoldItalic from "./node_modules/mathlive/fonts/KaTeX_Main-BoldItalic.woff2";
+import katexMainBold from "./node_modules/mathlive/fonts/KaTeX_Main-Bold.woff2";
+import katexMainItalic from "./node_modules/mathlive/fonts/KaTeX_Main-Italic.woff2";
+import katexMainRegular from "./node_modules/mathlive/fonts/KaTeX_Main-Regular.woff2";
+import katexMathBoldItalic from "./node_modules/mathlive/fonts/KaTeX_Math-BoldItalic.woff2";
+import katexMathItalic from "./node_modules/mathlive/fonts/KaTeX_Math-Italic.woff2";
+import katexSansSerifBold from "./node_modules/mathlive/fonts/KaTeX_SansSerif-Bold.woff2";
+import katexSansSerifItalic from "./node_modules/mathlive/fonts/KaTeX_SansSerif-Italic.woff2";
+import katexSansSerifRegular from "./node_modules/mathlive/fonts/KaTeX_SansSerif-Regular.woff2";
+import katexScriptRegular from "./node_modules/mathlive/fonts/KaTeX_Script-Regular.woff2";
+import katexSize1Regular from "./node_modules/mathlive/fonts/KaTeX_Size1-Regular.woff2";
+import katexSize2Regular from "./node_modules/mathlive/fonts/KaTeX_Size2-Regular.woff2";
+import katexSize3Regular from "./node_modules/mathlive/fonts/KaTeX_Size3-Regular.woff2";
+import katexSize4Regular from "./node_modules/mathlive/fonts/KaTeX_Size4-Regular.woff2";
+import katexTypewriterRegular from "./node_modules/mathlive/fonts/KaTeX_Typewriter-Regular.woff2";
+
+export const FONT_FILES = [
+	["KaTeX_AMS", katexAmsRegular, "normal", "400"],
+	["KaTeX_Caligraphic", katexCaligraphicBold, "normal", "700"],
+	["KaTeX_Caligraphic", katexCaligraphicRegular, "normal", "400"],
+	["KaTeX_Fraktur", katexFrakturBold, "normal", "700"],
+	["KaTeX_Fraktur", katexFrakturRegular, "normal", "400"],
+	["KaTeX_Main", katexMainBoldItalic, "italic", "700"],
+	["KaTeX_Main", katexMainBold, "normal", "700"],
+	["KaTeX_Main", katexMainItalic, "italic", "400"],
+	["KaTeX_Main", katexMainRegular, "normal", "400"],
+	["KaTeX_Math", katexMathBoldItalic, "italic", "700"],
+	["KaTeX_Math", katexMathItalic, "italic", "400"],
+	["KaTeX_SansSerif", katexSansSerifBold, "normal", "700"],
+	["KaTeX_SansSerif", katexSansSerifItalic, "italic", "400"],
+	["KaTeX_SansSerif", katexSansSerifRegular, "normal", "400"],
+	["KaTeX_Script", katexScriptRegular, "normal", "400"],
+	["KaTeX_Size1", katexSize1Regular, "normal", "400"],
+	["KaTeX_Size2", katexSize2Regular, "normal", "400"],
+	["KaTeX_Size3", katexSize3Regular, "normal", "400"],
+	["KaTeX_Size4", katexSize4Regular, "normal", "400"],
+	["KaTeX_Typewriter", katexTypewriterRegular, "normal", "400"],
+] as const;

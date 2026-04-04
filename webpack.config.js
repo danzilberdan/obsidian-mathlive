@@ -1,5 +1,6 @@
 module.exports = {
     mode: "development",
+    devtool: false,
     entry: "./main.ts",
     module: {
       rules: [
@@ -11,6 +12,10 @@ module.exports = {
         {
             test: /\.css$/,
             loader: "css-loader",
+        },
+        {
+            test: /\.woff2$/,
+            type: "asset/inline",
         },
       ],
     },
