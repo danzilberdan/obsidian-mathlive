@@ -25,6 +25,10 @@
       <stop offset="0%" stop-color="#10b981" stop-opacity="0" />
       <stop offset="100%" stop-color="#10b981" stop-opacity="0.5" />
     </linearGradient>
+    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+    </radialGradient>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
       <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#374151" stroke-width="1" stroke-opacity="0.2"/>
     </pattern>
@@ -61,8 +65,16 @@
     <polygon points="130,20 145,30 130,40" fill="#374151" />
     
     <!-- Cloud Icon Mock -->
-    <rect x="25" y="6" width="90" height="48" rx="24" fill="#1a1d23" class="border"/>
-    <text x="70" y="35" class="title" fill="#10b981" text-anchor="middle">Cloud OCR</text>
+    <circle cx="70" cy="30" r="50" fill="url(#nodeGlow)"/>
+    
+    <rect x="20" y="10" width="108" height="44" rx="8" fill="#10b981" />
+    <rect x="14" y="4" width="108" height="44" rx="8" class="bg-surface border"/>
+    
+    <!-- Cloud SVG Icon -->
+    <path d="M 42 32 C 37 32 34 29 34 25 C 34 21.5 36.5 18.5 40 18 C 41 14 44.5 11 48.5 11 C 53 11 56.5 14.5 57.5 18.5 C 61 19 63 22 63 25.5 C 63 29 60.5 32 57 32 Z" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Text -->
+    <text x="90" y="31" class="title" fill="#ffffff" text-anchor="middle">OCR</text>
   </g>
 
   <!-- Right: Output -->
