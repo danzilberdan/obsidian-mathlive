@@ -17,11 +17,11 @@ MathLive is an Obsidian plugin for writing and editing LaTeX math without leavin
 
 ## Intuitive Math Editor
 
-<img src="./example.gif" alt="Visual math editor demo" width="50%">
+<img src="./editor_demo.svg" alt="Visual math editor demo" width="100%">
 
 ## Formula OCR
 
-<img src="./ocr_example.gif" alt="OCR from clipboard demo" width="50%">
+<img src="./ocr_demo.svg" alt="OCR from clipboard demo" width="100%">
 
 ## Architecture (plugin)
 

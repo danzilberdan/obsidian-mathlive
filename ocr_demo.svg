@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&amp;family=Ubuntu+Mono:wght@400;700&amp;display=swap');
+      .title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 16px; fill: #ffffff; text-transform: uppercase; letter-spacing: 1px; }
+      .math { font-family: 'Times New Roman', serif; font-style: italic; font-size: 36px; fill: #ffffff; }
+      .math-sym { font-family: 'Times New Roman', serif; font-size: 40px; fill: #10b981; }
+      .latex { font-family: 'Ubuntu Mono', monospace; font-weight: 400; font-size: 16px; fill: #60a5fa; }
+      .latex-keyword { fill: #c084fc; }
+      .latex-bracket { fill: #9ca3af; }
+      .bg-base { fill: #0e1013; }
+      .bg-surface { fill: #1a1d23; }
+      .border { stroke: #374151; stroke-width: 2; }
+      .shadow { fill: #10b981; }
+      .dash-border { stroke: #10b981; stroke-width: 2; stroke-dasharray: 6 6; fill: none; }
+      
+      @keyframes scan {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(160px); }
+        100% { transform: translateY(0); }
+      }
+      .scanner-line { animation: scan 3s ease-in-out infinite; }
+    </style>
+    <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.5" />
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#374151" stroke-width="1" stroke-opacity="0.2"/>
+    </pattern>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#0e1013"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+
+  <!-- Left: Image Input -->
+  <g transform="translate(40, 60)">
+    <text x="0" y="-15" class="title" fill="#9ca3af">Clipboard Image</text>
+    <rect x="0" y="0" width="260" height="160" rx="8" class="bg-surface border" />
+    
+    <!-- Image Mock Content (Handwritten-ish math) -->
+    <g transform="translate(55, 95) rotate(-3)">
+      <text x="0" y="0" font-family="'Comic Sans MS', 'Chalkboard SE', sans-serif" font-size="44" fill="#9ca3af" font-style="italic">E = mc</text>
+      <text x="135" y="-15" font-family="'Comic Sans MS', 'Chalkboard SE', sans-serif" font-size="28" fill="#9ca3af" font-style="italic">2</text>
+    </g>
+
+    <!-- Scanner overlay -->
+    <g class="scanner-line">
+      <rect x="0" y="-40" width="260" height="40" fill="url(#scanGrad)" />
+      <line x1="0" y1="0" x2="260" y2="0" stroke="#10b981" stroke-width="3" />
+    </g>
+    
+    <!-- Crop marks -->
+    <rect x="-8" y="-8" width="276" height="176" rx="12" class="dash-border"/>
+  </g>
+
+  <!-- Middle: Cloud Processing -->
+  <g transform="translate(330, 110)">
+    <!-- Arrow Line -->
+    <line x1="0" y1="30" x2="140" y2="30" stroke="#374151" stroke-width="4" stroke-dasharray="8 8"/>
+    <polygon points="130,20 145,30 130,40" fill="#374151" />
+    
+    <!-- Cloud Icon Mock -->
+    <rect x="25" y="6" width="90" height="48" rx="24" fill="#1a1d23" class="border"/>
+    <text x="70" y="35" class="title" fill="#10b981" text-anchor="middle">Cloud OCR</text>
+  </g>
+
+  <!-- Right: Output -->
+  <g transform="translate(500, 60)">
+    <text x="0" y="-15" class="title" fill="#10b981">LaTeX Output</text>
+    
+    <rect x="8" y="8" width="260" height="160" rx="8" class="shadow" />
+    <rect x="0" y="0" width="260" height="160" rx="8" class="bg-surface border" />
+    
+    <!-- Rendered Math -->
+    <g transform="translate(70, 70)">
+      <text x="0" y="0" class="math">E = mc</text>
+      <text x="100" y="-15" class="math" font-size="24">2</text>
+    </g>
+
+    <!-- LaTeX Code Block -->
+    <rect x="16" y="100" width="228" height="44" rx="4" fill="#0e1013" class="border"/>
+    <text x="80" y="128" class="latex">
+      E = mc<tspan class="latex-bracket">^</tspan>2
+    </text>
+  </g>
+</svg>
