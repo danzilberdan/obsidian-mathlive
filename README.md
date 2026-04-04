@@ -1,79 +1,102 @@
-# MathLive Plugin for Obsidian Docs
+# MathLive Plugin for Obsidian
 
 ![](./banner.svg)
 
 <span style="font-size:1.5em;">
-MathLive is a powerful Obsidian plugin that simplifies the process of creating and editing LaTeX formulas. It provides an intuitive interface for visual editing and an OCR feature to convert scanned images into LaTeX code with a single click.
+MathLive is an Obsidian plugin for writing and editing LaTeX math without leaving your notes. It embeds a visual formula editor powered by [MathLive](https://cortexjs.io/mathlive/) and can turn clipboard images into LaTeX using cloud OCR or a self-hosted server.
 </span>
-
 
 <a href="https://mathlive.danz.blog" style="font-size:1.5em;">Visit the Site</a>
 
-## Intuitive Math Editor
-<img src="./example.gif" alt="Example GIF" width="50%">
+## Overview
 
+| Capability | Description |
+|------------|-------------|
+| **Visual editing** | Open a modal with a live math field; insert inline (`$…$`) or display (`$$…$$`) math into the active note. |
+| **Formula OCR** | Paste a formula image from the clipboard; the plugin sends it to a remote or local OCR service and appends the returned LaTeX. |
+
+## Intuitive Math Editor
+
+<img src="./example.gif" alt="Visual math editor demo" width="50%">
 
 ## Formula OCR
-<img src="./ocr_example.gif" alt="Example GIF" width="50%">
+
+<img src="./ocr_example.gif" alt="OCR from clipboard demo" width="50%">
+
+## Architecture (plugin)
+
+The plugin runs entirely inside Obsidian (TypeScript). It does not ship the OCR model: scanning uses HTTP to either the hosted service or your own instance.
+
+- **Editor path**: Commands open a modal with a `<math-field>` web component; on confirm, the selection in the editor is replaced with the chosen delimiters and LaTeX.
+- **OCR path**: The plugin reads `image/png` from the system clipboard, builds `multipart/form-data` with a `file` field, and `POST`s to the configured base URL with your API key (cloud only).
+
+## Cloud OCR and API usage
+
+When **Self hosted** is off in settings, requests go to `https://mathlive-ocr.danz.blog`. When it is on, the base URL is `http://localhost:8502` (same path and body as a standard [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) HTTP server).
+
+### `POST /predict/`
+
+**Headers**
+
+- `Api-key`: API key from [mathlive.danz.blog](https://mathlive.danz.blog) (required for the cloud endpoint).
+
+**Body** (`multipart/form-data`)
+
+- `file`: PNG (or other image) bytes of the formula to recognize.
+
+**Response**
+
+- JSON body whose string content is appended to the math field (same shape as the upstream OCR server).
+
+> **Note:** The plugin only runs a scan if the **API key** field is non-empty. For a local server that ignores `Api-key`, you can use any placeholder string so the scan action is enabled.
 
 ## Features
 
-- **Visual LaTeX Editing**: Type and edit LaTeX formulas visually without needing to write the LaTeX code manually. Formulas are rendered in real-time for easy editing and review.
-- **OCR Conversion**: Convert scanned images (e.g., from PDFs or the web) into LaTeX code. This feature is available in two versions:
-  - **Cloud-Hosted Version**: Leverage the power of our cloud servers for fast and accurate OCR conversion. With a reasonable one time payment that also supports the development of this plugin.
-  - **Open-Source Version**: Run the OCR conversion locally using the open-source implementation.
+- **Visual LaTeX editing**: Edit formulas with a WYSIWYG math field; see output as you type.
+- **OCR**
+  - **Cloud**: Fast inference on managed infrastructure; sign in at [mathlive.danz.blog](https://mathlive.danz.blog) for an API key and optional tokens.
+  - **Self-hosted**: Run [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) (or compatible) locally; enable **Self hosted** in the plugin and point traffic to `localhost:8502`.
 
-## Plugin Installation
+## Installation
 
 1. Open Obsidian.
-2. Go to Settings > Community plugins.
-3. Click on the "Browse" button and search for "MathLive".
-4. Click "Install" and then "Enable".
+2. Go to **Settings → Community plugins**.
+3. Click **Browse** and search for **MathLive**.
+4. Click **Install**, then **Enable**.
 
 ## Usage
 
-### Visual LaTeX Editing
+### Visual LaTeX editing
 
-1. Open any note in Obsidian.
-2. Open the Command Pallete(ctrl + p) and type "mathlive".
-    * It is highly recommended to add a shortcut for fast access during writing. e.g- ctrl + m
-3. Choose the "inline" option or the "full-line" option depending on your need.
-4. Formulas are rendered in real-time, allowing for seamless editing and review.
-5. Save your edit by clicking "Insert" or by clicking Escape.
+1. Open a note.
+2. Open the command palette (**Ctrl/Cmd + P**) and run a MathLive command (e.g. **Add inline math** or **Add full-line math**). A shortcut (e.g. **Ctrl + M**) is recommended.
+3. Edit in the modal; press **Insert** or **Escape** to write back to the note.
 
-### OCR Conversion
+### OCR (cloud)
 
-#### Paid Cloud-Hosted Version
+1. Create an API key at [mathlive.danz.blog](https://mathlive.danz.blog).
+2. In **Settings → MathLive**, paste the key under **API key**. Leave **Self hosted** disabled.
+3. Copy a formula image to the clipboard, open the MathLive modal, and use **Scan MathJax from Clipboard**.
 
-1. Head over to [Obsidian MathLive](https://mathlive.danz.blog)
-2. Sign in and follow the instructions.
+### OCR (self-hosted)
 
-#### Open-Source Version
+> Self-hosting needs comfort with Docker or Python tooling and uses CPU/GPU on your machine. The cloud option is simpler for most users.
 
-> **Note**: The open-source version requires a certain level of technical skill to set up and maintain. Additionally, it may not perform as efficiently as the cloud-hosted version as it will consume system resources. Users who prefer a hassle-free experience and better performance might find the paid cloud-hosted version more suitable.
-
-1. Follow the setup instructions in the [OCR open-source repository](https://github.com/lukas-blecher/LaTeX-OCR).
-2. You should end up with an HTTP server running locally on `http://localhost:8502`. Open this page on a browser to make sure the server is running.
-3. In the MathLive plugin settings, allow the "Self Hosted" option.
-4. At this point you should be able to use the OCR feature in the plugin.
+1. Follow [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) setup until an HTTP server responds on `http://localhost:8502`.
+2. In plugin settings, enable **Self hosted**.
+3. Use **Scan MathJax from Clipboard** as above.
 
 ## Support
 
-For any issues or feature requests, please open an issue on our [GitHub repository](https://github.com/danzilberdan/obsidian-mathlive).
+Issues and feature requests: [github.com/danzilberdan/obsidian-mathlive](https://github.com/danzilberdan/obsidian-mathlive).
 
-## Background of this project
-For the past few years I have been taking math and computer science courses while also working in a full time job as a software engineer.
-The material is not a must for most programming jobs. I have decided to continue studying because of my interest and in order to open doors for working on more research oriented tasks.
+## Background
 
-Most students who persue a degree, do it as a means to get a job. In contrast, I persue a degree solely to understand math and computers on a deeper level. To me, it is very important to keep the knowledge I acquire for future use.
+For several years I studied math and computer science alongside a full-time engineering role—not for a credential alone, but to understand the material deeply and retain it. Obsidian fit that goal: dense courses are easier to revisit if notes stay alive after exams.
 
-The problem is that it is very common to forget the material. Each course is a very dense and concentrated effort on a very specific topic. But in order to keep the knowledge for a lifetime, it is required to keep interacting with it even after the test. This is why Obsidian's ecosystem and philosophy seemed promising to me.
-
-So I started using Obsidian as a notebook for my courses. I quickly found out math was possible but not in an efficient way. I realised that a plugin that would focus on math convenience and speed would be valuable to Obsidian's community.
-
-Here is a [blog post](https://danz.blog/math-in-obsidian/) I wrote about it.
+Math in Obsidian was possible but slow. This plugin prioritizes speed and ergonomics for everyday note-taking. More context: [Math in Obsidian](https://danz.blog/math-in-obsidian/).
 
 ## Acknowledgements
 
-- [MathLive Library](https://github.com/arnog/mathlive) for the visual LaTeX editor.
-- [Latex OCR](https://github.com/lukas-blecher/LaTeX-OCR) for the open-source OCR functionality.
+- [MathLive](https://github.com/arnog/mathlive) for the visual editor.
+- [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) for the open-source OCR stack and HTTP API shape.
