@@ -2,11 +2,9 @@
 
 ![](./banner.svg)
 
-<span style="font-size:1.5em;">
 MathLive is an Obsidian plugin for writing and editing LaTeX math without leaving your notes. It embeds a visual formula editor powered by [MathLive](https://cortexjs.io/mathlive/) and can turn clipboard images into LaTeX using cloud OCR or a self-hosted server.
-</span>
 
-<a href="https://mathlive.danz.blog" style="font-size:1.5em;">Visit the Site</a>
+[Visit the site](https://mathlive.danz.blog)
 
 ## Overview
 
