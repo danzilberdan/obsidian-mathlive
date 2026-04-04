@@ -15,14 +15,6 @@ MathLive is an Obsidian plugin for writing and editing LaTeX math without leavin
 | **Visual editing** | Open a modal with a live math field; insert inline (`$…$`) or display (`$$…$$`) math into the active note. |
 | **Formula OCR** | Paste a formula image from the clipboard; the plugin sends it to a remote or local OCR service and appends the returned LaTeX. |
 
-## Intuitive Math Editor
-
-![Visual math editor demo](./editor_demo.svg)
-
-## Formula OCR
-
-![OCR from clipboard demo](./ocr_demo.svg)
-
 ## Architecture (plugin)
 
 The plugin runs entirely inside Obsidian (TypeScript). It does not ship the OCR model: scanning uses HTTP to either the hosted service or your own instance.
