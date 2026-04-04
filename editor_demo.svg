@@ -35,7 +35,7 @@
   
   <!-- Obsidian Editor Content Mock -->
   <text x="44" y="104" class="title" fill="#9ca3af">Gaussian Integral</text>
-  <text x="44" y="144" class="text" fill="#6b7280">The Gaussian integral, also known as the EulerPoisson integral, is equal to the square root of pi.</text>
+  <text x="44" y="144" class="text" fill="#6b7280">The Gaussian integral, also known as the Euler-Poisson integral, is equal to the square root of pi.</text>
   <rect x="44" y="164" width="300" height="30" fill="#10b981" rx="4" opacity="0.15"/>
   <rect x="44" y="164" width="300" height="30" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="4 4" rx="4"/>
   <text x="44" y="224" class="text" fill="#6b7280">This integral has wide applications in mathematics and physics.</text>
@@ -54,11 +54,11 @@
   <!-- Rendered Math -->
   <g transform="translate(220, 230)">
     <!-- Integral symbol -->
-    <text x="0" y="0" class="math-sym">+</text>
+    <text x="0" y="0" class="math-sym">&#x222B;</text>
     <!-- Lower limit -->
-    <text x="14" y="14" class="math" font-size="18">-</text>
+    <text x="14" y="14" class="math" font-size="18">-&#x221E;</text>
     <!-- Upper limit -->
-    <text x="20" y="-36" class="math" font-size="18"></text>
+    <text x="20" y="-36" class="math" font-size="18">&#x221E;</text>
     
     <!-- e^{-x^2} -->
     <text x="55" y="0" class="math">e</text>
@@ -72,9 +72,9 @@
     <text x="165" y="0" class="math">=</text>
     
     <!-- \sqrt{\pi} -->
-    <text x="205" y="2" class="math-sym"></text>
+    <text x="205" y="2" class="math-sym">&#x221A;</text>
     <line x1="225" y1="-26" x2="255" y2="-26" stroke="#10b981" stroke-width="3"/>
-    <text x="230" y="0" class="math">À</text>
+    <text x="230" y="0" class="math">&#x03C0;</text>
     
     <!-- Cursor -->
     <rect x="265" y="-30" width="3" height="36" fill="#10b981" class="cursor"/>
