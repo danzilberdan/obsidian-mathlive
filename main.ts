@@ -70,11 +70,17 @@ export default class MathLivePlugin extends Plugin {
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
 		this.updateMathJaxVisibility();
+		this.app.workspace.onLayoutReady(() => this.app.workspace.updateOptions());
 	}
 
 	onunload() {
 		document.body.removeClass("mathlive-hide-rendered-inline");
 		document.body.removeClass("mathlive-hide-rendered-block");
+		document.body.removeClass("mathlive-hide-mathjax-inline");
+		document.body.removeClass("mathlive-hide-mathjax-block");
+		document.body.removeClass("mathlive-inline-widgets-active");
+		document.body.removeClass("mathlive-block-widgets-active");
+		this.app.workspace.updateOptions();
 	}
 
 	async loadSettings() {
@@ -84,34 +90,34 @@ export default class MathLivePlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		this.updateMathJaxVisibility();
-		this.refreshMarkdownEditors();
+		this.app.workspace.updateOptions();
 	}
 
 	updateMathJaxVisibility() {
+		const editorOn = this.settings.enableInlineEditorMode;
+		// While MathLive inline widgets are on, Obsidian's inline MathJax must not sit above them in
+		// the hit-testing stack — the first click would hit mjx, exit math-edit state, and remove the widget.
+		const hideInlineInEditor =
+			editorOn &&
+			(this.settings.hideRenderedInlineMath || this.settings.enableInlineMathWidgets);
+		const hideBlockInEditor =
+			editorOn &&
+			(this.settings.hideRenderedBlockMath || this.settings.enableBlockMathWidgets);
+
+		document.body.toggleClass("mathlive-hide-mathjax-inline", hideInlineInEditor);
+		document.body.toggleClass("mathlive-hide-mathjax-block", hideBlockInEditor);
+		document.body.toggleClass("mathlive-hide-rendered-inline", hideInlineInEditor);
+		document.body.toggleClass("mathlive-hide-rendered-block", hideBlockInEditor);
 		document.body.toggleClass(
-			"mathlive-hide-rendered-inline",
-			this.settings.enableInlineEditorMode && this.settings.hideRenderedInlineMath
+			"mathlive-inline-widgets-active",
+			editorOn && this.settings.enableInlineMathWidgets
 		);
 		document.body.toggleClass(
-			"mathlive-hide-rendered-block",
-			this.settings.enableInlineEditorMode && this.settings.hideRenderedBlockMath
+			"mathlive-block-widgets-active",
+			editorOn && this.settings.enableBlockMathWidgets
 		);
 	}
 
-	refreshMarkdownEditors() {
-		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
-			const view = leaf.view as {
-				editor?: Editor;
-			};
-			const editor = view.editor;
-			if (!editor) {
-				continue;
-			}
-
-			const cursor = editor.getCursor();
-			editor.setCursor(cursor);
-		}
-	}
 }
 
 export class MathliveSettingTab extends PluginSettingTab {
@@ -225,7 +231,9 @@ In addition, there is a cloud option that requires no setup.
 
 	new Setting(containerEl)
 		.setName("Hide rendered inline math")
-		.setDesc("Hide Obsidian's rendered inline MathJax preview while inline MathLive widgets are enabled.")
+		.setDesc(
+			"When inline MathLive widgets are enabled, inline MathJax in the editor is always hidden so clicks reach the widget (otherwise MathJax sits on top and the first click dismisses editing). When widgets are off, this only toggles hiding MathJax for $…$ in Live Preview."
+		)
 		.addToggle((toggle) =>
 			toggle.setValue(this.plugin.settings.hideRenderedInlineMath).onChange(async (val) => {
 				this.plugin.settings.hideRenderedInlineMath = val;
@@ -235,7 +243,9 @@ In addition, there is a cloud option that requires no setup.
 
 	new Setting(containerEl)
 		.setName("Hide rendered block math")
-		.setDesc("Hide Obsidian's rendered block MathJax preview while inline MathLive widgets are enabled.")
+		.setDesc(
+			"When block MathLive widgets are enabled, block MathJax in the editor is always hidden for the same reason as inline (click-through). When block widgets are off, this only toggles hiding MathJax for $$…$$ in Live Preview."
+		)
 		.addToggle((toggle) =>
 			toggle.setValue(this.plugin.settings.hideRenderedBlockMath).onChange(async (val) => {
 				this.plugin.settings.hideRenderedBlockMath = val;
@@ -249,6 +259,16 @@ In addition, there is a cloud option that requires no setup.
 		.addToggle((toggle) =>
 			toggle.setValue(this.plugin.settings.immediateInlineUpdate).onChange(async (val) => {
 				this.plugin.settings.immediateInlineUpdate = val;
+				await this.plugin.saveSettings();
+			})
+		);
+
+	new Setting(containerEl)
+		.setName("Arrow key navigation between editor and widgets")
+		.setDesc("Use arrow keys at math boundaries to enter or exit MathLive widgets.")
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.arrowKeyNavigation).onChange(async (val) => {
+				this.plugin.settings.arrowKeyNavigation = val;
 				await this.plugin.saveSettings();
 			})
 		);

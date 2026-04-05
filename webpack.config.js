@@ -1,3 +1,20 @@
+const codemirrorExternals = [
+	"@codemirror/autocomplete",
+	"@codemirror/collab",
+	"@codemirror/commands",
+	"@codemirror/language",
+	"@codemirror/lint",
+	"@codemirror/search",
+	"@codemirror/state",
+	"@codemirror/view",
+	"@lezer/common",
+	"@lezer/highlight",
+	"@lezer/lr",
+].reduce((acc, pkg) => {
+	acc[pkg] = `commonjs ${pkg}`;
+	return acc;
+}, {});
+
 module.exports = {
     mode: "development",
     devtool: false,
@@ -24,6 +41,8 @@ module.exports = {
     },
     externals: {
       obsidian: "commonjs obsidian",
+      electron: "commonjs electron",
+      ...codemirrorExternals,
     },
     output: {
       path: __dirname + '/dist',

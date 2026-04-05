@@ -1,11 +1,20 @@
-import { syntaxTree } from "@codemirror/language";
+import type { Text } from "@codemirror/state";
 import {
+	EditorSelection,
 	Extension,
+	Prec,
 	RangeSetBuilder,
 	StateField,
 	Transaction,
 } from "@codemirror/state";
-import { Decoration, DecorationSet, EditorView, WidgetType } from "@codemirror/view";
+import {
+	Decoration,
+	DecorationSet,
+	EditorView,
+	keymap,
+	type KeyBinding,
+	WidgetType,
+} from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
 import { createMathfield } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
@@ -21,10 +30,17 @@ interface MathRange {
 	isInline: boolean;
 }
 
+interface MathFieldEntry {
+	mfe: HTMLElement;
+	from: number;
+	to: number;
+	isInline: boolean;
+}
+
 class MathLiveWidget extends WidgetType {
 	constructor(
 		private readonly config: WidgetConfig,
-		private readonly equation: string,
+		private equation: string,
 		private readonly isInline: boolean,
 		private readonly getSettings: () => PluginSettings
 	) {
@@ -32,41 +48,49 @@ class MathLiveWidget extends WidgetType {
 	}
 
 	eq(other: MathLiveWidget): boolean {
-		return other.config.from === this.config.from && other.isInline === this.isInline;
+		return (
+			other instanceof MathLiveWidget &&
+			other.config.from === this.config.from &&
+			other.config.to === this.config.to &&
+			other.equation === this.equation &&
+			other.isInline === this.isInline
+		);
+	}
+
+	ignoreEvent(): boolean {
+		return true;
 	}
 
 	toDOM(view: EditorView): HTMLElement {
 		const wrapper = document.createElement("div");
-		wrapper.addClass("mathlive-editor-widget");
-		wrapper.addClass(this.isInline ? "inline" : "block");
-		wrapper.addClass("cm-line");
-
 		const mfe = createMathfield({
 			initialValue: this.equation,
 			inline: this.isInline,
 		});
-		mfe.addClass("mathlive-editor-field");
+
+		wrapper.appendChild(mfe);
+		wrapper.addClass("obsidian-mathlive-codemirror-wrapper");
+		wrapper.addClass("cm-line");
+		mfe.addClass("obsidian-mathlive-codemirror-math-field");
+		mfe.defaultMode = this.isInline ? "inline-math" : "math";
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
 		mfe.dataset.initialValue = this.equation;
-		this.bindInputHandlers(mfe, view);
 
-		wrapper.appendChild(mfe);
-		this.applySettings(wrapper, mfe);
+		this.style(wrapper);
+		this.bindInputHandlers(wrapper, mfe, view);
+
 		return wrapper;
 	}
 
-	updateDOM(dom: HTMLElement, _view: EditorView): boolean {
+	updateDOM(dom: HTMLElement): boolean {
 		const wrapper = dom as HTMLDivElement;
-		wrapper.toggleClass("inline", this.isInline);
-		wrapper.toggleClass("block", !this.isInline);
-
-		const mfe = wrapper.querySelector("math-field") as MathfieldElement | null;
+		const mfe = wrapper.getElementsByTagName("math-field")[0] as MathfieldElement | undefined;
 		if (!mfe) {
 			return false;
 		}
 
-		this.applySettings(wrapper, mfe);
+		this.style(wrapper);
 		mfe.defaultMode = this.isInline ? "inline-math" : "math";
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
@@ -85,21 +109,39 @@ class MathLiveWidget extends WidgetType {
 		return true;
 	}
 
-	ignoreEvent(): boolean {
-		return true;
-	}
-
-	private applySettings(wrapper: HTMLElement, mfe: MathfieldElement) {
+	private style(wrapper: HTMLDivElement) {
 		const settings = this.getSettings();
-		const enabled = settings.enableInlineEditorMode &&
-			(this.isInline
-				? settings.enableInlineMathWidgets
-				: settings.enableBlockMathWidgets);
-		wrapper.toggleClass("hidden", !enabled);
-		mfe.readOnly = !enabled;
+
+		if (!settings.enableInlineEditorMode) {
+			wrapper.addClass("hidden");
+			return;
+		}
+
+		wrapper.removeClass("hidden");
+		if (this.isInline) {
+			wrapper.addClass("inline");
+			this.changeCSSClass(settings.enableInlineMathWidgets, wrapper, "hidden");
+			return;
+		}
+
+		wrapper.removeClass("inline");
+		this.changeCSSClass(settings.enableBlockMathWidgets, wrapper, "hidden");
 	}
 
-	private bindInputHandlers(mfe: MathfieldElement, view: EditorView) {
+	private changeCSSClass(enabled: boolean, element: HTMLElement, className: string) {
+		if (enabled) {
+			element.removeClass(className);
+			return;
+		}
+
+		element.addClass(className);
+	}
+
+	private bindInputHandlers(
+		wrapper: HTMLDivElement,
+		mfe: MathfieldElement,
+		view: EditorView
+	) {
 		const dispatchChange = (newValue: string) => {
 			const from = Number.parseInt(mfe.dataset.from ?? "", 10);
 			const to = Number.parseInt(mfe.dataset.to ?? "", 10);
@@ -115,28 +157,35 @@ class MathLiveWidget extends WidgetType {
 				},
 			});
 
+			this.equation = newValue;
 			mfe.dataset.to = `${from + newValue.length}`;
 			mfe.dataset.initialValue = newValue;
 			mfe.dataset.hasUnsavedChanges = "false";
 		};
 
-		mfe.addEventListener("input", () => {
-			if (this.getSettings().immediateInlineUpdate) {
-				dispatchChange(mfe.value);
-				return;
-			}
+		if (this.getSettings().immediateInlineUpdate) {
+			mfe.addEventListener("input", () => {
+				if (this.equation !== mfe.value) {
+					dispatchChange(mfe.value);
+				}
+			});
+		} else {
+			mfe.addEventListener("input", () => {
+				mfe.dataset.hasUnsavedChanges = "true";
+			});
 
-			mfe.dataset.hasUnsavedChanges = "true";
-		});
+			mfe.addEventListener("blur", () => {
+				if (mfe.dataset.hasUnsavedChanges !== "true") {
+					return;
+				}
 
-		mfe.addEventListener("blur", () => {
-			if (
-				!this.getSettings().immediateInlineUpdate &&
-				mfe.dataset.hasUnsavedChanges === "true"
-			) {
-				dispatchChange(mfe.value);
-			}
-		});
+				const newValue = mfe.value;
+				if (newValue !== this.equation) {
+					dispatchChange(newValue);
+				}
+				mfe.dataset.hasUnsavedChanges = "false";
+			});
+		}
 
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {
 			if (event.key !== "Escape") {
@@ -149,7 +198,300 @@ class MathLiveWidget extends WidgetType {
 			event.preventDefault();
 			event.stopPropagation();
 		});
+
+		mfe.addEventListener("focus", () => {
+			updateEditingBodyClass(this.isInline, true);
+		});
+
+		mfe.addEventListener("blur", () => {
+			window.setTimeout(() => {
+				if (!isFocusInMathField()) {
+					updateEditingBodyClass(true, false);
+					updateEditingBodyClass(false, false);
+				}
+			}, 0);
+		});
+
+		const exitToEditor = (cursorPos: number) => {
+			const docLen = view.state.doc.length;
+			if (cursorPos < 0 || cursorPos > docLen) {
+				return;
+			}
+
+			view.dispatch({ selection: EditorSelection.single(cursorPos) });
+			view.focus();
+		};
+
+		wrapper.addEventListener(
+			"keydown",
+			(event: KeyboardEvent) => {
+				const settings = this.getSettings();
+				const activeElement = document.activeElement;
+				const isFocused =
+					activeElement === mfe ||
+					(activeElement instanceof Node && mfe.contains(activeElement));
+				if (!isFocused || !settings.arrowKeyNavigation) {
+					return;
+				}
+
+				const from = Number.parseInt(mfe.dataset.from ?? `${this.config.from}`, 10);
+				const to = Number.parseInt(mfe.dataset.to ?? `${this.config.to}`, 10);
+				const posBefore = this.isInline ? from - 1 : to;
+				const posAfter = this.isInline ? from : to + 3;
+				const atStart = mfe.position === 0;
+				const atEnd = mfe.position === mfe.lastOffset;
+
+				if (event.key === "ArrowLeft" && atStart) {
+					event.preventDefault();
+					event.stopPropagation();
+					exitToEditor(posBefore);
+					return;
+				}
+
+				if (event.key === "ArrowRight" && atEnd) {
+					event.preventDefault();
+					event.stopPropagation();
+					exitToEditor(posAfter);
+					return;
+				}
+
+				const info = mfe.getElementInfo?.(mfe.position);
+				const atOutermost = info?.depth === 0;
+
+				if (event.key === "ArrowUp" && atOutermost) {
+					event.preventDefault();
+					event.stopPropagation();
+					exitToEditor(posBefore);
+					return;
+				}
+
+				if (event.key === "ArrowDown" && atOutermost) {
+					event.preventDefault();
+					event.stopPropagation();
+					exitToEditor(posAfter);
+				}
+			},
+			true
+		);
 	}
+}
+
+function isFocusInMathField(): boolean {
+	const active = document.activeElement as HTMLElement | null;
+	if (active?.closest?.("math-field")) {
+		return true;
+	}
+
+	if (active?.getRootNode() instanceof ShadowRoot) {
+		const host = (active.getRootNode() as ShadowRoot).host;
+		if (host?.tagName === "MATH-FIELD") {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function updateEditingBodyClass(isInline: boolean, isEditing: boolean) {
+	const className = isInline ? "mathlive-editing-inline" : "mathlive-editing-block";
+
+	if (isEditing) {
+		document.body.addClass(className);
+		return;
+	}
+
+	document.body.removeClass(className);
+}
+
+function getMathFieldEntries(view: EditorView): MathFieldEntry[] {
+	const list = view.dom.querySelectorAll("math-field[data-from][data-to]");
+	const entries: MathFieldEntry[] = [];
+	for (const mfe of Array.from(list)) {
+		const from = Number.parseInt(mfe.getAttribute("data-from") ?? "", 10);
+		const to = Number.parseInt(mfe.getAttribute("data-to") ?? "", 10);
+		if (Number.isNaN(from) || Number.isNaN(to)) {
+			continue;
+		}
+
+		const wrapper = mfe.closest(".obsidian-mathlive-codemirror-wrapper");
+		const isInline = wrapper?.classList.contains("inline") ?? false;
+		entries.push({
+			mfe: mfe as HTMLElement,
+			from,
+			to,
+			isInline,
+		});
+	}
+
+	return entries;
+}
+
+function focusMathfield(entry: MathFieldEntry, atStart: boolean) {
+	const mfe = entry.mfe as MathfieldElement;
+
+	const applyFocus = () => {
+		if (!entry.mfe.isConnected) {
+			return;
+		}
+
+		try {
+			mfe.focus();
+			mfe.position = atStart ? 0 : mfe.lastOffset;
+		} catch {
+			window.setTimeout(() => {
+				if (!entry.mfe.isConnected) {
+					return;
+				}
+				mfe.focus();
+				mfe.position = atStart ? 0 : mfe.lastOffset;
+			}, 0);
+		}
+	};
+
+	window.requestAnimationFrame(applyFocus);
+}
+
+function tryEnter(
+	view: EditorView,
+	match: (entry: MathFieldEntry, head: number, doc: Text) => boolean,
+	atStart: boolean
+): boolean {
+	if (isFocusInMathField()) {
+		return false;
+	}
+
+	const head = view.state.selection.main.head;
+	const doc = view.state.doc;
+
+	for (const entry of getMathFieldEntries(view)) {
+		if (!match(entry, head, doc)) {
+			continue;
+		}
+
+		focusMathfield(entry, atStart);
+		return true;
+	}
+
+	return false;
+}
+
+function arrowEnterBinding(
+	key: string,
+	match: (entry: MathFieldEntry, head: number, doc: Text) => boolean,
+	atStart: boolean,
+	getSettings: () => PluginSettings
+): KeyBinding {
+	return {
+		key,
+		run: (view) => (!getSettings().arrowKeyNavigation ? false : tryEnter(view, match, atStart)),
+	};
+}
+
+function enterMathLiveOnArrow(getSettings: () => PluginSettings): Extension {
+	return Prec.highest(
+		keymap.of([
+			arrowEnterBinding(
+				"ArrowRight",
+				(entry, head) => head === (entry.isInline ? entry.from - 1 : entry.to + 2),
+				true,
+				getSettings
+			),
+			arrowEnterBinding(
+				"ArrowLeft",
+				(entry, head) => head === (entry.isInline ? entry.from : entry.to + 3),
+				false,
+				getSettings
+			),
+			{
+				key: "ArrowDown",
+				run: (view) => {
+					const settings = getSettings();
+					if (!settings.arrowKeyNavigation || isFocusInMathField()) {
+						return false;
+					}
+
+					const doc = view.state.doc;
+					const blockEntries = () => getMathFieldEntries(view).filter((entry) => !entry.isInline);
+					const owningLine = (entry: MathFieldEntry) =>
+						doc.lineAt(Math.min(entry.to + 2, doc.length)).number;
+					const entryForOwningLine = (lineNo: number) =>
+						blockEntries().find((entry) => owningLine(entry) === lineNo) ?? null;
+					const nextOwningLineAfter = (lineNo: number) => {
+						let best: number | null = null;
+						for (const entry of blockEntries()) {
+							const line = owningLine(entry);
+							if (line <= lineNo) {
+								continue;
+							}
+							if (best === null || line < best) {
+								best = line;
+							}
+						}
+						return best;
+					};
+					const enterMathLiveForOwningLine = (lineNo: number) => {
+						const entry = entryForOwningLine(lineNo);
+						if (!entry) {
+							return false;
+						}
+
+						focusMathfield(entry, true);
+						return true;
+					};
+
+					const before = view.state.selection.main;
+					const next = view.moveVertically(before, true);
+					const moved = next.head !== before.head || next.anchor !== before.anchor;
+
+					if (moved) {
+						const beforeLine = doc.lineAt(before.head).number;
+						const afterLine = doc.lineAt(next.head).number;
+
+						if (afterLine !== beforeLine) {
+							const skippedLine = nextOwningLineAfter(beforeLine);
+							if (skippedLine !== null && skippedLine < afterLine) {
+								const pos = doc.line(skippedLine).from;
+								view.dispatch({
+									selection: view.state.selection.replaceRange(
+										EditorSelection.cursor(pos)
+									),
+									scrollIntoView: true,
+								});
+								return true;
+							}
+
+							if (enterMathLiveForOwningLine(beforeLine)) {
+								return true;
+							}
+						}
+
+						view.dispatch({
+							selection: view.state.selection.replaceRange(next),
+							scrollIntoView: true,
+						});
+						return true;
+					}
+
+					return enterMathLiveForOwningLine(doc.lineAt(before.head).number);
+				},
+			},
+			arrowEnterBinding(
+				"ArrowUp",
+				(entry, head, doc) => {
+					if (entry.isInline) {
+						return false;
+					}
+
+					return (
+						doc.lineAt(head).number ===
+						doc.lineAt(Math.min(entry.to + 3, doc.length)).number
+					);
+				},
+				false,
+				getSettings
+			),
+		])
+	);
 }
 
 function isEscapedDollar(text: string, index: number): boolean {
@@ -159,42 +501,6 @@ function isEscapedDollar(text: string, index: number): boolean {
 	}
 
 	return backslashCount % 2 === 1;
-}
-
-function collectMathRangesFromSyntaxTree(state: Transaction["state"]): MathRange[] {
-	const ranges: MathRange[] = [];
-	let begin = -1;
-	let end = -1;
-	let isInline = false;
-
-	syntaxTree(state).iterate({
-		enter(node) {
-			const name = node.type.name;
-			if (name.includes("formatting-math-begin")) {
-				if (name.includes("math-block")) {
-					begin = node.from + 2;
-					isInline = false;
-				} else {
-					begin = node.from + 1;
-					isInline = true;
-				}
-			}
-
-			if (name.includes("formatting-math-end") && begin !== -1) {
-				end = node.from;
-				ranges.push({
-					from: begin,
-					to: end,
-					isInline,
-				});
-				begin = -1;
-				end = -1;
-				isInline = false;
-			}
-		},
-	});
-
-	return ranges;
 }
 
 function collectMathRangesFromDoc(doc: string): MathRange[] {
@@ -211,11 +517,7 @@ function collectMathRangesFromDoc(doc: string): MathRange[] {
 		const isBlockDelimiter = doc[index + 1] === "$";
 		if (blockStart !== null) {
 			if (isBlockDelimiter) {
-				ranges.push({
-					from: blockStart,
-					to: index,
-					isInline: false,
-				});
+				ranges.push({ from: blockStart, to: index, isInline: false });
 				blockStart = null;
 				index += 2;
 				continue;
@@ -226,11 +528,7 @@ function collectMathRangesFromDoc(doc: string): MathRange[] {
 		}
 
 		if (inlineStart !== null) {
-			ranges.push({
-				from: inlineStart,
-				to: index,
-				isInline: true,
-			});
+			ranges.push({ from: inlineStart, to: index, isInline: true });
 			inlineStart = null;
 			index += 1;
 			continue;
@@ -249,28 +547,19 @@ function collectMathRangesFromDoc(doc: string): MathRange[] {
 	return ranges;
 }
 
-function collectMathRanges(state: Transaction["state"]): MathRange[] {
-	const syntaxTreeRanges = collectMathRangesFromSyntaxTree(state);
-	if (syntaxTreeRanges.length > 0) {
-		return syntaxTreeRanges;
-	}
-
-	// Fallback for Obsidian builds whose CM math node names differ.
-	return collectMathRangesFromDoc(state.doc.toString());
-}
-
 function buildDecorations(
 	state: Transaction["state"],
 	getSettings: () => PluginSettings
 ): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>();
 	const settings = getSettings();
-
 	if (!settings.enableInlineEditorMode) {
 		return builder.finish();
 	}
 
-	for (const range of collectMathRanges(state)) {
+	// Obsidian's CM math node names vary across versions, so scanning the buffer
+	// is more reliable here than matching syntax-tree node names.
+	for (const range of collectMathRangesFromDoc(state.doc.toString())) {
 		const equation = state.sliceDoc(range.from, range.to);
 		const widget = new MathLiveWidget(
 			{ from: range.from, to: range.to },
@@ -279,25 +568,35 @@ function buildDecorations(
 			getSettings
 		);
 
-		if (range.isInline && settings.enableInlineMathWidgets) {
+		if (!range.isInline) {
+			if (!settings.enableBlockMathWidgets) {
+				continue;
+			}
+			// Put widget at the end of the math block so it appears below the formula
+			// and safely outside Obsidian's folding Decoration.replace region.
+			const anchor = Math.min(state.doc.length, range.to + 2);
 			builder.add(
-				Math.max(0, range.from - 1),
-				Math.max(0, range.from - 1),
-				Decoration.widget({
-					widget,
-					side: 1,
-				})
-			);
-		}
-
-		if (!range.isInline && settings.enableBlockMathWidgets) {
-			builder.add(
-				range.to + 2,
-				range.to + 2,
+				anchor,
+				anchor,
 				Decoration.widget({
 					widget,
 					block: true,
-					side: 10,
+					side: 1,
+				})
+			);
+			continue;
+		}
+
+		if (settings.enableInlineMathWidgets) {
+			// Put widget at the end of the inline math so it appears after the formula
+			// and safely outside Obsidian's folding Decoration.replace region.
+			const anchor = Math.min(state.doc.length, range.to + 1);
+			builder.add(
+				anchor,
+				anchor,
+				Decoration.widget({
+					widget,
+					side: 1,
 				})
 			);
 		}
@@ -317,7 +616,7 @@ export function createInlineMathEditorExtension(
 			return buildDecorations(transaction.state, getSettings);
 		},
 		provide(field) {
-			return EditorView.decorations.from(field);
+			return [EditorView.decorations.from(field), enterMathLiveOnArrow(getSettings)];
 		},
 	});
 }

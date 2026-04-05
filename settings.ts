@@ -7,6 +7,7 @@ export interface PluginSettings {
 	hideRenderedInlineMath: boolean;
 	hideRenderedBlockMath: boolean;
 	immediateInlineUpdate: boolean;
+	arrowKeyNavigation: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -15,7 +16,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableInlineEditorMode: false,
 	enableInlineMathWidgets: true,
 	enableBlockMathWidgets: true,
-	hideRenderedInlineMath: false,
-	hideRenderedBlockMath: false,
+	hideRenderedInlineMath: true,
+	hideRenderedBlockMath: true,
 	immediateInlineUpdate: true,
+	arrowKeyNavigation: true,
 };

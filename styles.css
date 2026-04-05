@@ -109,24 +109,38 @@ math-field::part(content) {
   --_contains-highlight-background-color: #1e1e1e;
 }
 
-.mathlive-editor-widget {
-  display: flex;
-  width: 100%;
-  margin: 0.25rem 0;
+.obsidian-mathlive-codemirror-wrapper {
+  position: relative;
+  z-index: 3;
 }
 
-.mathlive-editor-widget.inline {
-  display: inline-flex;
-  width: auto;
-  margin: 0 0.35rem 0 0;
-  vertical-align: middle;
+/* Live Preview: keep MathLive above any residual preview layers; isolate stacking from mjx siblings. */
+body.mathlive-inline-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathlive-codemirror-wrapper {
+  z-index: 50;
+  isolation: isolate;
 }
 
-.mathlive-editor-widget.hidden {
-  display: none !important;
+body.mathlive-inline-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathlive-codemirror-wrapper.inline {
+  z-index: 50;
 }
 
-.mathlive-editor-field {
+/* Belt-and-suspenders: never let inline MathJax steal pointer events while widgets are enabled. */
+body.mathlive-inline-widgets-active .markdown-source-view.mod-cm6 .cm-editor span.math mjx-container {
+  pointer-events: none !important;
+}
+
+body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .cm-editor div.math mjx-container,
+body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .cm-editor .math-block mjx-container {
+  pointer-events: none !important;
+}
+
+body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathlive-codemirror-wrapper:not(.inline) {
+  z-index: 50;
+  isolation: isolate;
+}
+
+.obsidian-mathlive-codemirror-wrapper math-field {
+  display: block;
   min-width: 10rem;
   width: 100%;
   border-radius: var(--radius-m, 8px);
@@ -135,14 +149,30 @@ math-field::part(content) {
   transition: all 0.2s ease;
 }
 
-.mathlive-editor-widget.inline .mathlive-editor-field {
+.obsidian-mathlive-codemirror-wrapper.inline {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  margin: 0 0.35rem 0 0;
+  vertical-align: middle;
+}
+
+.obsidian-mathlive-codemirror-wrapper.inline math-field {
   min-width: 8rem;
   width: auto;
+  max-width: 100%;
+  overflow: auto;
   display: inline-block;
 }
 
-.mathlive-editor-widget.block .mathlive-editor-field {
-  width: 100%;
+.obsidian-mathlive-codemirror-wrapper.hidden {
+  display: none !important;
+}
+
+.obsidian-mathlive-codemirror-wrapper.hidden math-field {
+  display: none;
+  margin: 0;
 }
 
 .mathlive-modal-header {
@@ -292,13 +322,35 @@ math-field::part(content) {
   width: 100vw;
 }
 
+body.mathlive-hide-mathjax-block .cm-editor div.math mjx-container,
 body.mathlive-hide-rendered-block .cm-editor div.math mjx-container,
 body.mathlive-hide-rendered-block .cm-editor div.callout .math-block mjx-container {
   display: none !important;
 }
 
+body.mathlive-hide-mathjax-inline .cm-editor div.callout .math-block mjx-container,
+body.mathlive-hide-rendered-inline .cm-editor div.callout .math-block mjx-container,
+body.mathlive-hide-rendered-block .cm-editor div.callout .math-block mjx-container {
+  display: block !important;
+}
+
+body.mathlive-hide-mathjax-inline .cm-editor span.math mjx-container,
 body.mathlive-hide-rendered-inline .cm-editor span.math mjx-container,
+body.mathlive-editing-inline .cm-editor span.math mjx-container,
 body.mathlive-hide-rendered-inline .cm-editor div.callout .math-inline mjx-container {
+  display: none !important;
+}
+
+body.mathlive-hide-mathjax-inline .cm-editor div.callout .math-inline mjx-container {
+  display: inline !important;
+}
+
+body.mathlive-editing-block .cm-editor div.math mjx-container,
+body.mathlive-editing-block .cm-editor div.callout .math-block mjx-container {
+  display: none !important;
+}
+
+body.mathlive-editing-inline .cm-editor div.callout .math-inline mjx-container {
   display: none !important;
 }
 
