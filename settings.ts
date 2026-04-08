@@ -13,7 +13,7 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
 	apiKey: null,
 	useLocalInference: false,
-	enableInlineEditorMode: false,
+	enableInlineEditorMode: true,
 	enableInlineMathWidgets: true,
 	enableBlockMathWidgets: true,
 	hideRenderedInlineMath: true,

@@ -16,7 +16,8 @@ import {
 	WidgetType,
 } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
-import { createMathfield } from "./mathlive-shared";
+import { setIcon } from "obsidian";
+import { appendLatexFromClipboardImage, createMathfield } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
 interface WidgetConfig {
@@ -162,6 +163,102 @@ class MathLiveWidget extends WidgetType {
 			mfe.dataset.initialValue = newValue;
 			mfe.dataset.hasUnsavedChanges = "false";
 		};
+
+		const refocusMathfield = () => {
+			window.setTimeout(() => {
+				try {
+					mfe.focus();
+					mfe.position = mfe.lastOffset;
+				} catch {
+					// Ignore transient focus failures if the widget was re-rendered.
+				}
+			}, 0);
+		};
+
+		const toolbar = document.createElement("div");
+		toolbar.addClass("obsidian-mathlive-widget-menu");
+		wrapper.prepend(toolbar);
+		const actionGroup = toolbar.createDiv({ cls: "obsidian-mathlive-widget-menu-group" });
+		const pasteImageButton = actionGroup.createEl("button", {
+			cls: "obsidian-mathlive-widget-menu-button",
+			attr: {
+				type: "button",
+				"aria-label": "Paste LaTeX from clipboard image",
+			},
+		});
+		setIcon(pasteImageButton, "image-plus");
+		pasteImageButton.addEventListener("mousedown", (event) => {
+			event.preventDefault();
+		});
+		pasteImageButton.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			void appendLatexFromClipboardImage({
+				settings: this.getSettings(),
+				mathfield: mfe,
+				onValueChange: (value) => {
+					dispatchChange(value);
+					refocusMathfield();
+				},
+			});
+		});
+
+		const menuWrap = toolbar.createDiv({ cls: "mathlive-modal-menu obsidian-mathlive-widget-overflow-menu" });
+		const menuTrigger = menuWrap.createEl("button", {
+			cls: "mathlive-modal-menu-trigger obsidian-mathlive-widget-menu-button",
+			attr: {
+				type: "button",
+				"aria-label": "More options",
+				"aria-expanded": "false",
+				"aria-haspopup": "true",
+			},
+		});
+		setIcon(menuTrigger, "more-vertical");
+
+		const dropdown = menuWrap.createDiv({ cls: "mathlive-modal-menu-dropdown" });
+		const link = dropdown.createEl("a", {
+			cls: "mathlive-modal-menu-item external-link",
+			text: "Made by Dan Zilberman",
+			href: "https://danz.blog",
+		});
+		link.setAttr("target", "_blank");
+		link.setAttr("rel", "noopener noreferrer");
+		dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
+
+		let menuOutsideListener: ((event: MouseEvent) => void) | undefined;
+		const closeMenu = () => {
+			dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
+			menuTrigger.setAttr("aria-expanded", "false");
+			if (menuOutsideListener) {
+				document.removeEventListener("click", menuOutsideListener);
+				menuOutsideListener = undefined;
+			}
+		};
+		const openMenu = () => {
+			dropdown.removeClass("mathlive-modal-menu-dropdown--hidden");
+			menuTrigger.setAttr("aria-expanded", "true");
+			window.setTimeout(() => {
+				menuOutsideListener = (menuEvent: MouseEvent) => {
+					if (!menuWrap.contains(menuEvent.target as Node)) {
+						closeMenu();
+					}
+				};
+				document.addEventListener("click", menuOutsideListener);
+			}, 0);
+		};
+
+		menuTrigger.addEventListener("mousedown", (event) => {
+			event.preventDefault();
+		});
+		menuTrigger.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			if (dropdown.hasClass("mathlive-modal-menu-dropdown--hidden")) {
+				openMenu();
+				return;
+			}
+			closeMenu();
+		});
 
 		if (this.getSettings().immediateInlineUpdate) {
 			mfe.addEventListener("input", () => {

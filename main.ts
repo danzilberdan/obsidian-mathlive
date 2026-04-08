@@ -4,7 +4,6 @@ import {
 	type EditorPosition,
 	MarkdownFileInfo,
 	Modal,
-	Notice,
 	Platform,
 	Plugin,
 	PluginSettingTab,
@@ -17,31 +16,10 @@ import { createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
 	ensureMathfieldElementRegistered,
+	appendLatexFromClipboardImage,
 	parseMathSelection,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
-
-const CLOUD_OCR_AUTH_NOTICE =
-	'Open Settings -> MathLive and configure your API key. If you use cloud OCR, make sure your remote account is funded. More info is available in settings.';
-
-function isCloudOcrAuthorizationError(error: unknown): boolean {
-	if (!(error instanceof Error)) {
-		return false;
-	}
-
-	if (error.message === CLOUD_OCR_AUTH_NOTICE) {
-		return true;
-	}
-
-	if (/status 4\d\d/.test(error.message)) {
-		return true;
-	}
-
-	// Some browser/Electron fetch failures never expose the 4xx response and only surface
-	// a generic network error to the plugin. Treat those cloud OCR failures as auth/setup
-	// guidance rather than falling back to the console-only notice.
-	return error.name === 'TypeError' && /Failed to fetch|Load failed|NetworkError/i.test(error.message);
-}
 
 export default class MathLivePlugin extends Plugin {
 	settings: PluginSettings;
@@ -538,7 +516,7 @@ class MathLiveModal extends Modal {
 		});
 		
 		const iconSpan = scan.createSpan({ cls: "mathlive-btn-icon" });
-		setIcon(iconSpan, "image");
+		setIcon(iconSpan, "image-plus");
 		
 		const textWrap = scan.createDiv({ cls: "mathlive-btn-text-wrap" });
 		textWrap.createSpan({
@@ -558,86 +536,17 @@ class MathLiveModal extends Modal {
 	}
 
 	async onImageScanRequest() {
-		if (!this.plugin.settings.apiKey) {
-			new Notice(CLOUD_OCR_AUTH_NOTICE, 10000)
-			return
-		}
-		try {
-			const clipboardItems = await navigator.clipboard.read();
-			for (const item of clipboardItems) {
-				for (const type of item.types) {
-					if (item.types.includes('image/png')) {
-						const blob = await item.getType(type)
-						new Notice('Scanning MathJax image')
-						const mathjax = await this.scanImage(blob);
-						this.mfe!.value += mathjax;
-						this.renderedResult = this.resultRenderTemplate(this.mfe?.value ?? '');
-
-						new Notice(`Got scan result for MathJax`)
-						return
-					}
-					
-				}
-			}
-			new Notice('No image found in clipboard.');
-		} catch (error) {
-			if (!this.plugin.settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
-				new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
-				return;
-			}
-			console.error('Error reading clipboard or uploading image:', error);
-			new Notice(`Failed to scan image. See console for details.`)
-		}	
-	}
-
-	async scanImage(imageData: Blob) {
-		let address = 'https://mathlive-ocr.danz.blog'
-		if (this.plugin.settings.useLocalInference) {
-			address = 'http://localhost:8502'
+		if (!this.mfe) {
+			return;
 		}
 
-		const formData = new FormData();
-		formData.append('file', imageData);
-
-		let res: Response;
-		try {
-			res = await fetch(address + '/predict/', {
-				headers: {
-					'Api-key': this.plugin.settings.apiKey ?? ""			
-				},
-				method: 'POST',
-				body: formData
-			});
-		} catch (error) {
-			if (!this.plugin.settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
-				throw new Error(CLOUD_OCR_AUTH_NOTICE);
-			}
-			throw error;
-		}
-
-		if (!res.ok) {
-			if (res.status >= 400 && res.status < 500) {
-				throw new Error(CLOUD_OCR_AUTH_NOTICE);
-			}
-
-			throw new Error(`OCR request failed with status ${res.status}.`);
-		}
-
-		return await res.json()
-	}
-
-	async convertToJPEG(imageData: string) {
-		const img = new Image();
-		img.src = imageData;
-		await new Promise((resolve) => { img.onload = resolve; });
-		
-		const canvas = document.createElement('canvas');
-		canvas.width = img.width;
-		canvas.height = img.height;
-		const ctx = canvas.getContext('2d');
-		ctx!.drawImage(img, 0, 0);
-		
-		return canvas.toDataURL('image/jpeg', 0.8);
+		await appendLatexFromClipboardImage({
+			settings: this.plugin.settings,
+			mathfield: this.mfe,
+			onValueChange: (value) => {
+				this.renderedResult = this.resultRenderTemplate(value);
+			},
+		});
 	}
 
 	onClose() {

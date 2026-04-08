@@ -112,6 +112,69 @@ math-field::part(content) {
 .obsidian-mathlive-codemirror-wrapper {
   position: relative;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.obsidian-mathlive-widget-menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 100%;
+  box-sizing: border-box;
+  padding: 0.12rem 0.16rem;
+  border-radius: var(--radius-s, 4px);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.obsidian-mathlive-widget-menu-group {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.obsidian-mathlive-widget-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  border-radius: var(--radius-s, 4px);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.obsidian-mathlive-widget-menu-button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.obsidian-mathlive-widget-menu-button svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.obsidian-mathlive-widget-overflow-menu {
+  margin-left: auto;
+}
+
+.obsidian-mathlive-widget-overflow-menu .obsidian-mathlive-widget-menu-button {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.obsidian-mathlive-widget-overflow-menu .obsidian-mathlive-widget-menu-button svg {
+  width: 0.72rem;
+  height: 0.72rem;
 }
 
 /* Live Preview: keep MathLive above any residual preview layers; isolate stacking from mjx siblings. */
@@ -151,7 +214,8 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
 
 .obsidian-mathlive-codemirror-wrapper.inline {
   display: inline-flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   width: auto;
   max-width: 100%;
   margin: 0 0.35rem 0 0;

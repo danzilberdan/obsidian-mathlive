@@ -1,5 +1,7 @@
 import type { MathfieldElement } from "mathlive";
+import { Notice } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
+import type { PluginSettings } from "./settings";
 
 const MATHLIVE_FONT_STYLE_ID = "mathlive-static-fonts";
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
@@ -84,6 +86,9 @@ export interface MathfieldConfig {
 	id?: string;
 	onInput?: (value: string) => void;
 }
+
+export const CLOUD_OCR_AUTH_NOTICE =
+	'Open Settings -> MathLive and configure your API key. If you use cloud OCR, make sure your remote account is funded. More info is available in settings.';
 
 export async function ensureMathfieldElementRegistered() {
 	const MathfieldElement = await loadMathfieldElement();
@@ -193,4 +198,112 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 
 	return mfe;
+}
+
+function isCloudOcrAuthorizationError(error: unknown): boolean {
+	if (!(error instanceof Error)) {
+		return false;
+	}
+
+	if (error.message === CLOUD_OCR_AUTH_NOTICE) {
+		return true;
+	}
+
+	if (/status 4\d\d/.test(error.message)) {
+		return true;
+	}
+
+	// Some browser/Electron fetch failures never expose the 4xx response and only surface
+	// a generic network error to the plugin. Treat those cloud OCR failures as auth/setup
+	// guidance rather than falling back to the console-only notice.
+	return error.name === "TypeError" && /Failed to fetch|Load failed|NetworkError/i.test(error.message);
+}
+
+async function readClipboardImageBlob(): Promise<Blob | null> {
+	const clipboardItems = await navigator.clipboard.read();
+	for (const item of clipboardItems) {
+		for (const type of item.types) {
+			if (type.startsWith("image/")) {
+				return await item.getType(type);
+			}
+		}
+	}
+
+	return null;
+}
+
+export async function scanImageToLatex(
+	settings: PluginSettings,
+	imageData: Blob
+): Promise<string> {
+	let address = "https://mathlive-ocr.danz.blog";
+	if (settings.useLocalInference) {
+		address = "http://localhost:8502";
+	}
+
+	const formData = new FormData();
+	formData.append("file", imageData);
+
+	let res: Response;
+	try {
+		res = await fetch(address + "/predict/", {
+			headers: {
+				"Api-key": settings.apiKey ?? "",
+			},
+			method: "POST",
+			body: formData,
+		});
+	} catch (error) {
+		if (!settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
+			throw new Error(CLOUD_OCR_AUTH_NOTICE);
+		}
+		throw error;
+	}
+
+	if (!res.ok) {
+		if (res.status >= 400 && res.status < 500) {
+			throw new Error(CLOUD_OCR_AUTH_NOTICE);
+		}
+
+		throw new Error(`OCR request failed with status ${res.status}.`);
+	}
+
+	return await res.json();
+}
+
+export async function appendLatexFromClipboardImage(options: {
+	settings: PluginSettings;
+	mathfield: MathfieldElement;
+	onValueChange?: (value: string) => void;
+}): Promise<boolean> {
+	const { settings, mathfield, onValueChange } = options;
+
+	if (!settings.useLocalInference && !settings.apiKey) {
+		new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
+		return false;
+	}
+
+	try {
+		const imageBlob = await readClipboardImageBlob();
+		if (!imageBlob) {
+			new Notice("No image found in clipboard.");
+			return false;
+		}
+
+		new Notice("Scanning math image");
+		const latex = await scanImageToLatex(settings, imageBlob);
+		mathfield.value += latex;
+		onValueChange?.(mathfield.value);
+		new Notice("Got scan result for MathJax");
+		return true;
+	} catch (error) {
+		if (!settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
+			new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
+			return false;
+		}
+
+		console.error("Error reading clipboard or uploading image:", error);
+		new Notice("Failed to scan image. See console for details.");
+		return false;
+	}
 }
