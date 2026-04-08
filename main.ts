@@ -21,12 +21,17 @@ import {
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 
+const CLOUD_ACCESS_STATUS_URL = "https://mathlive-ocr.danz.blog/access-status";
+
 export default class MathLivePlugin extends Plugin {
 	settings: PluginSettings;
+	private cloudAccessStatusPromise: Promise<boolean | null> | null = null;
+	private cachedCloudAccessStatus: boolean | null | undefined = undefined;
 
 	async onload() {
 		await ensureMathfieldElementRegistered();
 		await this.loadSettings();
+		this.warmCloudAccessStatus();
 
 		this.addCommand({
 			id: 'open-modal',
@@ -44,7 +49,10 @@ export default class MathLivePlugin extends Plugin {
 			}
 		});
 		this.registerEditorExtension(
-			createInlineMathEditorExtension(() => this.settings)
+			createInlineMathEditorExtension(
+				() => this.settings,
+				() => this.shouldShowUpgradeButton()
+			)
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
 		this.updateMathJaxVisibility();
@@ -62,13 +70,77 @@ export default class MathLivePlugin extends Plugin {
 	}
 
 	async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    }
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
 
-	async saveSettings() {
+	async saveSettings(options?: { refreshCloudAccessStatus?: boolean }) {
 		await this.saveData(this.settings);
+		if (options?.refreshCloudAccessStatus) {
+			this.invalidateCloudAccessStatus();
+			this.warmCloudAccessStatus();
+		}
 		this.updateMathJaxVisibility();
 		this.app.workspace.updateOptions();
+	}
+
+	private invalidateCloudAccessStatus() {
+		this.cloudAccessStatusPromise = null;
+		this.cachedCloudAccessStatus = undefined;
+	}
+
+	private warmCloudAccessStatus() {
+		if (this.settings.useLocalInference || !this.settings.apiKey?.trim()) {
+			this.cachedCloudAccessStatus = null;
+			return;
+		}
+
+		void this.loadCloudAccessStatus();
+	}
+
+	private async loadCloudAccessStatus(): Promise<boolean | null> {
+		if (this.settings.useLocalInference || !this.settings.apiKey?.trim()) {
+			this.cachedCloudAccessStatus = null;
+			return null;
+		}
+
+		if (this.cachedCloudAccessStatus !== undefined) {
+			return this.cachedCloudAccessStatus;
+		}
+
+		if (!this.cloudAccessStatusPromise) {
+			const apiKey = this.settings.apiKey.trim();
+			this.cloudAccessStatusPromise = fetch(CLOUD_ACCESS_STATUS_URL, {
+				headers: {
+					"Api-Key": apiKey,
+				},
+			})
+				.then(async (response) => {
+					if (!response.ok) {
+						throw new Error(
+							`Cloud access status request failed with status ${response.status}.`
+						);
+					}
+
+					const payload = (await response.json()) as {
+						hasUnlimitedAccess?: unknown;
+					};
+					return payload.hasUnlimitedAccess === true;
+				})
+				.catch((error) => {
+					console.warn("Could not determine MathLive cloud access status.", error);
+					return null;
+				})
+				.finally(() => {
+					this.cloudAccessStatusPromise = null;
+				});
+		}
+
+		this.cachedCloudAccessStatus = await this.cloudAccessStatusPromise;
+		return this.cachedCloudAccessStatus;
+	}
+
+	async shouldShowUpgradeButton(): Promise<boolean> {
+		return (await this.loadCloudAccessStatus()) === false;
 	}
 
 	updateMathJaxVisibility() {
@@ -140,7 +212,7 @@ In addition, there is a cloud option that requires no setup.
 		.setName('API key')
 		.addText(tc => tc.setValue(this.plugin.settings.apiKey ?? "").onChange(async val => {
 			this.plugin.settings.apiKey = val;
-			await this.plugin.saveSettings()
+			await this.plugin.saveSettings({ refreshCloudAccessStatus: true })
 		}))
     
 	const homepageLink = document.createElement('a')
@@ -166,7 +238,7 @@ In addition, there is a cloud option that requires no setup.
 		.setName('Self hosted')
 		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
 			this.plugin.settings.useLocalInference = val;
-			await this.plugin.saveSettings()
+			await this.plugin.saveSettings({ refreshCloudAccessStatus: true })
 		}));
 
 	new Setting(containerEl);

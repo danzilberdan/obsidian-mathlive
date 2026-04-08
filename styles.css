@@ -163,6 +163,29 @@ math-field::part(content) {
   height: 0.85rem;
 }
 
+.obsidian-mathlive-widget-account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.55rem;
+  padding: 0 0.45rem;
+  border-radius: var(--radius-s, 4px);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary-alt, var(--background-primary));
+  color: var(--interactive-accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.obsidian-mathlive-widget-account-link:hover {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+  color: var(--interactive-accent-hover);
+}
+
 .obsidian-mathlive-widget-overflow-menu {
   margin-left: auto;
 }

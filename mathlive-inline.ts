@@ -38,12 +38,15 @@ interface MathFieldEntry {
 	isInline: boolean;
 }
 
+const ACCOUNT_URL = "https://mathlive.danz.blog/console";
+
 class MathLiveWidget extends WidgetType {
 	constructor(
 		private readonly config: WidgetConfig,
 		private equation: string,
 		private readonly isInline: boolean,
-		private readonly getSettings: () => PluginSettings
+		private readonly getSettings: () => PluginSettings,
+		private readonly shouldShowUpgradeButton: () => Promise<boolean>
 	) {
 		super();
 	}
@@ -202,6 +205,7 @@ class MathLiveWidget extends WidgetType {
 				},
 			});
 		});
+		void this.renderAccountLink(actionGroup, wrapper);
 
 		const menuWrap = toolbar.createDiv({ cls: "mathlive-modal-menu obsidian-mathlive-widget-overflow-menu" });
 		const menuTrigger = menuWrap.createEl("button", {
@@ -370,6 +374,40 @@ class MathLiveWidget extends WidgetType {
 			},
 			true
 		);
+	}
+
+	private async renderAccountLink(actionGroup: HTMLElement, wrapper: HTMLDivElement) {
+		const settings = this.getSettings();
+		if (!settings.useLocalInference && !settings.apiKey?.trim()) {
+			this.appendAccountLink(actionGroup, "Sign in");
+			return;
+		}
+
+		if (!(await this.shouldShowUpgradeButton()) || !wrapper.isConnected) {
+			return;
+		}
+
+		this.appendAccountLink(actionGroup, "Upgrade");
+	}
+
+	private appendAccountLink(actionGroup: HTMLElement, text: string) {
+		if (actionGroup.querySelector(".obsidian-mathlive-widget-account-link")) {
+			return;
+		}
+
+		const accountLink = actionGroup.createEl("a", {
+			cls: "obsidian-mathlive-widget-account-link external-link",
+			text,
+			href: ACCOUNT_URL,
+		});
+		accountLink.setAttr("target", "_blank");
+		accountLink.setAttr("rel", "noopener noreferrer");
+		accountLink.addEventListener("mousedown", (event) => {
+			event.preventDefault();
+		});
+		accountLink.addEventListener("click", (event) => {
+			event.stopPropagation();
+		});
 	}
 }
 
@@ -646,7 +684,8 @@ function collectMathRangesFromDoc(doc: string): MathRange[] {
 
 function buildDecorations(
 	state: Transaction["state"],
-	getSettings: () => PluginSettings
+	getSettings: () => PluginSettings,
+	shouldShowUpgradeButton: () => Promise<boolean>
 ): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>();
 	const settings = getSettings();
@@ -662,7 +701,8 @@ function buildDecorations(
 			{ from: range.from, to: range.to },
 			equation,
 			range.isInline,
-			getSettings
+			getSettings,
+			shouldShowUpgradeButton
 		);
 
 		if (!range.isInline) {
@@ -703,14 +743,15 @@ function buildDecorations(
 }
 
 export function createInlineMathEditorExtension(
-	getSettings: () => PluginSettings
+	getSettings: () => PluginSettings,
+	shouldShowUpgradeButton: () => Promise<boolean>
 ): Extension {
 	return StateField.define<DecorationSet>({
 		create(state) {
-			return buildDecorations(state, getSettings);
+			return buildDecorations(state, getSettings, shouldShowUpgradeButton);
 		},
 		update(_oldState: DecorationSet, transaction: Transaction): DecorationSet {
-			return buildDecorations(transaction.state, getSettings);
+			return buildDecorations(transaction.state, getSettings, shouldShowUpgradeButton);
 		},
 		provide(field) {
 			return [EditorView.decorations.from(field), enterMathLiveOnArrow(getSettings)];
