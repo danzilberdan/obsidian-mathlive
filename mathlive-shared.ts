@@ -243,8 +243,26 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	return mfe;
 }
 
-function isCloudOcrAuthorizationError(error: unknown): boolean {
-	return error instanceof Error && error.message === CLOUD_OCR_AUTH_NOTICE;
+const SCAN_FAILED_NOTICE = "Couldn't scan the image. Check your connection and try again.";
+const NO_SCANS_LEFT_NOTICE =
+	"You've used all your free scans. Open Settings -> MathLive to upgrade to unlimited scans.";
+const NO_MATH_NOTICE = "No math found in this image. Try cropping closer to the formula. Nothing was charged.";
+const BAD_IMAGE_NOTICE = "MathLive couldn't read this image. Copy the formula as a screenshot and try again.";
+
+// The scanner never sends a bigger image to a model, so there's no point uploading one.
+const MAX_UPLOAD_SIDE = 1600;
+// The scanner gives up on a scan after 18 seconds, so a reply this late means the request is lost.
+const SCAN_TIMEOUT_MS = 25000;
+// A scan that fails this fast never reached a model (a dropped connection, a restarting server),
+// so it is worth one more try before bothering the user.
+const QUICK_FAILURE_MS = 5000;
+
+type ScanFailure = "auth" | "no_scans_left" | "no_math" | "bad_image" | "unavailable";
+
+class ScanError extends Error {
+	constructor(readonly failure: ScanFailure, message: string) {
+		super(message);
+	}
 }
 
 async function readClipboardImageBlob(): Promise<Blob | null> {
@@ -258,6 +276,40 @@ async function readClipboardImageBlob(): Promise<Blob | null> {
 	}
 
 	return null;
+}
+
+// Scales big screenshots down before upload, which makes scans on slow connections much faster.
+// Anything the browser can't decode goes up unchanged and the scanner decides.
+async function shrinkImage(image: Blob): Promise<Blob> {
+	let bitmap: ImageBitmap;
+	try {
+		bitmap = await createImageBitmap(image);
+	} catch {
+		return image;
+	}
+
+	try {
+		const longest = Math.max(bitmap.width, bitmap.height);
+		if (longest <= MAX_UPLOAD_SIDE) {
+			return image;
+		}
+
+		const scale = MAX_UPLOAD_SIDE / longest;
+		const canvas = createEl("canvas");
+		canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+		canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+		const context = canvas.getContext("2d");
+		if (!context) {
+			return image;
+		}
+		context.imageSmoothingQuality = "high";
+		context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+		return await new Promise<Blob>((resolve) => {
+			canvas.toBlob((blob) => resolve(blob ?? image), "image/png");
+		});
+	} finally {
+		bitmap.close();
+	}
 }
 
 async function buildMultipartBody(
@@ -282,6 +334,96 @@ async function buildMultipartBody(
 	return { body: body.buffer, contentType: `multipart/form-data; boundary=${boundary}` };
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+	return new Promise((resolve, reject) => {
+		const timer = window.setTimeout(() => {
+			reject(new ScanError("unavailable", `Scan timed out after ${ms} ms.`));
+		}, ms);
+		promise.then(
+			(value) => {
+				window.clearTimeout(timer);
+				resolve(value);
+			},
+			(error: unknown) => {
+				window.clearTimeout(timer);
+				reject(error instanceof Error ? error : new Error(String(error)));
+			}
+		);
+	});
+}
+
+// The scanner answers errors with {detail, code}. Older scanners send only detail, and the
+// self-hosted one sends neither, so the status decides when there's no code.
+function errorCode(res: { json: unknown }): string | null {
+	try {
+		const body = res.json as { code?: unknown } | null;
+		return typeof body?.code === "string" ? body.code : null;
+	} catch {
+		return null;
+	}
+}
+
+function scanFailure(status: number, code: string | null): ScanFailure {
+	switch (code) {
+		case "missing_api_key":
+		case "invalid_api_key":
+			return "auth";
+		case "no_scans_left":
+			return "no_scans_left";
+		case "no_math":
+			return "no_math";
+		case "no_image":
+		case "not_an_image":
+		case "image_too_small":
+			return "bad_image";
+	}
+	return status < 500 ? "auth" : "unavailable";
+}
+
+async function requestScan(address: string, apiKey: string, image: Blob): Promise<string> {
+	const { body, contentType } = await buildMultipartBody("file", image);
+	let res;
+	try {
+		res = await withTimeout(
+			requestUrl({
+				url: address + "/predict/",
+				method: "POST",
+				contentType,
+				headers: {
+					"Api-Key": apiKey,
+				},
+				body,
+				throw: false,
+			}),
+			SCAN_TIMEOUT_MS
+		);
+	} catch (error) {
+		if (error instanceof ScanError) {
+			throw error;
+		}
+		throw new ScanError("unavailable", error instanceof Error ? error.message : String(error));
+	}
+
+	if (res.status >= 400) {
+		throw new ScanError(
+			scanFailure(res.status, errorCode(res)),
+			`OCR request failed with status ${res.status}.`
+		);
+	}
+
+	let latex: unknown;
+	try {
+		latex = res.json;
+	} catch {
+		latex = null;
+	}
+	if (typeof latex !== "string") {
+		throw new ScanError("unavailable", "OCR response did not contain LaTeX.");
+	}
+
+	return latex;
+}
+
 export async function scanImageToLatex(
 	settings: PluginSettings,
 	imageData: Blob
@@ -291,32 +433,86 @@ export async function scanImageToLatex(
 		address = (settings.localInferenceUrl.trim() || DEFAULT_SETTINGS.localInferenceUrl).replace(/\/+$/, "");
 	}
 
-	const { body, contentType } = await buildMultipartBody("file", imageData);
-	const res = await requestUrl({
-		url: address + "/predict/",
-		method: "POST",
-		contentType,
-		headers: {
-			"Api-Key": settings.apiKey ?? "",
-		},
-		body,
-		throw: false,
-	});
+	const image = await shrinkImage(imageData);
+	const apiKey = settings.apiKey ?? "";
+	const started = Date.now();
+	try {
+		return await requestScan(address, apiKey, image);
+	} catch (error) {
+		const quick = Date.now() - started < QUICK_FAILURE_MS;
+		if (!(error instanceof ScanError) || error.failure !== "unavailable" || !quick) {
+			throw error;
+		}
+		console.warn("MathLive: scan failed quickly, trying once more.", error);
+		await new Promise((resolve) => window.setTimeout(resolve, 1000));
+		return await requestScan(address, apiKey, image);
+	}
+}
 
-	if (res.status >= 400 && res.status < 500) {
-		throw new Error(CLOUD_OCR_AUTH_NOTICE);
+function showScanFailure(message: string, retry?: () => void) {
+	if (!retry) {
+		new Notice(message, 10000);
+		return;
 	}
 
-	if (res.status >= 500) {
-		throw new Error(`OCR request failed with status ${res.status}.`);
-	}
+	const notice = new Notice(
+		createFragment((frag) => {
+			frag.appendText(message + " ");
+			const button = frag.createEl("button", { cls: "mathlive-notice-retry", text: "Retry" });
+			button.addEventListener("click", (event) => {
+				event.stopPropagation();
+				notice.hide();
+				retry();
+			});
+		}),
+		15000
+	);
+}
 
-	const latex: unknown = res.json;
-	if (typeof latex !== "string") {
-		throw new Error("OCR response did not contain LaTeX.");
-	}
+async function scanAndAppend(
+	options: {
+		settings: PluginSettings;
+		mathfield: MathfieldElement;
+		onValueChange?: (value: string) => void;
+	},
+	image: Blob
+): Promise<boolean> {
+	const { settings, mathfield, onValueChange } = options;
 
-	return latex;
+	try {
+		new Notice("Scanning math image");
+		const latex = await scanImageToLatex(settings, image);
+		// The formula may have closed or re-rendered while the scan ran.
+		if (!mathfield.isConnected) {
+			new Notice("The formula was closed before the scan finished. Open it and scan again.");
+			return false;
+		}
+		mathfield.value += latex;
+		onValueChange?.(mathfield.value);
+		new Notice("Scan added to the formula");
+		return true;
+	} catch (error) {
+		const failure = error instanceof ScanError ? error.failure : "unavailable";
+		console.error("MathLive: scan failed:", error);
+
+		if (failure === "auth" && !settings.useLocalInference) {
+			showScanFailure(CLOUD_OCR_AUTH_NOTICE);
+		} else if (failure === "no_scans_left") {
+			showScanFailure(NO_SCANS_LEFT_NOTICE);
+		} else if (failure === "no_math") {
+			showScanFailure(NO_MATH_NOTICE);
+		} else if (failure === "bad_image") {
+			showScanFailure(BAD_IMAGE_NOTICE);
+		} else {
+			// The retry keeps the image, so it works even after the clipboard has changed.
+			showScanFailure(SCAN_FAILED_NOTICE, () => {
+				if (mathfield.isConnected) {
+					void scanAndAppend(options, image);
+				}
+			});
+		}
+		return false;
+	}
 }
 
 export async function appendLatexFromClipboardImage(options: {
@@ -324,34 +520,24 @@ export async function appendLatexFromClipboardImage(options: {
 	mathfield: MathfieldElement;
 	onValueChange?: (value: string) => void;
 }): Promise<boolean> {
-	const { settings, mathfield, onValueChange } = options;
+	const { settings } = options;
 
 	if (!settings.useLocalInference && !settings.apiKey) {
 		new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
 		return false;
 	}
 
+	let image: Blob | null;
 	try {
-		const imageBlob = await readClipboardImageBlob();
-		if (!imageBlob) {
-			new Notice("No image found in clipboard.");
-			return false;
-		}
-
-		new Notice("Scanning math image");
-		const latex = await scanImageToLatex(settings, imageBlob);
-		mathfield.value += latex;
-		onValueChange?.(mathfield.value);
-		new Notice("Scan added to the formula");
-		return true;
+		image = await readClipboardImageBlob();
 	} catch (error) {
-		if (!settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
-			new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
-			return false;
-		}
-
-		console.error("Error reading clipboard or uploading image:", error);
-		new Notice("Couldn't scan the image. Check your connection and try again.");
+		console.error("MathLive: couldn't read the clipboard:", error);
+		image = null;
+	}
+	if (!image) {
+		new Notice("No image found in clipboard.");
 		return false;
 	}
+
+	return await scanAndAppend(options, image);
 }

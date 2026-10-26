@@ -318,3 +318,7 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline mjx-container {
 .mathlive-settings-intro {
   white-space: pre-wrap;
 }
+
+.mathlive-notice-retry {
+  margin-left: var(--size-4-2);
+}
