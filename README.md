@@ -75,9 +75,10 @@ Best for most users. No local setup required.
 
 Best if you want to run OCR on your own machine.
 
-1. Set up a compatible OCR server such as [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) so it is available at `http://localhost:8502`.
+1. Set up a compatible OCR server such as [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR). By default MathLive looks for it at `http://localhost:8502`.
 2. Open **Settings -> MathLive**.
 3. Turn on `Self-hosted scanner`.
+4. If your server runs somewhere else, enter its address in `Self-hosted scanner address`.
 
 Self-hosting is more technical and usually only makes sense if you are already comfortable running local services.
 
@@ -104,7 +105,7 @@ Obsidian asks plugins to state the following up front.
 - **Network use.** The plugin only connects to the internet for cloud scanning:
   - `https://mathlive-ocr.danz.blog/predict/` receives the image you chose to scan, with your API key, and returns LaTeX.
   - `https://mathlive-ocr.danz.blog/access-status` is checked with your API key to show whether your account has unlimited scans.
-  - With `Self-hosted scanner` on, scans go to `http://localhost:8502` instead, and nothing leaves your computer.
+  - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
 - **Data.** The scan server turns the image into LaTeX and does not keep the image. Your account stores your email, your API keys, your scan count and when a key was last used. Server logs record requests and errors to keep the service running.
 - **No telemetry, ads or pop-ups.** The plugin does not track how you use it and shows no ads.

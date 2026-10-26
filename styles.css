@@ -1,10 +1,21 @@
 :root {
   /* MathLive's fonts are bundled and registered by the plugin. */
   --ML__static-fonts: true;
+}
+
+.theme-dark {
   --selection-background-color: rgba(0,0,0,0.5);
   --selection-color: rgb(73, 201, 206);
   --highlight-text: rgb(73, 201, 206);
-  --contains-highlight-background-color: rgba(0,0,0,0.5);;
+  --contains-highlight-background-color: rgba(0,0,0,0.5);
+}
+
+/* Light themes: the dark overlay above hid the selected text (#12). */
+.theme-light {
+  --selection-background-color: var(--text-selection);
+  --selection-color: var(--text-normal);
+  --highlight-text: var(--text-accent);
+  --contains-highlight-background-color: var(--background-modifier-hover);
 }
 
 .mathlive-modal-content {
@@ -106,9 +117,14 @@
   min-width: 0;
 }
 
-math-field::part(content) {
+.theme-dark math-field::part(content) {
   --_text-highlight-background-color: #1e1e1e;
   --_contains-highlight-background-color: #1e1e1e;
+}
+
+.theme-light math-field::part(content) {
+  --_text-highlight-background-color: var(--background-modifier-hover);
+  --_contains-highlight-background-color: var(--background-modifier-hover);
 }
 
 .obsidian-mathlive-codemirror-wrapper {

@@ -631,7 +631,72 @@ function isEscapedDollar(text: string, index: number): boolean {
 	return backslashCount % 2 === 1;
 }
 
-function collectMathRangesFromDoc(doc: string): MathRange[] {
+// Replaces fenced code blocks and inline code with spaces, keeping every offset, so a `$`
+// inside code never becomes a math widget (#25).
+export function maskCodeRegions(doc: string): string {
+	const chars = doc.split("");
+	const blank = (from: number, to: number) => {
+		for (let index = from; index < to; index += 1) {
+			if (chars[index] !== "\n") {
+				chars[index] = " ";
+			}
+		}
+	};
+
+	let fence: { marker: string; length: number } | null = null;
+	for (let lineStart = 0; lineStart <= doc.length; ) {
+		let lineEnd = doc.indexOf("\n", lineStart);
+		if (lineEnd === -1) {
+			lineEnd = doc.length;
+		}
+		const line = doc.slice(lineStart, lineEnd);
+
+		if (fence) {
+			const closing = /^[\s>]*(`{3,}|~{3,})\s*$/.exec(line);
+			if (closing && closing[1][0] === fence.marker && closing[1].length >= fence.length) {
+				fence = null;
+			}
+			blank(lineStart, lineEnd);
+		} else {
+			const opening = /^[\s>]*(`{3,}|~{3,})/.exec(line);
+			if (opening) {
+				fence = { marker: opening[1][0], length: opening[1].length };
+				blank(lineStart, lineEnd);
+			} else {
+				for (let index = 0; index < line.length; ) {
+					if (line[index] !== "`") {
+						index += 1;
+						continue;
+					}
+
+					let runEnd = index;
+					while (line[runEnd] === "`") {
+						runEnd += 1;
+					}
+					const run = line.slice(index, runEnd);
+					let close = line.indexOf(run, runEnd);
+					while (close !== -1 && line[close + run.length] === "`") {
+						close = line.indexOf(run, close + run.length + 1);
+					}
+					if (close === -1) {
+						index = runEnd;
+						continue;
+					}
+
+					blank(lineStart + index, lineStart + close + run.length);
+					index = close + run.length;
+				}
+			}
+		}
+
+		lineStart = lineEnd + 1;
+	}
+
+	return chars.join("");
+}
+
+function collectMathRangesFromDoc(source: string): MathRange[] {
+	const doc = maskCodeRegions(source);
 	const ranges: MathRange[] = [];
 	let inlineStart: number | null = null;
 	let blockStart: number | null = null;

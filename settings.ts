@@ -1,6 +1,7 @@
 export interface PluginSettings {
 	apiKey: string | null;
 	useLocalInference: boolean;
+	localInferenceUrl: string;
 	enableInlineEditorMode: boolean;
 	enableInlineMathWidgets: boolean;
 	enableBlockMathWidgets: boolean;
@@ -13,6 +14,7 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
 	apiKey: null,
 	useLocalInference: false,
+	localInferenceUrl: "http://localhost:8502",
 	enableInlineEditorMode: true,
 	enableInlineMathWidgets: true,
 	enableBlockMathWidgets: true,
