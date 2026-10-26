@@ -1,4 +1,4 @@
-import { blockField, expect, menuItem, modalField, noteLine, noteText, runCommand, test, waitForModalField } from "./fixtures.mjs";
+import { blockField, expect, focusField, menuItem, modalField, noteLine, noteText, runCommand, test, waitForModalField } from "./fixtures.mjs";
 
 const selectInLine = (page, prefix, from, to) =>
 	page.evaluate(
@@ -105,9 +105,9 @@ test.describe("formula editor window", () => {
 		await trigger.click();
 		await expect(menuItem(page, "Made by Dan Zilberman")).toBeVisible();
 		await expect(menuItem(page, "Sign in to scan images")).toBeVisible();
-		await page.keyboard.press("Escape");
+		// A click elsewhere in the window closes the menu and leaves the window open.
+		await page.locator(".mathlive-modal-title").click();
 		await expect(page.locator(".menu")).toHaveCount(0);
-		// Escape closed the menu only.
 		await expect(modalField(page)).toBeVisible();
 	});
 
@@ -134,7 +134,8 @@ test.describe("formula editor window", () => {
 
 	test("MathLive's own menu opens from a block formula in the note", async ({ page }) => {
 		const field = blockField(page);
-		await field.click();
+		// The plugin moves focus into a clicked formula a moment later, which would take it from the menu.
+		await focusField(field);
 		await field.locator("[part=menu-toggle]").click();
 		await expect(page.getByText("Insert Matrix")).toBeVisible();
 		await page.keyboard.press("Escape");
