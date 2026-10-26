@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "20.x"
           cache: npm
@@ -39,10 +39,10 @@ jobs:
       OBSIDIAN_VERSION: "1.14.5"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "20.x"
           cache: npm
@@ -57,7 +57,7 @@ jobs:
           npx playwright install-deps chromium
 
       - name: Cache Obsidian
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .obsidian-cache
           key: obsidian-${{ env.OBSIDIAN_VERSION }}
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload test report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ui-test-report
           path: |
