@@ -1,5 +1,5 @@
 import type { MathfieldElement } from "mathlive";
-import { Notice, requestUrl } from "obsidian";
+import { type Menu, Notice, requestUrl } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
@@ -166,6 +166,29 @@ export function parseMathSelection(
 		resultRenderTemplate: (result) => result,
 		initialLatex: selectionText,
 	};
+}
+
+// Shows a menu under the button that opened it. A formula with focus keeps Escape to itself, so
+// listen for it before the formula does, or the menu can't be closed from the keyboard.
+export function showMenuBelow(menu: Menu, button: HTMLElement) {
+	const doc = button.doc;
+	const closeOnEscape = (event: KeyboardEvent) => {
+		if (event.key !== "Escape") {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		menu.hide();
+	};
+	doc.addEventListener("keydown", closeOnEscape, true);
+	button.setAttr("aria-expanded", "true");
+	menu.onHide(() => {
+		doc.removeEventListener("keydown", closeOnEscape, true);
+		button.setAttr("aria-expanded", "false");
+	});
+
+	const rect = button.getBoundingClientRect();
+	menu.showAtPosition({ x: rect.left, y: rect.bottom, width: rect.width }, doc);
 }
 
 // MathLive has one virtual keyboard. When it moves to another container while it is showing, the
