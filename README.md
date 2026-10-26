@@ -1,100 +1,92 @@
-# MathLive Plugin for Obsidian
+<div align="center">
 
-![](./banner.svg)
+![MathLive for Obsidian](./banner.svg)
 
-MathLive helps you write math in Obsidian faster. Instead of manually typing every LaTeX command, you can open a visual math editor, build the expression you want, and insert it directly into your note.
+**Write math in Obsidian visually, and turn screenshots of formulas into LaTeX.**
 
-It can also turn a copied formula image into LaTeX, either through a hosted OCR service or your own local OCR server.
+[![Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=7c3aed&label=downloads&query=%24%5B%22mathlive%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2FHEAD%2Fcommunity-plugin-stats.json)](https://community.obsidian.md/plugins/mathlive)
+[![GitHub stars](https://img.shields.io/github/stars/danzilberdan/obsidian-mathlive?style=flat&logo=github&color=f5c518)](https://github.com/danzilberdan/obsidian-mathlive/stargazers)
+[![Latest release](https://img.shields.io/github/v/release/danzilberdan/obsidian-mathlive?color=10b981&label=release)](https://github.com/danzilberdan/obsidian-mathlive/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/danzilberdan/obsidian-mathlive/ci.yml?branch=master&label=tests)](https://github.com/danzilberdan/obsidian-mathlive/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/danzilberdan/obsidian-mathlive?color=blue)](LICENSE)
 
-[Visit the site](https://mathlive.danz.blog)
+[**Install in Obsidian**](https://obsidian.md/plugins?id=mathlive) · [Website](https://mathlive.danz.blog) · [Report a bug](https://github.com/danzilberdan/obsidian-mathlive/issues/new/choose)
 
-## Why Use It
+</div>
 
-- Write inline math and display math without leaving your note.
-- Edit existing formulas in a visual math field instead of raw LaTeX only.
-- Convert pasted formula images into LaTeX when you do not want to retype them.
-- Stay inside Obsidian for everyday note-taking, class notes, and problem solving.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/note-dark.png">
+    <img src="docs/images/note-light.png" alt="A note with inline and block formulas edited in place by MathLive" width="820">
+  </picture>
+</p>
 
-## What You Can Do
+MathLive replaces the LaTeX in your notes with a visual math editor. Click a formula to edit it like you would in a word processor, open a larger editor window with an on-screen math keyboard, or copy a formula from a PDF or slide and scan it straight into your note.
 
-### Visual math editing
+## Features
 
-Use MathLive when you want to:
+- **Edit formulas where they are.** Inline `$...$` and block `$$...$$` math turn into live editors in Live Preview. Inline formulas stay at text height, so your paragraphs don't jump around.
+- **Editor window.** A focused editor for longer expressions, with `Ctrl/Cmd + Enter` to insert into the note.
+- **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
+- **Scan formula images.** Copy a screenshot of a formula and turn it into editable LaTeX, using the MathLive cloud scanner or your own self-hosted one.
+- **Stays out of the way.** Each formula has one small ⋮ menu. Everything is still plain LaTeX in your Markdown files.
 
-- insert new inline math like `$x^2 + y^2$`
-- insert display math blocks like `$$\int_0^1 x^2 dx$$`
-- tweak an existing expression in a friendlier editor
-
-### Formula OCR
-
-If you copy an image of a formula to your clipboard, MathLive can try to convert it into LaTeX and add it to the editor for you.
-
-This is useful for:
-
-- screenshots from PDFs or slides
-- handwritten or typeset formulas you want to reuse
-- getting a draft expression quickly before cleaning it up
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/menu-dark.png">
+    <img src="docs/images/menu-light.png" alt="The ⋮ menu of an inline formula: scan clipboard image, open in editor window, show math keyboard" width="820">
+  </picture>
+</p>
 
 ## Installation
 
-1. Open Obsidian.
-2. Go to **Settings -> Community plugins**.
-3. Click **Browse** and search for `MathLive`.
-4. Click **Install**.
-5. Click **Enable**.
+1. In Obsidian, open **Settings → Community plugins** and turn on community plugins if you haven't yet.
+2. Click **Browse**, search for **MathLive**, then click **Install** and **Enable**.
 
-## Getting Started
+Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer on desktop.
 
-### Insert or edit math
+## Getting started
 
-1. Open any note.
-2. Open the command palette with `Ctrl/Cmd + P`.
-3. Run `Add inline math` or `Add full-line math`.
-4. Type in the MathLive editor and click `Insert into note` (or press `Ctrl/Cmd + Enter`).
+**Edit a formula in your note.** Write `$x^2$` or a `$$` block in Live Preview and click it. Type to edit, use the arrow keys to move in and out of the formula, and open the ⋮ menu for more options.
 
-If you already selected text first, MathLive uses that selection as the starting content, which makes editing existing formulas quicker.
+**Use the editor window.** Open the command palette (`Ctrl/Cmd + P`) and run **MathLive: Add inline math** or **MathLive: Add full-line math**. If you selected a formula first, the editor window opens with it. Click **Insert into note** or press `Ctrl/Cmd + Enter` to put it in your note.
 
-### Set a hotkey
+**Set a hotkey.** If you write math often, assign hotkeys to both commands in **Settings → Hotkeys**.
 
-If you use math often, assign a hotkey to the MathLive commands in **Settings -> Hotkeys**. That makes the plugin much faster to use during note-taking.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/editor-window-dark.png">
+    <img src="docs/images/editor-window-light.png" alt="The MathLive editor window with the math keyboard open" width="820">
+  </picture>
+</p>
 
-## OCR Setup
+## Scanning formula images
 
-MathLive supports two OCR modes.
+1. Copy an image of a formula to your clipboard, for example a screenshot from a PDF, a slide or handwritten notes.
+2. Click **Scan clipboard image** in the editor window, or choose it from a formula's ⋮ menu.
+3. The recognized LaTeX is added to the formula. Check it and fix anything the scanner got wrong.
 
-### Cloud OCR
+You can scan with either of these:
 
-Best for most users. No local setup required.
+| | Cloud scanner | Self-hosted scanner |
+| --- | --- | --- |
+| Setup | Create an account and API key at [mathlive.danz.blog](https://mathlive.danz.blog), then paste the key into **Settings → MathLive → API key** | Run a compatible server such as [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR), then turn on **Self-hosted scanner** |
+| Cost | 10 free scans per account, then a paid plan for unlimited scans | Free |
+| Best for | Most people | People already comfortable running local services |
 
-1. Create a free account and API key at [mathlive.danz.blog](https://mathlive.danz.blog). Free accounts include 10 scans; unlimited scanning is a paid plan.
-2. Open **Settings -> MathLive**.
-3. Paste the key into `API key`.
-4. Make sure `Self-hosted scanner` is turned off.
+The self-hosted scanner uses `http://localhost:8502` unless you set another address in **Self-hosted scanner address**.
 
-### Self-hosted OCR
+## Settings
 
-Best if you want to run OCR on your own machine.
-
-1. Set up a compatible OCR server such as [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR). By default MathLive looks for it at `http://localhost:8502`.
-2. Open **Settings -> MathLive**.
-3. Turn on `Self-hosted scanner`.
-4. If your server runs somewhere else, enter its address in `Self-hosted scanner address`.
-
-Self-hosting is more technical and usually only makes sense if you are already comfortable running local services.
-
-## How To Scan A Formula Image
-
-1. Copy a formula image to your clipboard.
-2. Open MathLive with `Add inline math` or `Add full-line math`.
-3. Click `Add LaTeX from clipboard image`, or use the image button on a math widget in your note.
-4. Wait for the recognized LaTeX to appear in the editor.
-5. Clean up anything that needs correction, then click `Insert`.
-
-## Notes
-
-- `MathLive` is desktop-only.
-- OCR results are a starting point, not a guarantee. You may still want to fix symbols or spacing.
-- Cloud OCR is usually the simplest option if you just want the feature to work.
+| Setting | What it does |
+| --- | --- |
+| API key | Your key for the cloud scanner |
+| Self-hosted scanner, Self-hosted scanner address | Send scans to your own server instead |
+| Enable inline editor mode | Turn formulas in the note into editors |
+| Enable inline / block math widgets | Choose which formulas get an editor |
+| Hide rendered inline / block math | Show only the editor, without Obsidian's rendered math next to it |
+| Update inline widgets immediately | Write changes into the note as you type, or when the formula loses focus |
+| Arrow key navigation between editor and widgets | Move the cursor into and out of formulas with the arrow keys |
 
 ## Disclosures
 
@@ -110,15 +102,17 @@ Obsidian asks plugins to state the following up front.
 - **Data.** The scan server turns the image into LaTeX and does not keep the image. Your account stores your email, your API keys, your scan count and when a key was last used. Server logs record requests and errors to keep the service running.
 - **No telemetry, ads or pop-ups.** The plugin does not track how you use it and shows no ads.
 
-## Contributing and security
+## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) to report a bug, suggest a feature or send a pull request, and [SECURITY.md](SECURITY.md) to report a security issue privately.
+Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report a bug or build the plugin locally, and [SECURITY.md](SECURITY.md) to report a security issue privately. Every change runs an automated test suite in a real Obsidian app.
 
-## Support
-
-Issues and feature requests: [github.com/danzilberdan/obsidian-mathlive](https://github.com/danzilberdan/obsidian-mathlive)
+If MathLive saves you time, a ⭐ on this repository helps other people find it, and you can [buy me a coffee](https://www.buymeacoffee.com/danzilberdan).
 
 ## Acknowledgements
 
-- [MathLive](https://github.com/arnog/mathlive) for the visual editor
-- [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) for OCR support
+- [MathLive](https://github.com/arnog/mathlive) by Arno Gourdol, the math editor this plugin is built on
+- [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) by Lukas Blecher, for self-hosted scanning
+
+## License
+
+[MIT](LICENSE) © Dan Zilberman
