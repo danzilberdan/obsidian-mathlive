@@ -17,7 +17,7 @@ import {
 } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
 import { Menu, setIcon } from "obsidian";
-import { appendLatexFromClipboardImage, createMathfield } from "./mathlive-shared";
+import { appendLatexFromClipboardImage, createMathfield, moveVirtualKeyboard } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
 interface WidgetConfig {
@@ -251,6 +251,8 @@ class MathLiveWidget extends WidgetType {
 		});
 
 		mfe.addEventListener("focus", () => {
+			// The keyboard opens in the window this formula is in.
+			moveVirtualKeyboard(mfe.doc.body);
 			updateEditingBodyClass(mfe.doc, this.isInline, true);
 		});
 
@@ -351,8 +353,7 @@ class MathLiveWidget extends WidgetType {
 				.setTitle("Show math keyboard")
 				.setIcon("keyboard")
 				.onClick(() => {
-					// The editor window moves the keyboard into itself, so bring it back to this window.
-					window.mathVirtualKeyboard.container = mfe.doc.body;
+					moveVirtualKeyboard(mfe.doc.body);
 					mfe.focus();
 					mfe.executeCommand("showVirtualKeyboard");
 				})

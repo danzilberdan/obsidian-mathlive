@@ -21,6 +21,7 @@ import {
 	ensureMathfieldElementRegistered,
 	registerMathliveFonts,
 	appendLatexFromClipboardImage,
+	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
@@ -423,7 +424,7 @@ class MathLiveModal extends Modal {
 			event.stopPropagation();
 			this.close();
 		}, { capture: true });
-		window.mathVirtualKeyboard.container = keyboardContainer
+		moveVirtualKeyboard(keyboardContainer)
 
 		modalContent.addClass("mathlive-modal-content");
 		modalContent.appendChild(this.mfe);
@@ -625,6 +626,8 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
+		// Give the keyboard back to the note, or formulas there would open it inside this closed window.
+		moveVirtualKeyboard(this.contentEl.doc.body);
 		if (this.insertHotkey) {
 			this.scope.unregister(this.insertHotkey);
 			this.insertHotkey = undefined;
