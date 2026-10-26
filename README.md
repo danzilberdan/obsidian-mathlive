@@ -23,14 +23,14 @@
   </picture>
 </p>
 
-MathLive replaces the LaTeX in your notes with a visual math editor. Click a formula to edit it like you would in a word processor, open a larger editor window with an on-screen math keyboard, or copy a formula from a PDF or slide and scan it straight into your note.
+MathLive replaces the LaTeX in your notes with a visual math editor. Click a formula to edit it like you would in a word processor, open a larger editor window with an on-screen math keyboard, or draw a box around a formula in a PDF or slide and scan it straight into your note.
 
 ## Features
 
 - **Edit formulas where they are.** Inline `$...$` and block `$$...$$` math turn into live editors in Live Preview. Inline formulas stay at text height, so your paragraphs don't jump around.
 - **Editor window.** A focused editor for longer expressions, with `Ctrl/Cmd + Enter` to insert into the note.
 - **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
-- **Scan formula images.** Copy a screenshot of a formula and turn it into editable LaTeX, using the MathLive cloud scanner or your own self-hosted one.
+- **Scan formulas into LaTeX.** Draw a box around a formula anywhere in Obsidian, such as a PDF you have open, or scan a screenshot from your clipboard. Uses the MathLive cloud scanner or your own self-hosted one.
 - **Stays out of the way.** Each formula has one small ⋮ menu. Everything is still plain LaTeX in your Markdown files.
 
 <p align="center">
@@ -53,7 +53,7 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 **Use the editor window.** Open the command palette (`Ctrl/Cmd + P`) and run **MathLive: Add inline math** or **MathLive: Add full-line math**. If you selected a formula first, the editor window opens with it. Click **Insert into note** or press `Ctrl/Cmd + Enter` to put it in your note.
 
-**Set a hotkey.** If you write math often, assign hotkeys to both commands in **Settings → Hotkeys**.
+**Set a hotkey.** If you write math often, assign hotkeys to the commands in **Settings → Hotkeys**.
 
 <p align="center">
   <picture>
@@ -62,11 +62,13 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
   </picture>
 </p>
 
-## Scanning formula images
+## Scanning formulas
 
-1. Copy an image of a formula to your clipboard, for example a screenshot from a PDF, a slide or handwritten notes.
-2. Click **Scan clipboard image** in the editor window, or choose it from a formula's ⋮ menu.
-3. The recognized LaTeX is added to the formula. Check it and fix anything the scanner got wrong.
+**From the screen.** Open the PDF, slide or image next to your note, put the cursor where the formula should go, and click the scan icon in the left ribbon (or run **MathLive: Scan formula from screen**, which you can give a hotkey). Drag a box around the formula. Its LaTeX goes into the note at the cursor: as a math block on an empty line, or as inline math in a line of text. Press `Esc` to cancel. The editor window and a formula's ⋮ menu have **Scan from screen** too, which adds the scan to that formula.
+
+**From the clipboard.** Copy a screenshot of a formula, for example from another app or handwritten notes, then click **Scan clipboard image** in the editor window or choose it from a formula's ⋮ menu.
+
+Check the result and fix anything the scanner got wrong.
 
 You can scan with either of these:
 
@@ -101,6 +103,7 @@ Obsidian asks plugins to state the following up front.
   - `https://mathlive-ocr.danz.blog/access-status` is checked with your API key to show whether your account has unlimited scans.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
+- **Screen.** Scanning from the screen takes a picture of the Obsidian window only, and only when you start it. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
 - **Data.** The scan server turns the image into LaTeX and does not keep the image. Your account stores your email, your API keys, your scan count and when a key was last used. Server logs record requests and errors to keep the service running.
 - **No telemetry, ads or pop-ups.** The plugin does not track how you use it and shows no ads.
 

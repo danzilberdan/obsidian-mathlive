@@ -16,9 +16,11 @@ import {
 	WidgetType,
 } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
-import { Menu, setIcon } from "obsidian";
+import { type App, Menu, setIcon } from "obsidian";
 import {
 	appendLatexFromClipboardImage,
+	mathfieldScanTarget,
+	scanScreenAreaInto,
 	createMathfield,
 	moveVirtualKeyboard,
 	showMenuBelow,
@@ -47,6 +49,7 @@ export const ACCOUNT_URL = "https://mathlive.danz.blog/console";
 export const AUTHOR_URL = "https://danz.blog";
 
 export interface WidgetHooks {
+	app: App;
 	getSettings: () => PluginSettings;
 	shouldShowUpgradeButton: () => Promise<boolean>;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
@@ -189,15 +192,19 @@ class MathLiveWidget extends WidgetType {
 			}, 0);
 		};
 
+		const scanOptions = () => ({
+			settings: this.hooks.getSettings(),
+			mathfield: mfe,
+			onValueChange: (value: string) => {
+				dispatchChange(value);
+				refocusMathfield();
+			},
+		});
+		const scanScreenArea = () => {
+			void scanScreenAreaInto(this.hooks.app, mathfieldScanTarget(scanOptions()), mfe.doc);
+		};
 		const scanClipboardImage = () => {
-			void appendLatexFromClipboardImage({
-				settings: this.hooks.getSettings(),
-				mathfield: mfe,
-				onValueChange: (value) => {
-					dispatchChange(value);
-					refocusMathfield();
-				},
-			});
+			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
 		};
 
 		const menuButton = wrapper.createEl("button", {
@@ -216,7 +223,7 @@ class MathLiveWidget extends WidgetType {
 		menuButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			void this.showMenu(menuButton, mfe, view, scanClipboardImage);
+			void this.showMenu(menuButton, mfe, view, scanClipboardImage, scanScreenArea);
 		});
 
 		if (this.hooks.getSettings().immediateInlineUpdate) {
@@ -337,12 +344,16 @@ class MathLiveWidget extends WidgetType {
 		button: HTMLElement,
 		mfe: MathfieldElement,
 		view: EditorView,
-		scanClipboardImage: () => void
+		scanClipboardImage: () => void,
+		scanScreenArea: () => void
 	) {
 		const accountItem = await this.getAccountItem();
 		const menu = new Menu();
 		menu.addItem((item) =>
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
+		);
+		menu.addItem((item) =>
+			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
 		);
 		menu.addItem((item) =>
 			item

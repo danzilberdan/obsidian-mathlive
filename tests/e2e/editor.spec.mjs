@@ -32,7 +32,7 @@ test.describe("formulas in the note", () => {
 			bodyClasses: [...document.body.classList].filter((name) => name.startsWith("mathlive-")),
 			fonts: [...document.fonts].filter((font) => font.family.startsWith("KaTeX")).length,
 		}));
-		expect(state.commands.sort()).toEqual(["mathlive:open-modal", "mathlive:open-modal-inline"]);
+		expect(state.commands.sort()).toEqual(["mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area"]);
 		expect(state.bodyClasses).toEqual(
 			expect.arrayContaining(["mathlive-inline-widgets-active", "mathlive-block-widgets-active"])
 		);
@@ -120,6 +120,7 @@ test.describe("formulas in the note", () => {
 		await expect(trigger).toHaveAttribute("aria-expanded", "true");
 		await expect(menu.locator(".menu-item-title")).toHaveText([
 			"Scan clipboard image",
+			"Scan from screen",
 			"Open in editor window",
 			"Show math keyboard",
 			"Sign in to scan images",

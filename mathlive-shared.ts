@@ -1,6 +1,7 @@
 import type { MathfieldElement } from "mathlive";
-import { type Menu, Notice, requestUrl } from "obsidian";
+import { type App, type Menu, Notice, requestUrl } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
+import { selectScreenArea } from "./screen-capture";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
@@ -168,6 +169,65 @@ export function parseMathSelection(
 	};
 }
 
+// The $...$ or $$...$$ formula around an offset in the text, if there is one.
+export function findEnclosingMath(text: string, offset: number): { from: number; to: number } | null {
+	let inlineStart: number | null = null;
+	let blockStart: number | null = null;
+
+	for (let index = 0; index < text.length; ) {
+		if (text[index] !== "$" || isEscapedDollar(text, index)) {
+			index += 1;
+			continue;
+		}
+
+		const isBlockDelimiter = text[index + 1] === "$";
+		if (blockStart !== null) {
+			if (isBlockDelimiter) {
+				const end = index + 2;
+				if (offset > blockStart && offset < end) {
+					return { from: blockStart, to: end };
+				}
+				blockStart = null;
+				index = end;
+				continue;
+			}
+
+			index += 1;
+			continue;
+		}
+
+		if (inlineStart !== null) {
+			const end = index + 1;
+			if (offset > inlineStart && offset < end) {
+				return { from: inlineStart, to: end };
+			}
+			inlineStart = null;
+			index = end;
+			continue;
+		}
+
+		if (isBlockDelimiter) {
+			blockStart = index;
+			index += 2;
+			continue;
+		}
+
+		inlineStart = index;
+		index += 1;
+	}
+
+	return null;
+}
+
+function isEscapedDollar(text: string, index: number) {
+	let backslashCount = 0;
+	for (let cursor = index - 1; cursor >= 0 && text[cursor] === "\\"; cursor -= 1) {
+		backslashCount += 1;
+	}
+
+	return backslashCount % 2 === 1;
+}
+
 // Shows a menu under the button that opened it. A formula with focus keeps Escape to itself, so
 // listen for it before the formula does, or the menu can't be closed from the keyboard.
 export function showMenuBelow(menu: Menu, button: HTMLElement) {
@@ -247,6 +307,7 @@ const SCAN_FAILED_NOTICE = "Couldn't scan the image. Check your connection and t
 const NO_SCANS_LEFT_NOTICE =
 	"You've used all your free scans. Open Settings -> MathLive to upgrade to unlimited scans.";
 const NO_MATH_NOTICE = "No math found in this image. Try cropping closer to the formula. Nothing was charged.";
+const EMPTY_CLIPBOARD_NOTICE = "No image found in clipboard.";
 const BAD_IMAGE_NOTICE = "MathLive couldn't read this image. Copy the formula as a screenshot and try again.";
 
 // The scanner never sends a bigger image to a model, so there's no point uploading one.
@@ -469,27 +530,56 @@ function showScanFailure(message: string, retry?: () => void) {
 	);
 }
 
-async function scanAndAppend(
-	options: {
-		settings: PluginSettings;
-		mathfield: MathfieldElement;
-		onValueChange?: (value: string) => void;
-	},
-	image: Blob
-): Promise<boolean> {
+// Where a scan's LaTeX goes: a formula, or the cursor in a note.
+export interface ScanTarget {
+	settings: PluginSettings;
+	// False once the formula or note has closed, so a late scan has nowhere to go.
+	isOpen(): boolean;
+	insert(latex: string): void;
+	addedMessage: string;
+	closedMessage: string;
+}
+
+export function mathfieldScanTarget(options: {
+	settings: PluginSettings;
+	mathfield: MathfieldElement;
+	onValueChange?: (value: string) => void;
+}): ScanTarget {
 	const { settings, mathfield, onValueChange } = options;
+	return {
+		settings,
+		isOpen: () => mathfield.isConnected,
+		insert: (latex) => {
+			mathfield.value += latex;
+			onValueChange?.(mathfield.value);
+		},
+		addedMessage: "Scan added to the formula",
+		closedMessage: "The formula was closed before the scan finished. Open it and scan again.",
+	};
+}
+
+// The cloud scanner needs an account, so say so before the user picks an image.
+function checkCanScan(settings: PluginSettings): boolean {
+	if (!settings.useLocalInference && !settings.apiKey) {
+		new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
+		return false;
+	}
+	return true;
+}
+
+async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
+	const { settings } = target;
 
 	try {
 		new Notice("Scanning math image");
 		const latex = await scanImageToLatex(settings, image);
 		// The formula may have closed or re-rendered while the scan ran.
-		if (!mathfield.isConnected) {
-			new Notice("The formula was closed before the scan finished. Open it and scan again.");
+		if (!target.isOpen()) {
+			new Notice(target.closedMessage);
 			return false;
 		}
-		mathfield.value += latex;
-		onValueChange?.(mathfield.value);
-		new Notice("Scan added to the formula");
+		target.insert(latex);
+		new Notice(target.addedMessage);
 		return true;
 	} catch (error) {
 		const failure = error instanceof ScanError ? error.failure : "unavailable";
@@ -506,8 +596,8 @@ async function scanAndAppend(
 		} else {
 			// The retry keeps the image, so it works even after the clipboard has changed.
 			showScanFailure(SCAN_FAILED_NOTICE, () => {
-				if (mathfield.isConnected) {
-					void scanAndAppend(options, image);
+				if (target.isOpen()) {
+					void scanInto(target, image);
 				}
 			});
 		}
@@ -515,15 +605,16 @@ async function scanAndAppend(
 	}
 }
 
-export async function appendLatexFromClipboardImage(options: {
-	settings: PluginSettings;
-	mathfield: MathfieldElement;
-	onValueChange?: (value: string) => void;
-}): Promise<boolean> {
-	const { settings } = options;
-
-	if (!settings.useLocalInference && !settings.apiKey) {
-		new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
+export async function appendLatexFromClipboardImage(
+	options: {
+		settings: PluginSettings;
+		mathfield: MathfieldElement;
+		onValueChange?: (value: string) => void;
+	},
+	// Offered instead when the clipboard has no image.
+	scanScreenArea?: () => void
+): Promise<boolean> {
+	if (!checkCanScan(options.settings)) {
 		return false;
 	}
 
@@ -535,9 +626,77 @@ export async function appendLatexFromClipboardImage(options: {
 		image = null;
 	}
 	if (!image) {
-		new Notice("No image found in clipboard.");
+		showEmptyClipboard(scanScreenArea);
 		return false;
 	}
 
-	return await scanAndAppend(options, image);
+	return await scanInto(mathfieldScanTarget(options), image);
+}
+
+function showEmptyClipboard(scanScreenArea?: () => void) {
+	if (!scanScreenArea) {
+		new Notice(EMPTY_CLIPBOARD_NOTICE);
+		return;
+	}
+
+	const notice = new Notice(
+		createFragment((frag) => {
+			frag.appendText(EMPTY_CLIPBOARD_NOTICE + " You can also select the formula on screen. ");
+			const button = frag.createEl("button", { cls: "mathlive-notice-retry", text: "Select on screen" });
+			button.addEventListener("click", (event) => {
+				event.stopPropagation();
+				notice.hide();
+				scanScreenArea();
+			});
+		}),
+		10000
+	);
+}
+
+// Lets the user drag a box around a formula anywhere in the Obsidian window and scans it.
+// `hideWhileSelecting` hides something, like the editor window, from the picture and returns how
+// to show it again.
+export async function scanScreenAreaInto(
+	app: App,
+	target: ScanTarget,
+	doc: Document,
+	hideWhileSelecting?: () => () => void
+): Promise<boolean> {
+	if (!checkCanScan(target.settings)) {
+		return false;
+	}
+
+	const show = hideWhileSelecting?.();
+	let image: Blob | null;
+	try {
+		if (show) {
+			// Let the window repaint without it before the picture is taken.
+			await nextFrames(doc, 2);
+		}
+		image = await selectScreenArea(app, doc);
+	} catch (error) {
+		console.error("MathLive: couldn't take a screenshot:", error);
+		new Notice("MathLive couldn't take a screenshot of this window.");
+		return false;
+	} finally {
+		show?.();
+	}
+	if (!image || !target.isOpen()) {
+		return false;
+	}
+
+	return await scanInto(target, image);
+}
+
+function nextFrames(doc: Document, count: number): Promise<void> {
+	return new Promise((resolve) => {
+		const step = () => {
+			if (count-- <= 0) {
+				resolve();
+				return;
+			}
+			doc.win.requestAnimationFrame(step);
+		};
+		step();
+	});
 }

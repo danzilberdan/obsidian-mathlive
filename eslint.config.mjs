@@ -23,7 +23,7 @@ export default defineConfig([
 				"error",
 				{
 					brands: ["MathLive", "MathJax", "LaTeX", "Obsidian", "Docker", "Dan Zilberman", "Live Preview", "Markdown"],
-					acronyms: ["API", "OCR"],
+					acronyms: ["API", "OCR", "PDF"],
 				},
 			],
 		},

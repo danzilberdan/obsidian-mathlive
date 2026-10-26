@@ -322,3 +322,71 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline mjx-container {
 .mathlive-notice-retry {
   margin-left: var(--size-4-2);
 }
+
+/* Scanning an area of the screen: a frozen picture of the window to drag a box over. */
+.mathlive-capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-dragged-item);
+  cursor: crosshair;
+  user-select: none;
+  touch-action: none;
+}
+
+.mathlive-capture-picture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  pointer-events: none;
+}
+
+.mathlive-capture-shade {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+.mathlive-capture-overlay.is-selecting .mathlive-capture-shade {
+  display: none;
+}
+
+.mathlive-capture-box {
+  display: none;
+  position: absolute;
+  left: var(--mathlive-capture-left);
+  top: var(--mathlive-capture-top);
+  width: var(--mathlive-capture-width);
+  height: var(--mathlive-capture-height);
+  outline: 2px solid var(--interactive-accent);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.35);
+}
+
+.mathlive-capture-overlay.is-selecting .mathlive-capture-box {
+  display: block;
+}
+
+.mathlive-capture-hint {
+  position: absolute;
+  top: var(--size-4-4);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--size-4-2) var(--size-4-4);
+  border-radius: var(--radius-m);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  box-shadow: var(--shadow-s);
+  font-size: var(--font-ui-small);
+  pointer-events: none;
+}
+
+.mathlive-capture-overlay.is-selecting .mathlive-capture-hint {
+  display: none;
+}
+
+.mathlive-scan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
