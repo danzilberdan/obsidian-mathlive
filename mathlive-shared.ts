@@ -1,7 +1,7 @@
 import type { MathfieldElement } from "mathlive";
 import { Notice, requestUrl } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
-import type { PluginSettings } from "./settings";
+import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
 let mathfieldElementCtor: MathfieldElementCtor | null = null;
@@ -252,7 +252,7 @@ export async function scanImageToLatex(
 ): Promise<string> {
 	let address = "https://mathlive-ocr.danz.blog";
 	if (settings.useLocalInference) {
-		address = "http://localhost:8502";
+		address = (settings.localInferenceUrl.trim() || DEFAULT_SETTINGS.localInferenceUrl).replace(/\/+$/, "");
 	}
 
 	const { body, contentType } = await buildMultipartBody("file", imageData);

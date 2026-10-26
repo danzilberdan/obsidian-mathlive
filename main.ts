@@ -237,11 +237,22 @@ export class MathliveSettingTab extends PluginSettingTab {
 
 	new Setting(containerEl)
 		.setName("Self-hosted scanner")
-		.setDesc("Send scans to a scanner you run yourself at localhost:8502 instead of the cloud. Free, but needs Docker and some technical setup.")
+		.setDesc("Send scans to a scanner you run yourself instead of the cloud. Free, but needs Docker and some technical setup.")
 		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
 			this.plugin.settings.useLocalInference = val;
 			await this.plugin.saveSettings({ refreshCloudAccessStatus: true })
 		}));
+
+	new Setting(containerEl)
+		.setName("Self-hosted scanner address")
+		.setDesc("Where your scanner runs, for example on another computer in your network.")
+		.addText(tc => tc
+			.setPlaceholder(DEFAULT_SETTINGS.localInferenceUrl)
+			.setValue(this.plugin.settings.localInferenceUrl)
+			.onChange(async val => {
+				this.plugin.settings.localInferenceUrl = val.trim();
+				await this.plugin.saveSettings()
+			}));
 
 	new Setting(containerEl).setName("Inline editor").setHeading();
 
@@ -382,6 +393,9 @@ class MathLiveModal extends Modal {
 				this.renderedResult = resultRenderTemplate(value);
 			},
 		});
+		// Inline-math mode doesn't scroll long formulas in the modal (#21). The note still gets
+		// inline math, because resultRenderTemplate decides the $ or $$ delimiters.
+		this.mfe.defaultMode = "math";
 		this.mfe.addEventListener("keydown", (event: KeyboardEvent) => {
 			if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey)) {
 				return;
@@ -648,5 +662,8 @@ class MathLiveModal extends Modal {
 		}
 
 		this.editor.replaceRange(this.renderedResult, this.replaceFrom, this.replaceTo);
+		// Leave the cursor after the inserted math so typing can continue (#22).
+		const endOffset = this.editor.posToOffset(this.replaceFrom) + this.renderedResult.length;
+		this.editor.setCursor(this.editor.offsetToPos(endOffset));
 	}
 }

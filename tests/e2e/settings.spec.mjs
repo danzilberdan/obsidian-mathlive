@@ -55,6 +55,7 @@ test.describe("settings", () => {
 			expect.arrayContaining([
 				"API key",
 				"Self-hosted scanner",
+				"Self-hosted scanner address",
 				"Enable inline editor mode",
 				"Enable inline math widgets",
 				"Enable block math widgets",
@@ -76,6 +77,17 @@ test.describe("settings", () => {
 		await expect
 			.poll(() => readSavedSettings(obsidian.vault))
 			.toMatchObject({ apiKey: "test-key-123", useLocalInference: true });
+	});
+
+	test("the self-hosted scanner address is saved", async ({ obsidian }) => {
+		const settingsWindow = await openSettings(obsidian);
+		const input = settingRow(settingsWindow, "Self-hosted scanner address").locator("input");
+		await expect(input).toHaveValue("http://localhost:8502");
+		await input.fill("http://192.168.1.20:8502");
+
+		await expect
+			.poll(() => readSavedSettings(obsidian.vault))
+			.toMatchObject({ localInferenceUrl: "http://192.168.1.20:8502" });
 	});
 
 	test("turning off inline widgets keeps block widgets", async ({ obsidian, page }) => {
