@@ -66,7 +66,7 @@ class MathLiveWidget extends WidgetType {
 	}
 
 	toDOM(view: EditorView): HTMLElement {
-		const wrapper = document.createElement("div");
+		const wrapper = createDiv();
 		const mfe = createMathfield({
 			initialValue: this.equation,
 			inline: this.isInline,
@@ -99,7 +99,7 @@ class MathLiveWidget extends WidgetType {
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
 
-		const activeElement = document.activeElement;
+		const activeElement = wrapper.doc.activeElement;
 		const isFocused =
 			activeElement === mfe ||
 			(activeElement instanceof Node && mfe.contains(activeElement));
@@ -178,8 +178,7 @@ class MathLiveWidget extends WidgetType {
 			}, 0);
 		};
 
-		const toolbar = document.createElement("div");
-		toolbar.addClass("obsidian-mathlive-widget-menu");
+		const toolbar = createDiv({ cls: "obsidian-mathlive-widget-menu" });
 		wrapper.prepend(toolbar);
 		const actionGroup = toolbar.createDiv({ cls: "obsidian-mathlive-widget-menu-group" });
 		const pasteImageButton = actionGroup.createEl("button", {
@@ -234,7 +233,7 @@ class MathLiveWidget extends WidgetType {
 			dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
 			menuTrigger.setAttr("aria-expanded", "false");
 			if (menuOutsideListener) {
-				document.removeEventListener("click", menuOutsideListener);
+				menuWrap.doc.removeEventListener("click", menuOutsideListener);
 				menuOutsideListener = undefined;
 			}
 		};
@@ -247,7 +246,7 @@ class MathLiveWidget extends WidgetType {
 						closeMenu();
 					}
 				};
-				document.addEventListener("click", menuOutsideListener);
+				menuWrap.doc.addEventListener("click", menuOutsideListener);
 			}, 0);
 		};
 
@@ -301,14 +300,14 @@ class MathLiveWidget extends WidgetType {
 		});
 
 		mfe.addEventListener("focus", () => {
-			updateEditingBodyClass(this.isInline, true);
+			updateEditingBodyClass(mfe.doc, this.isInline, true);
 		});
 
 		mfe.addEventListener("blur", () => {
 			window.setTimeout(() => {
-				if (!isFocusInMathField()) {
-					updateEditingBodyClass(true, false);
-					updateEditingBodyClass(false, false);
+				if (!isFocusInMathField(mfe.doc)) {
+					updateEditingBodyClass(mfe.doc, true, false);
+					updateEditingBodyClass(mfe.doc, false, false);
 				}
 			}, 0);
 		});
@@ -327,7 +326,7 @@ class MathLiveWidget extends WidgetType {
 			"keydown",
 			(event: KeyboardEvent) => {
 				const settings = this.getSettings();
-				const activeElement = document.activeElement;
+				const activeElement = wrapper.doc.activeElement;
 				const isFocused =
 					activeElement === mfe ||
 					(activeElement instanceof Node && mfe.contains(activeElement));
@@ -411,8 +410,8 @@ class MathLiveWidget extends WidgetType {
 	}
 }
 
-function isFocusInMathField(): boolean {
-	const active = document.activeElement as HTMLElement | null;
+function isFocusInMathField(doc: Document): boolean {
+	const active = doc.activeElement as HTMLElement | null;
 	if (active?.closest?.("math-field")) {
 		return true;
 	}
@@ -427,15 +426,9 @@ function isFocusInMathField(): boolean {
 	return false;
 }
 
-function updateEditingBodyClass(isInline: boolean, isEditing: boolean) {
+function updateEditingBodyClass(doc: Document, isInline: boolean, isEditing: boolean) {
 	const className = isInline ? "mathlive-editing-inline" : "mathlive-editing-block";
-
-	if (isEditing) {
-		document.body.addClass(className);
-		return;
-	}
-
-	document.body.removeClass(className);
+	doc.body.toggleClass(className, isEditing);
 }
 
 function getMathFieldEntries(view: EditorView): MathFieldEntry[] {
@@ -491,7 +484,7 @@ function tryEnter(
 	match: (entry: MathFieldEntry, head: number, doc: Text) => boolean,
 	atStart: boolean
 ): boolean {
-	if (isFocusInMathField()) {
+	if (isFocusInMathField(view.dom.doc)) {
 		return false;
 	}
 
@@ -541,7 +534,7 @@ function enterMathLiveOnArrow(getSettings: () => PluginSettings): Extension {
 				key: "ArrowDown",
 				run: (view) => {
 					const settings = getSettings();
-					if (!settings.arrowKeyNavigation || isFocusInMathField()) {
+					if (!settings.arrowKeyNavigation || isFocusInMathField(view.dom.doc)) {
 						return false;
 					}
 

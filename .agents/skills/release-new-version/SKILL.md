@@ -39,7 +39,7 @@ Use this skill for this repo's release flow.
 Pushing the tag triggers `.github/workflows/release.yml`, which:
 
 - builds the plugin
-- attaches `main.js`, `manifest.json`, `styles.css`, and a zip asset
+- attaches `main.js`, `manifest.json`, and `styles.css` with build provenance attestations
 - creates the GitHub release automatically
 
 ## Notes

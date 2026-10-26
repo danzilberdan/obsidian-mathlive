@@ -1,27 +1,29 @@
 import type { MathfieldElement } from "mathlive";
-import { Notice } from "obsidian";
+import { Notice, requestUrl } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
 import type { PluginSettings } from "./settings";
 
-const MATHLIVE_FONT_STYLE_ID = "mathlive-static-fonts";
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
 let mathfieldElementCtor: MathfieldElementCtor | null = null;
 let mathliveLoadPromise: Promise<MathfieldElementCtor> | null = null;
+const fontDocuments = new WeakSet<Document>();
 
-function ensureStaticMathliveFonts() {
-	document.documentElement.style.setProperty("--ML__static-fonts", "true");
-
-	if (document.getElementById(MATHLIVE_FONT_STYLE_ID)) {
+// Registers MathLive's bundled fonts with the FontFace API. MathLive skips its own font
+// loading because styles.css sets --ML__static-fonts.
+export function registerMathliveFonts(doc: Document) {
+	if (fontDocuments.has(doc)) {
 		return;
 	}
+	fontDocuments.add(doc);
 
-	const style = document.createElement("style");
-	style.id = MATHLIVE_FONT_STYLE_ID;
-	style.textContent = FONT_FILES.map(
-		([family, source, styleName, weight]) =>
-			`@font-face{font-display:swap;font-family:${family};font-style:${styleName};font-weight:${weight};src:url("${source}") format("woff2")}`
-	).join("");
-	document.head.appendChild(style);
+	for (const [family, source, styleName, weight] of FONT_FILES) {
+		const face = new FontFace(family, `url("${source}") format("woff2")`, {
+			display: "swap",
+			style: styleName,
+			weight,
+		});
+		doc.fonts.add(face);
+	}
 }
 
 function shouldSuppressMathliveImportError(args: unknown[]): boolean {
@@ -90,9 +92,9 @@ export interface MathfieldConfig {
 export const CLOUD_OCR_AUTH_NOTICE =
 	'Open Settings -> MathLive and configure your API key. If you use cloud OCR, make sure your remote account is funded. More info is available in settings.';
 
-export async function ensureMathfieldElementRegistered() {
+export async function ensureMathfieldElementRegistered(doc: Document = activeDocument) {
 	const MathfieldElement = await loadMathfieldElement();
-	ensureStaticMathliveFonts();
+	registerMathliveFonts(doc);
 	MathfieldElement.fontsDirectory = null;
 	MathfieldElement.soundsDirectory = null;
 
@@ -166,7 +168,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 		throw new Error("MathLive was not initialized before creating a math-field.");
 	}
 
-	const mfe = document.createElement("math-field") as MathfieldElement;
+	const mfe = new mathfieldElementCtor();
 	if (config.id) {
 		mfe.id = config.id;
 	}
@@ -201,22 +203,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 }
 
 function isCloudOcrAuthorizationError(error: unknown): boolean {
-	if (!(error instanceof Error)) {
-		return false;
-	}
-
-	if (error.message === CLOUD_OCR_AUTH_NOTICE) {
-		return true;
-	}
-
-	if (/status 4\d\d/.test(error.message)) {
-		return true;
-	}
-
-	// Some browser/Electron fetch failures never expose the 4xx response and only surface
-	// a generic network error to the plugin. Treat those cloud OCR failures as auth/setup
-	// guidance rather than falling back to the console-only notice.
-	return error.name === "TypeError" && /Failed to fetch|Load failed|NetworkError/i.test(error.message);
+	return error instanceof Error && error.message === CLOUD_OCR_AUTH_NOTICE;
 }
 
 async function readClipboardImageBlob(): Promise<Blob | null> {
@@ -232,6 +219,28 @@ async function readClipboardImageBlob(): Promise<Blob | null> {
 	return null;
 }
 
+async function buildMultipartBody(
+	fieldName: string,
+	file: Blob
+): Promise<{ body: ArrayBuffer; contentType: string }> {
+	const boundary = `----MathLiveBoundary${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+	const encoder = new TextEncoder();
+	const head = encoder.encode(
+		`--${boundary}\r\n` +
+			`Content-Disposition: form-data; name="${fieldName}"; filename="image"\r\n` +
+			`Content-Type: ${file.type || "application/octet-stream"}\r\n\r\n`
+	);
+	const content = new Uint8Array(await file.arrayBuffer());
+	const tail = encoder.encode(`\r\n--${boundary}--\r\n`);
+
+	const body = new Uint8Array(head.length + content.length + tail.length);
+	body.set(head, 0);
+	body.set(content, head.length);
+	body.set(tail, head.length + content.length);
+
+	return { body: body.buffer, contentType: `multipart/form-data; boundary=${boundary}` };
+}
+
 export async function scanImageToLatex(
 	settings: PluginSettings,
 	imageData: Blob
@@ -241,34 +250,32 @@ export async function scanImageToLatex(
 		address = "http://localhost:8502";
 	}
 
-	const formData = new FormData();
-	formData.append("file", imageData);
+	const { body, contentType } = await buildMultipartBody("file", imageData);
+	const res = await requestUrl({
+		url: address + "/predict/",
+		method: "POST",
+		contentType,
+		headers: {
+			"Api-Key": settings.apiKey ?? "",
+		},
+		body,
+		throw: false,
+	});
 
-	let res: Response;
-	try {
-		res = await fetch(address + "/predict/", {
-			headers: {
-				"Api-key": settings.apiKey ?? "",
-			},
-			method: "POST",
-			body: formData,
-		});
-	} catch (error) {
-		if (!settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
-			throw new Error(CLOUD_OCR_AUTH_NOTICE);
-		}
-		throw error;
+	if (res.status >= 400 && res.status < 500) {
+		throw new Error(CLOUD_OCR_AUTH_NOTICE);
 	}
 
-	if (!res.ok) {
-		if (res.status >= 400 && res.status < 500) {
-			throw new Error(CLOUD_OCR_AUTH_NOTICE);
-		}
-
+	if (res.status >= 500) {
 		throw new Error(`OCR request failed with status ${res.status}.`);
 	}
 
-	return await res.json();
+	const latex: unknown = res.json;
+	if (typeof latex !== "string") {
+		throw new Error("OCR response did not contain LaTeX.");
+	}
+
+	return latex;
 }
 
 export async function appendLatexFromClipboardImage(options: {
@@ -294,7 +301,7 @@ export async function appendLatexFromClipboardImage(options: {
 		const latex = await scanImageToLatex(settings, imageBlob);
 		mathfield.value += latex;
 		onValueChange?.(mathfield.value);
-		new Notice("Got scan result for MathJax");
+		new Notice("Scan added to the formula");
 		return true;
 	} catch (error) {
 		if (!settings.useLocalInference && isCloudOcrAuthorizationError(error)) {
@@ -303,7 +310,7 @@ export async function appendLatexFromClipboardImage(options: {
 		}
 
 		console.error("Error reading clipboard or uploading image:", error);
-		new Notice("Failed to scan image. See console for details.");
+		new Notice("Couldn't scan the image. Check your connection and try again.");
 		return false;
 	}
 }

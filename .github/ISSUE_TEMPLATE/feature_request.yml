@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest an idea for MathLive
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the problem or the moment where MathLive gets in your way.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: Your idea for a solution, if you have one.

@@ -1,4 +1,6 @@
 :root {
+  /* MathLive's fonts are bundled and registered by the plugin. */
+  --ML__static-fonts: true;
   --selection-background-color: rgba(0,0,0,0.5);
   --selection-color: rgb(73, 201, 206);
   --highlight-text: rgb(73, 201, 206);
@@ -448,4 +450,7 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline mjx-container {
   gap: 0.75rem;
   width: 100%;
   margin-top: 0.5rem;
+}
+.mathlive-settings-intro {
+  white-space: pre-wrap;
 }
