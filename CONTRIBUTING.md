@@ -15,7 +15,8 @@ Open an issue with the **Feature request** template and describe the problem you
 1. Follow [DEVELOPMENT.md](DEVELOPMENT.md) to build the plugin and load it in a test vault.
 2. Keep the change focused on one fix or feature.
 3. Run `npm run lint` and `npm run build`. Both must pass with no warnings, because every release is checked by Obsidian's automated review.
-4. Describe what you changed and how you tested it in the pull request.
+4. Run `npm run test:e2e`. It downloads Obsidian, installs the plugin in a throwaway vault and clicks through every feature. On Linux without a screen it needs `xvfb-run`. If you add or change a feature, add a test for it in `tests/e2e/`.
+5. Describe what you changed and how you tested it in the pull request.
 
 Code follows [Obsidian's plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines). In particular: use `activeDocument` and Obsidian's element helpers (`createEl`, `createDiv`) instead of `document`, use `requestUrl` for network calls, put styles in `styles.css`, and never add telemetry to the plugin.
 
