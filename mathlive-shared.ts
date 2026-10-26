@@ -93,14 +93,19 @@ export const CLOUD_OCR_AUTH_NOTICE =
 	'Open Settings -> MathLive and configure your API key. If you use cloud OCR, make sure your remote account is funded. More info is available in settings.';
 
 export async function ensureMathfieldElementRegistered(doc: Document = activeDocument) {
-	const MathfieldElement = await loadMathfieldElement();
+	const loaded = await loadMathfieldElement();
 	registerMathliveFonts(doc);
-	MathfieldElement.fontsDirectory = null;
-	MathfieldElement.soundsDirectory = null;
 
 	if (customElements.get("math-field") === undefined) {
-		customElements.define("math-field", MathfieldElement);
+		customElements.define("math-field", loaded);
 	}
+
+	// After the plugin is disabled and enabled again (or updated), the tag stays bound to the
+	// class from the first load, and only that class can be constructed.
+	const MathfieldElement = customElements.get("math-field") as MathfieldElementCtor;
+	MathfieldElement.fontsDirectory = null;
+	MathfieldElement.soundsDirectory = null;
+	mathfieldElementCtor = MathfieldElement;
 }
 
 export function parseMathSelection(
