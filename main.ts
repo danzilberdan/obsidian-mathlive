@@ -23,6 +23,7 @@ import {
 	appendLatexFromClipboardImage,
 	moveVirtualKeyboard,
 	parseMathSelection,
+	showMenuBelow,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 
@@ -579,10 +580,7 @@ class MathLiveModal extends Modal {
 				.setIcon("external-link")
 				.onClick(() => window.open(AUTHOR_URL))
 		);
-		const rect = button.getBoundingClientRect();
-		button.setAttr("aria-expanded", "true");
-		menu.onHide(() => button.setAttr("aria-expanded", "false"));
-		menu.showAtPosition({ x: rect.left, y: rect.bottom, width: rect.width }, button.doc);
+		showMenuBelow(menu, button);
 	}
 
 	initSubmitButton(actions: HTMLElement) {

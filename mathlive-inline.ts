@@ -17,7 +17,12 @@ import {
 } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
 import { Menu, setIcon } from "obsidian";
-import { appendLatexFromClipboardImage, createMathfield, moveVirtualKeyboard } from "./mathlive-shared";
+import {
+	appendLatexFromClipboardImage,
+	createMathfield,
+	moveVirtualKeyboard,
+	showMenuBelow,
+} from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
 interface WidgetConfig {
@@ -374,10 +379,7 @@ class MathLiveWidget extends WidgetType {
 				.onClick(() => window.open(AUTHOR_URL))
 		);
 
-		const rect = button.getBoundingClientRect();
-		button.setAttr("aria-expanded", "true");
-		menu.onHide(() => button.setAttr("aria-expanded", "false"));
-		menu.showAtPosition({ x: rect.left, y: rect.bottom, width: rect.width }, button.doc);
+		showMenuBelow(menu, button);
 	}
 
 	private async getAccountItem(): Promise<string | undefined> {
