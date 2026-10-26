@@ -3,9 +3,12 @@ import {
 	clearClipboard,
 	expect,
 	inlineField,
+	inlineWidget,
+	menuItem,
 	modalField,
 	noteLine,
 	notices,
+	openWidgetMenu,
 	putImageOnClipboard,
 	runCommand,
 	setSettings,
@@ -23,9 +26,9 @@ test.describe("scanning a formula image", () => {
 		expect(await putImageOnClipboard(page)).toBe(true);
 	});
 
-	test("the scan button on a formula adds the scanned LaTeX", async ({ page, scanner }) => {
-		const widget = page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper").first();
-		await widget.getByRole("button", { name: "Paste LaTeX from clipboard image" }).click();
+	test("Scan clipboard image in a formula's ⋮ menu adds the scanned LaTeX", async ({ page, scanner }) => {
+		await openWidgetMenu(page, inlineWidget(page, 0));
+		await menuItem(page, "Scan clipboard image").click();
 
 		await expect(notices(page).filter({ hasText: "Scan added to the formula" })).toBeVisible();
 		await expect.poll(() => noteLine(page, "Inline math")).toBe(`Inline math $x^2 + y^2 = z^2${SCANNED_LATEX}$ in a sentence.`);

@@ -1,4 +1,4 @@
-import { expect, modalField, noteLine, noteText, runCommand, test, waitForModalField } from "./fixtures.mjs";
+import { blockField, expect, focusField, menuItem, modalField, noteLine, noteText, runCommand, test, waitForModalField } from "./fixtures.mjs";
 
 const selectInLine = (page, prefix, from, to) =>
 	page.evaluate(
@@ -91,15 +91,35 @@ test.describe("formula editor window", () => {
 		expect(await noteLine(page, "Plain paragraph")).toBe("Plain paragraph between formulas. $e^{x}$");
 	});
 
-	test("the window's More options menu opens and closes", async ({ page }) => {
+	test("the window's ⋮ menu sits by the close button and opens Obsidian's menu", async ({ page }) => {
 		await runCommand(page, "mathlive:open-modal");
-		const header = page.locator(".mathlive-modal-header");
-		const dropdown = header.locator(".mathlive-modal-menu-dropdown");
-		await header.locator(".mathlive-modal-menu-trigger").click();
-		await expect(dropdown).not.toHaveClass(/--hidden/);
-		await expect(dropdown.getByRole("link", { name: "Made by Dan Zilberman" })).toBeVisible();
+		await waitForModalField(page);
+		const trigger = page.locator(".mathlive-modal-root .mathlive-modal-menu-trigger");
+		const close = page.locator(".mathlive-modal-root .modal-close-button, .mathlive-modal-root .modal > .modal-header-button");
+		const triggerBox = await trigger.boundingBox();
+		const closeBox = await close.first().boundingBox();
+		// Same row as the close button, just to its left, without overlapping it.
+		expect(Math.abs(triggerBox.y - closeBox.y)).toBeLessThanOrEqual(2);
+		expect(triggerBox.x + triggerBox.width).toBeLessThanOrEqual(closeBox.x);
+
+		await trigger.click();
+		await expect(menuItem(page, "Made by Dan Zilberman")).toBeVisible();
+		await expect(menuItem(page, "Sign in to scan images")).toBeVisible();
+		// A click elsewhere in the window closes the menu and leaves the window open.
 		await page.locator(".mathlive-modal-title").click();
-		await expect(dropdown).toHaveClass(/--hidden/);
+		await expect(page.locator(".menu")).toHaveCount(0);
+		await expect(modalField(page)).toBeVisible();
+	});
+
+	test("the window's buttons sit on one row under the formula", async ({ page }) => {
+		await runCommand(page, "mathlive:open-modal");
+		await waitForModalField(page);
+		const scan = await page.locator(".mathlive-modal-root .scan-button").boundingBox();
+		const insert = await page.locator(".mathlive-modal-root button.submit").boundingBox();
+		const field = await modalField(page).boundingBox();
+		expect(Math.abs(scan.y - insert.y)).toBeLessThanOrEqual(2);
+		expect(scan.y).toBeGreaterThan(field.y + field.height);
+		await expect(page.locator(".mathlive-modal-root button.submit")).toContainText("Insert into note");
 	});
 
 	test("the virtual keyboard opens inside the window", async ({ page }) => {
@@ -112,13 +132,13 @@ test.describe("formula editor window", () => {
 		await expect(modalField(page)).toHaveJSProperty("value", "7");
 	});
 
-	test("MathLive's own menu opens from a formula in the note", async ({ page }) => {
-		const field = page.locator(".cm-content math-field").first();
-		await field.click();
+	test("MathLive's own menu opens from a block formula in the note", async ({ page }) => {
+		const field = blockField(page);
+		// The plugin moves focus into a clicked formula a moment later, which would take it from the menu.
+		await focusField(field);
 		await field.locator("[part=menu-toggle]").click();
 		await expect(page.getByText("Insert Matrix")).toBeVisible();
-		// A click outside closes it.
-		await page.mouse.click(700, 700);
+		await page.keyboard.press("Escape");
 		await expect(page.getByText("Insert Matrix")).toBeHidden();
 	});
 });

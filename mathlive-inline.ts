@@ -16,8 +16,8 @@ import {
 	WidgetType,
 } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
-import { setIcon } from "obsidian";
-import { appendLatexFromClipboardImage, createMathfield } from "./mathlive-shared";
+import { Menu, setIcon } from "obsidian";
+import { appendLatexFromClipboardImage, createMathfield, moveVirtualKeyboard } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
 interface WidgetConfig {
@@ -38,15 +38,21 @@ interface MathFieldEntry {
 	isInline: boolean;
 }
 
-const ACCOUNT_URL = "https://mathlive.danz.blog/console";
+export const ACCOUNT_URL = "https://mathlive.danz.blog/console";
+export const AUTHOR_URL = "https://danz.blog";
+
+export interface WidgetHooks {
+	getSettings: () => PluginSettings;
+	shouldShowUpgradeButton: () => Promise<boolean>;
+	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
+}
 
 class MathLiveWidget extends WidgetType {
 	constructor(
 		private readonly config: WidgetConfig,
 		private equation: string,
 		private readonly isInline: boolean,
-		private readonly getSettings: () => PluginSettings,
-		private readonly shouldShowUpgradeButton: () => Promise<boolean>
+		private readonly hooks: WidgetHooks
 	) {
 		super();
 	}
@@ -114,7 +120,7 @@ class MathLiveWidget extends WidgetType {
 	}
 
 	private style(wrapper: HTMLDivElement) {
-		const settings = this.getSettings();
+		const settings = this.hooks.getSettings();
 
 		if (!settings.enableInlineEditorMode) {
 			wrapper.addClass("hidden");
@@ -178,92 +184,37 @@ class MathLiveWidget extends WidgetType {
 			}, 0);
 		};
 
-		const toolbar = createDiv({ cls: "obsidian-mathlive-widget-menu" });
-		wrapper.prepend(toolbar);
-		const actionGroup = toolbar.createDiv({ cls: "obsidian-mathlive-widget-menu-group" });
-		const pasteImageButton = actionGroup.createEl("button", {
-			cls: "obsidian-mathlive-widget-menu-button",
-			attr: {
-				type: "button",
-				"aria-label": "Paste LaTeX from clipboard image",
-			},
-		});
-		setIcon(pasteImageButton, "image-plus");
-		pasteImageButton.addEventListener("mousedown", (event) => {
-			event.preventDefault();
-		});
-		pasteImageButton.addEventListener("click", (event) => {
-			event.preventDefault();
-			event.stopPropagation();
+		const scanClipboardImage = () => {
 			void appendLatexFromClipboardImage({
-				settings: this.getSettings(),
+				settings: this.hooks.getSettings(),
 				mathfield: mfe,
 				onValueChange: (value) => {
 					dispatchChange(value);
 					refocusMathfield();
 				},
 			});
-		});
-		void this.renderAccountLink(actionGroup, wrapper);
+		};
 
-		const menuWrap = toolbar.createDiv({ cls: "mathlive-modal-menu obsidian-mathlive-widget-overflow-menu" });
-		const menuTrigger = menuWrap.createEl("button", {
-			cls: "mathlive-modal-menu-trigger obsidian-mathlive-widget-menu-button",
+		const menuButton = wrapper.createEl("button", {
+			cls: "obsidian-mathlive-widget-menu-button clickable-icon",
 			attr: {
 				type: "button",
 				"aria-label": "More options",
-				"aria-expanded": "false",
-				"aria-haspopup": "true",
+				"aria-haspopup": "menu",
 			},
 		});
-		setIcon(menuTrigger, "more-vertical");
-
-		const dropdown = menuWrap.createDiv({ cls: "mathlive-modal-menu-dropdown" });
-		const link = dropdown.createEl("a", {
-			cls: "mathlive-modal-menu-item external-link",
-			text: "Made by Dan Zilberman",
-			href: "https://danz.blog",
-		});
-		link.setAttr("target", "_blank");
-		link.setAttr("rel", "noopener noreferrer");
-		dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
-
-		let menuOutsideListener: ((event: MouseEvent) => void) | undefined;
-		const closeMenu = () => {
-			dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
-			menuTrigger.setAttr("aria-expanded", "false");
-			if (menuOutsideListener) {
-				menuWrap.doc.removeEventListener("click", menuOutsideListener);
-				menuOutsideListener = undefined;
-			}
-		};
-		const openMenu = () => {
-			dropdown.removeClass("mathlive-modal-menu-dropdown--hidden");
-			menuTrigger.setAttr("aria-expanded", "true");
-			window.setTimeout(() => {
-				menuOutsideListener = (menuEvent: MouseEvent) => {
-					if (!menuWrap.contains(menuEvent.target as Node)) {
-						closeMenu();
-					}
-				};
-				menuWrap.doc.addEventListener("click", menuOutsideListener);
-			}, 0);
-		};
-
-		menuTrigger.addEventListener("mousedown", (event) => {
+		setIcon(menuButton, "more-vertical");
+		menuButton.addEventListener("mousedown", (event) => {
+			// Keep the cursor where it is.
 			event.preventDefault();
 		});
-		menuTrigger.addEventListener("click", (event) => {
+		menuButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			if (dropdown.hasClass("mathlive-modal-menu-dropdown--hidden")) {
-				openMenu();
-				return;
-			}
-			closeMenu();
+			void this.showMenu(menuButton, mfe, view, scanClipboardImage);
 		});
 
-		if (this.getSettings().immediateInlineUpdate) {
+		if (this.hooks.getSettings().immediateInlineUpdate) {
 			mfe.addEventListener("input", () => {
 				if (this.equation !== mfe.value) {
 					dispatchChange(mfe.value);
@@ -300,6 +251,8 @@ class MathLiveWidget extends WidgetType {
 		});
 
 		mfe.addEventListener("focus", () => {
+			// The keyboard opens in the window this formula is in.
+			moveVirtualKeyboard(mfe.doc.body);
 			updateEditingBodyClass(mfe.doc, this.isInline, true);
 		});
 
@@ -325,7 +278,7 @@ class MathLiveWidget extends WidgetType {
 		wrapper.addEventListener(
 			"keydown",
 			(event: KeyboardEvent) => {
-				const settings = this.getSettings();
+				const settings = this.hooks.getSettings();
 				const activeElement = wrapper.doc.activeElement;
 				const isFocused =
 					activeElement === mfe ||
@@ -375,38 +328,65 @@ class MathLiveWidget extends WidgetType {
 		);
 	}
 
-	private async renderAccountLink(actionGroup: HTMLElement, wrapper: HTMLDivElement) {
-		const settings = this.getSettings();
-		if (!settings.useLocalInference && !settings.apiKey?.trim()) {
-			this.appendAccountLink(actionGroup, "Sign in");
-			return;
+	private async showMenu(
+		button: HTMLElement,
+		mfe: MathfieldElement,
+		view: EditorView,
+		scanClipboardImage: () => void
+	) {
+		const accountItem = await this.getAccountItem();
+		const menu = new Menu();
+		menu.addItem((item) =>
+			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
+		);
+		menu.addItem((item) =>
+			item
+				.setTitle("Open in editor window")
+				.setIcon("maximize-2")
+				.onClick(() => {
+					const from = Number.parseInt(mfe.dataset.from ?? `${this.config.from}`, 10);
+					this.hooks.openEditorWindow(view, from, this.isInline);
+				})
+		);
+		menu.addItem((item) =>
+			item
+				.setTitle("Show math keyboard")
+				.setIcon("keyboard")
+				.onClick(() => {
+					moveVirtualKeyboard(mfe.doc.body);
+					mfe.focus();
+					mfe.executeCommand("showVirtualKeyboard");
+				})
+		);
+		menu.addSeparator();
+		if (accountItem) {
+			menu.addItem((item) =>
+				item
+					.setTitle(accountItem)
+					.setIcon("user")
+					.onClick(() => window.open(ACCOUNT_URL))
+			);
 		}
+		menu.addItem((item) =>
+			item
+				.setTitle("Made by Dan Zilberman")
+				.setIcon("external-link")
+				.onClick(() => window.open(AUTHOR_URL))
+		);
 
-		if (!(await this.shouldShowUpgradeButton()) || !wrapper.isConnected) {
-			return;
-		}
-
-		this.appendAccountLink(actionGroup, "Upgrade");
+		const rect = button.getBoundingClientRect();
+		button.setAttr("aria-expanded", "true");
+		menu.onHide(() => button.setAttr("aria-expanded", "false"));
+		menu.showAtPosition({ x: rect.left, y: rect.bottom, width: rect.width }, button.doc);
 	}
 
-	private appendAccountLink(actionGroup: HTMLElement, text: string) {
-		if (actionGroup.querySelector(".obsidian-mathlive-widget-account-link")) {
-			return;
+	private async getAccountItem(): Promise<string | undefined> {
+		const settings = this.hooks.getSettings();
+		if (!settings.useLocalInference && !settings.apiKey?.trim()) {
+			return "Sign in to scan images";
 		}
 
-		const accountLink = actionGroup.createEl("a", {
-			cls: "obsidian-mathlive-widget-account-link external-link",
-			text,
-			href: ACCOUNT_URL,
-		});
-		accountLink.setAttr("target", "_blank");
-		accountLink.setAttr("rel", "noopener noreferrer");
-		accountLink.addEventListener("mousedown", (event) => {
-			event.preventDefault();
-		});
-		accountLink.addEventListener("click", (event) => {
-			event.stopPropagation();
-		});
+		return (await this.hooks.shouldShowUpgradeButton()) ? "Upgrade for more scans" : undefined;
 	}
 }
 
@@ -740,13 +720,9 @@ function collectMathRangesFromDoc(source: string): MathRange[] {
 	return ranges;
 }
 
-function buildDecorations(
-	state: Transaction["state"],
-	getSettings: () => PluginSettings,
-	shouldShowUpgradeButton: () => Promise<boolean>
-): DecorationSet {
+function buildDecorations(state: Transaction["state"], hooks: WidgetHooks): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>();
-	const settings = getSettings();
+	const settings = hooks.getSettings();
 	if (!settings.enableInlineEditorMode) {
 		return builder.finish();
 	}
@@ -759,8 +735,7 @@ function buildDecorations(
 			{ from: range.from, to: range.to },
 			equation,
 			range.isInline,
-			getSettings,
-			shouldShowUpgradeButton
+			hooks
 		);
 
 		if (!range.isInline) {
@@ -800,19 +775,16 @@ function buildDecorations(
 	return builder.finish();
 }
 
-export function createInlineMathEditorExtension(
-	getSettings: () => PluginSettings,
-	shouldShowUpgradeButton: () => Promise<boolean>
-): Extension {
+export function createInlineMathEditorExtension(hooks: WidgetHooks): Extension {
 	return StateField.define<DecorationSet>({
 		create(state) {
-			return buildDecorations(state, getSettings, shouldShowUpgradeButton);
+			return buildDecorations(state, hooks);
 		},
 		update(_oldState: DecorationSet, transaction: Transaction): DecorationSet {
-			return buildDecorations(transaction.state, getSettings, shouldShowUpgradeButton);
+			return buildDecorations(transaction.state, hooks);
 		},
 		provide(field) {
-			return [EditorView.decorations.from(field), enterMathLiveOnArrow(getSettings)];
+			return [EditorView.decorations.from(field), enterMathLiveOnArrow(hooks.getSettings)];
 		},
 	});
 }

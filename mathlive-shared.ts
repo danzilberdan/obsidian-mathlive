@@ -168,6 +168,19 @@ export function parseMathSelection(
 	};
 }
 
+// MathLive has one virtual keyboard. When it moves to another container while it is showing, the
+// space it made at the bottom of the old one stays behind, so close it first.
+export function moveVirtualKeyboard(container: HTMLElement) {
+	const keyboard = window.mathVirtualKeyboard;
+	if (keyboard.container === container) {
+		return;
+	}
+	if (keyboard.visible) {
+		keyboard.hide();
+	}
+	keyboard.container = container;
+}
+
 export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	if (!mathfieldElementCtor) {
 		throw new Error("MathLive was not initialized before creating a math-field.");
