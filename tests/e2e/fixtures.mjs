@@ -65,13 +65,17 @@ async function resetApp(page, defaults) {
 	await page.evaluate(() => {
 		window.app.setting?.close();
 		document.querySelectorAll(".notice").forEach((notice) => notice.remove());
+		if (window.__e2eOriginalOpen) {
+			window.open = window.__e2eOriginalOpen;
+			window.__e2eOriginalOpen = undefined;
+		}
 		return true;
 	});
 	await expect(async () => {
-		if ((await page.locator(".modal-container").count()) > 0) {
+		if ((await page.locator(".modal-container, .menu").count()) > 0) {
 			await page.keyboard.press("Escape");
 		}
-		await expect(page.locator(".modal-container")).toHaveCount(0, { timeout: 1000 });
+		await expect(page.locator(".modal-container, .menu")).toHaveCount(0, { timeout: 1000 });
 	}).toPass({ timeout: 10_000 });
 
 	await page.evaluate(
@@ -134,6 +138,31 @@ export const clearClipboard = (page) =>
 export const inlineField = (page, index = 0) => page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper.inline math-field").nth(index);
 export const blockField = (page) => page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper:not(.inline) math-field").first();
 export const modalField = (page) => page.locator("#mathlive-modal-field");
+export const inlineWidget = (page, index = 0) => page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper.inline").nth(index);
+export const blockWidget = (page) => page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper:not(.inline)").first();
+export const menuItem = (page, title) => page.locator(".menu .menu-item", { hasText: title });
+
+// Opens a formula's ⋮ menu and returns Obsidian's menu.
+export async function openWidgetMenu(page, widget) {
+	await widget.getByRole("button", { name: "More options" }).click();
+	const menu = page.locator(".menu");
+	await expect(menu).toBeVisible();
+	return menu;
+}
+
+// Records the links the plugin opens instead of opening a browser.
+export const recordOpenedUrls = (page) =>
+	page.evaluate(() => {
+		window.__e2eOriginalOpen ??= window.open;
+		window.__e2eOpenedUrls = [];
+		window.open = (url) => {
+			window.__e2eOpenedUrls.push(String(url));
+			return null;
+		};
+		return true;
+	});
+
+export const openedUrls = (page) => page.evaluate(() => window.__e2eOpenedUrls ?? []);
 
 // Clicks a formula and waits until it keeps keyboard focus, so typing reaches it. A click
 // first lands in the note, and the plugin moves focus into the formula a moment later.

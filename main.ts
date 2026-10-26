@@ -10,9 +10,12 @@ import {
 	Setting,
 	setIcon,
 	type KeymapEventHandler,
+	MarkdownView,
+	Menu,
 } from "obsidian";
+import type { EditorView } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
-import { createInlineMathEditorExtension } from "./mathlive-inline";
+import { ACCOUNT_URL, AUTHOR_URL, createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
 	ensureMathfieldElementRegistered,
@@ -58,10 +61,11 @@ export default class MathLivePlugin extends Plugin {
 			}
 		});
 		this.registerEditorExtension(
-			createInlineMathEditorExtension(
-				() => this.settings,
-				() => this.shouldShowUpgradeButton()
-			)
+			createInlineMathEditorExtension({
+				getSettings: () => this.settings,
+				shouldShowUpgradeButton: () => this.shouldShowUpgradeButton(),
+				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
+			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
 		this.registerEvent(
@@ -161,6 +165,22 @@ export default class MathLivePlugin extends Plugin {
 
 		this.cachedCloudAccessStatus = await this.cloudAccessStatusPromise;
 		return this.cachedCloudAccessStatus;
+	}
+
+	// Opens the editor window on the formula that contains the position.
+	private openEditorWindowAt(view: EditorView, position: number, inline: boolean) {
+		let editor: Editor | undefined;
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			if (leaf.view instanceof MarkdownView && leaf.view.containerEl.contains(view.dom)) {
+				editor = leaf.view.editor;
+			}
+		});
+		if (!editor) {
+			return;
+		}
+
+		editor.setCursor(editor.offsetToPos(position));
+		new MathLiveModal(this.app, editor, this, inline).open();
 	}
 
 	async shouldShowUpgradeButton(): Promise<boolean> {
@@ -340,7 +360,6 @@ class MathLiveModal extends Modal {
 	inline: boolean 
 	resultRenderTemplate: (res: string) => string
 	private insertHotkey?: KeymapEventHandler
-	private menuOutsideListener?: (e: MouseEvent) => void
 	private replaceFrom?: EditorPosition
 	private replaceTo?: EditorPosition
 	
@@ -354,8 +373,7 @@ class MathLiveModal extends Modal {
 	onOpen() {
 		const modalContent = this.contentEl;
 
-		const header = this.initHeader(modalContent)
-		this.initOverflowMenu(header)
+		this.initHeader()
 
 		this.insertHotkey = this.scope.register(["Mod"], "Enter", () => {
 			this.close();
@@ -365,8 +383,8 @@ class MathLiveModal extends Modal {
 		this.initMathlive(modalContent)
 		
 		const actionsContainer = modalContent.createDiv({ cls: "mathlive-modal-actions" });
-		this.initSubmitButton(actionsContainer)
 		this.initImageScanner(actionsContainer)
+		this.initSubmitButton(actionsContainer)
 	}
 
 	initMathlive(modalContent: Element) {
@@ -518,120 +536,78 @@ class MathLiveModal extends Modal {
 		return backslashCount % 2 === 1;
 	}
 
-	initHeader(modalContent: Element) {
-		const header = modalContent.createDiv({ cls: "header mathlive-modal-header" });
-		header.createEl("h2", {
-			text: this.inline ? "Edit inline math" : "Edit math block",
-			cls: "mathlive-modal-title"
-		});
-		return header;
-	}
+	initHeader() {
+		this.setTitle(this.inline ? "Edit inline math" : "Edit math block");
+		this.titleEl.addClass("mathlive-modal-title");
 
-	initOverflowMenu(header: HTMLElement) {
-		const wrap = header.createDiv({ cls: "mathlive-modal-menu" });
-		const trigger = wrap.createEl("button", {
-			cls: "mathlive-modal-menu-trigger",
+		// A div like Obsidian's own close button, so Obsidian doesn't focus it when the window opens.
+		const menuButton = createDiv({
+			cls: "mathlive-modal-menu-trigger clickable-icon",
 			attr: {
-				type: "button",
+				role: "button",
 				"aria-label": "More options",
-				"aria-expanded": "false",
-				"aria-haspopup": "true",
+				"aria-haspopup": "menu",
 			},
 		});
-		setIcon(trigger, "more-vertical");
-
-		const dropdown = wrap.createDiv({ cls: "mathlive-modal-menu-dropdown" });
-		const link = dropdown.createEl("a", {
-			cls: "mathlive-modal-menu-item external-link",
-			text: "Made by Dan Zilberman",
-			href: "https://danz.blog",
+		setIcon(menuButton, "more-vertical");
+		// Next to the title, where Obsidian also puts the close button.
+		this.titleEl.insertAdjacentElement("afterend", menuButton);
+		menuButton.addEventListener("click", (event) => {
+			event.stopPropagation();
+			void this.showMenu(menuButton);
 		});
-		link.setAttr("target", "_blank");
-		link.setAttr("rel", "noopener noreferrer");
-
-		const closeMenu = () => {
-			dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
-			trigger.setAttr("aria-expanded", "false");
-			if (this.menuOutsideListener) {
-				wrap.doc.removeEventListener("click", this.menuOutsideListener);
-				this.menuOutsideListener = undefined;
-			}
-		};
-
-		const openMenu = () => {
-			dropdown.removeClass("mathlive-modal-menu-dropdown--hidden");
-			trigger.setAttr("aria-expanded", "true");
-			window.setTimeout(() => {
-				this.menuOutsideListener = (e: MouseEvent) => {
-					if (!wrap.contains(e.target as Node)) {
-						closeMenu();
-					}
-				};
-				wrap.doc.addEventListener("click", this.menuOutsideListener);
-			}, 0);
-		};
-
-		trigger.addEventListener("click", (e) => {
-			e.stopPropagation();
-			if (dropdown.hasClass("mathlive-modal-menu-dropdown--hidden")) {
-				openMenu();
-			} else {
-				closeMenu();
-			}
-		});
-
-		dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
 	}
 
-	initSubmitButton(modalContent: Element) {
-		const row = window.createDiv({ cls: "mathlive-button-row" });
-		const submitButton = row.createEl("button", {
-			cls: "submit mathlive-action-btn",
+	private async showMenu(button: HTMLElement) {
+		const settings = this.plugin.settings;
+		const needsSignIn = !settings.useLocalInference && !settings.apiKey?.trim();
+		const canUpgrade = !needsSignIn && (await this.plugin.shouldShowUpgradeButton());
+
+		const menu = new Menu();
+		if (needsSignIn || canUpgrade) {
+			menu.addItem((item) =>
+				item
+					.setTitle(needsSignIn ? "Sign in to scan images" : "Upgrade for more scans")
+					.setIcon("user")
+					.onClick(() => window.open(ACCOUNT_URL))
+			);
+		}
+		menu.addItem((item) =>
+			item
+				.setTitle("Made by Dan Zilberman")
+				.setIcon("external-link")
+				.onClick(() => window.open(AUTHOR_URL))
+		);
+		const rect = button.getBoundingClientRect();
+		button.setAttr("aria-expanded", "true");
+		menu.onHide(() => button.setAttr("aria-expanded", "false"));
+		menu.showAtPosition({ x: rect.left, y: rect.bottom, width: rect.width }, button.doc);
+	}
+
+	initSubmitButton(actions: HTMLElement) {
+		const submitButton = actions.createEl("button", {
+			cls: "submit mathlive-action-btn mod-cta",
 			attr: { type: "button" },
 		});
-		
-		const iconSpan = submitButton.createSpan({ cls: "mathlive-btn-icon" });
-		setIcon(iconSpan, "check");
-		
-		const textWrap = submitButton.createDiv({ cls: "mathlive-btn-text-wrap" });
-		textWrap.createSpan({
-			cls: "mathlive-btn-title",
-			text: "Insert into note",
-		});
-		textWrap.createSpan({
+		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert into note" });
+		submitButton.createEl("kbd", {
 			cls: "mathlive-btn-hint",
 			text: Platform.isMacOS ? "⌘ Enter" : "Ctrl+Enter",
 		});
-		
 		submitButton.addEventListener("click", () => this.close());
-		modalContent.appendChild(row);
 	}
 
-	initImageScanner(modalContent: Element) {
-		const row = window.createDiv({ cls: "mathlive-button-row" });
-		const scan = row.createEl("button", {
+	initImageScanner(actions: HTMLElement) {
+		const scan = actions.createEl("button", {
 			cls: "scan-button mathlive-action-btn",
 			attr: { type: "button" },
 		});
-		
 		const iconSpan = scan.createSpan({ cls: "mathlive-btn-icon" });
 		setIcon(iconSpan, "image-plus");
-		
-		const textWrap = scan.createDiv({ cls: "mathlive-btn-text-wrap" });
-		textWrap.createSpan({
-			cls: "mathlive-btn-title",
-			text: "Add LaTeX from clipboard image",
-		});
-		textWrap.createSpan({
-			cls: "mathlive-btn-desc",
-			text: "Paste a formula screenshot as editable math",
-		});
-		
+		scan.createSpan({ cls: "mathlive-btn-title", text: "Scan clipboard image" });
 		scan.addEventListener("click", () => {
 			void this.onImageScanRequest();
 		});
-
-		modalContent.appendChild(row);
 	}
 
 	async onImageScanRequest() {
@@ -649,10 +625,6 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
-		if (this.menuOutsideListener) {
-			this.contentEl.doc.removeEventListener("click", this.menuOutsideListener);
-			this.menuOutsideListener = undefined;
-		}
 		if (this.insertHotkey) {
 			this.scope.unregister(this.insertHotkey);
 			this.insertHotkey = undefined;
