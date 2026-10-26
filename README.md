@@ -1,6 +1,8 @@
 <div align="center">
 
-![MathLive for Obsidian](./banner.svg)
+<img src="docs/images/logo.png" alt="MathLive logo" width="128">
+
+<h1>MathLive</h1>
 
 **Write math in Obsidian visually, and turn screenshots of formulas into LaTeX.**
 
