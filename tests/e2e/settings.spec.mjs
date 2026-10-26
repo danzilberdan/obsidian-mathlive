@@ -27,6 +27,15 @@ async function openSettings(obsidian) {
 	return settingsWindow;
 }
 
+// Obsidian may be halfway through writing the file, so a read can see it empty.
+function readSavedSettings(vault) {
+	try {
+		return JSON.parse(fs.readFileSync(path.join(vault, ".obsidian", "plugins", "mathlive", "data.json"), "utf8"));
+	} catch {
+		return {};
+	}
+}
+
 const settingRow = (settingsWindow, name) =>
 	settingsWindow.locator(".vertical-tab-content .setting-item").filter({
 		has: settingsWindow.locator(".setting-item-name", { hasText: new RegExp(`^${name}$`) }),
@@ -64,9 +73,8 @@ test.describe("settings", () => {
 		await settingRow(settingsWindow, "API key").locator("input").fill("test-key-123");
 		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();
 
-		const dataFile = path.join(obsidian.vault, ".obsidian", "plugins", "mathlive", "data.json");
 		await expect
-			.poll(() => (fs.existsSync(dataFile) ? JSON.parse(fs.readFileSync(dataFile, "utf8")) : {}))
+			.poll(() => readSavedSettings(obsidian.vault))
 			.toMatchObject({ apiKey: "test-key-123", useLocalInference: true });
 	});
 

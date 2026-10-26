@@ -101,4 +101,24 @@ test.describe("formula editor window", () => {
 		await page.locator(".mathlive-modal-title").click();
 		await expect(dropdown).toHaveClass(/--hidden/);
 	});
+
+	test("the virtual keyboard opens inside the window", async ({ page }) => {
+		await runCommand(page, "mathlive:open-modal");
+		await waitForModalField(page);
+		await modalField(page).locator("[part=virtual-keyboard-toggle]").click();
+		// The plugin hosts the keyboard inside the window so it stays above Obsidian's overlay.
+		await expect(page.locator(".mathlive-modal-root .virt-keyboard .ML__keyboard")).toBeVisible();
+		await page.keyboard.type("7");
+		await expect(modalField(page)).toHaveJSProperty("value", "7");
+	});
+
+	test("MathLive's own menu opens from a formula in the note", async ({ page }) => {
+		const field = page.locator(".cm-content math-field").first();
+		await field.click();
+		await field.locator("[part=menu-toggle]").click();
+		await expect(page.getByText("Insert Matrix")).toBeVisible();
+		// A click outside closes it.
+		await page.mouse.click(700, 700);
+		await expect(page.getByText("Insert Matrix")).toBeHidden();
+	});
 });

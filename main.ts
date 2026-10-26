@@ -395,8 +395,25 @@ class MathLiveModal extends Modal {
 
 		modalContent.addClass("mathlive-modal-content");
 		modalContent.appendChild(this.mfe);
-		this.mfe.focus();
-		window.setTimeout(() => this.mfe?.focus(), 10)
+		this.focusFormulaWhenShown();
+	}
+
+	// Obsidian focuses the window's first button as it opens, and MathLive can't take focus until
+	// the window has finished appearing, so keep focusing the formula until it sticks.
+	private focusFormulaWhenShown() {
+		const win = this.contentEl.win;
+		const doc = this.contentEl.doc;
+		const deadline = Date.now() + 1000;
+		const tryFocus = () => {
+			if (!this.mfe?.isConnected || doc.activeElement === this.mfe) {
+				return;
+			}
+			this.mfe.focus();
+			if (Date.now() < deadline) {
+				win.requestAnimationFrame(tryFocus);
+			}
+		};
+		tryFocus();
 	}
 
 	private resolveSelectionTarget() {

@@ -138,7 +138,7 @@ export const modalField = (page) => page.locator("#mathlive-modal-field");
 // Clicks a formula and waits until it keeps keyboard focus, so typing reaches it. A click
 // first lands in the note, and the plugin moves focus into the formula a moment later.
 export async function focusField(field) {
-	const hasFocus = () => field.evaluate((element) => element.hasFocus());
+	const hasFocus = () => field.evaluate((element) => element.ownerDocument.activeElement === element);
 	await field.click();
 	await expect(async () => {
 		expect(await hasFocus()).toBe(true);
@@ -150,9 +150,8 @@ export async function focusField(field) {
 // Waits until the editor window's formula is ready for typing.
 export async function waitForModalField(page) {
 	const field = modalField(page);
-	await expect.poll(() => field.evaluate((element) => element.hasFocus())).toBe(true);
-	// The window focuses the formula a second time just after opening.
-	await page.waitForTimeout(100);
+	// hasFocus() can report true before the browser has moved focus, so check the document.
+	await expect.poll(() => field.evaluate((element) => element.ownerDocument.activeElement === element)).toBe(true);
 	return field;
 }
 
