@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in MathLive doesn't work as expected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a note
+        2. Run "Add inline math"
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: mathlive-version
+    attributes:
+      label: MathLive version
+      description: Settings -> Community plugins -> MathLive
+    validations:
+      required: true
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian version
+      description: Settings -> About
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or formula
+      description: A screenshot, the LaTeX you were editing, or the image you tried to scan.

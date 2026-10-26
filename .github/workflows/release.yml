@@ -7,9 +7,10 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 env:
-  PLUGIN_ID: mathlive
   PLUGIN_NAME: MathLive
 
 jobs:
@@ -28,12 +29,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint and type check
+        run: npm run lint
+
       - name: Build
-        run: |
-          npm run build
-          mkdir ${{ env.PLUGIN_ID }}
-          cp main.js manifest.json styles.css ${{ env.PLUGIN_ID }}
-          zip -r ${{ env.PLUGIN_ID }}-${{ github.ref_name }}.zip ${{ env.PLUGIN_ID }}
+        run: npm run build
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Release with Notes
         uses: softprops/action-gh-release@v2
@@ -44,4 +52,3 @@ jobs:
             main.js
             manifest.json
             styles.css
-            ${{ env.PLUGIN_ID }}-${{ github.ref_name }}.zip

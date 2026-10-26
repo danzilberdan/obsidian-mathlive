@@ -50,7 +50,7 @@ This is useful for:
 1. Open any note.
 2. Open the command palette with `Ctrl/Cmd + P`.
 3. Run `Add inline math` or `Add full-line math`.
-4. Type in the MathLive editor and click `Insert`.
+4. Type in the MathLive editor and click `Insert into note` (or press `Ctrl/Cmd + Enter`).
 
 If you already selected text first, MathLive uses that selection as the starting content, which makes editing existing formulas quicker.
 
@@ -66,10 +66,10 @@ MathLive supports two OCR modes.
 
 Best for most users. No local setup required.
 
-1. Create an API key at [mathlive.danz.blog](https://mathlive.danz.blog).
+1. Create a free account and API key at [mathlive.danz.blog](https://mathlive.danz.blog). Free accounts include 10 scans; unlimited scanning is a paid plan.
 2. Open **Settings -> MathLive**.
 3. Paste the key into `API key`.
-4. Make sure `Self hosted` is turned off.
+4. Make sure `Self-hosted scanner` is turned off.
 
 ### Self-hosted OCR
 
@@ -77,8 +77,7 @@ Best if you want to run OCR on your own machine.
 
 1. Set up a compatible OCR server such as [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) so it is available at `http://localhost:8502`.
 2. Open **Settings -> MathLive**.
-3. Turn on `Self hosted`.
-4. Enter any non-empty value in `API key` if your local server does not require one. The scan button is only enabled when that field has a value.
+3. Turn on `Self-hosted scanner`.
 
 Self-hosting is more technical and usually only makes sense if you are already comfortable running local services.
 
@@ -86,7 +85,7 @@ Self-hosting is more technical and usually only makes sense if you are already c
 
 1. Copy a formula image to your clipboard.
 2. Open MathLive with `Add inline math` or `Add full-line math`.
-3. Click `Scan MathJax from Clipboard`.
+3. Click `Add LaTeX from clipboard image`, or use the image button on a math widget in your note.
 4. Wait for the recognized LaTeX to appear in the editor.
 5. Clean up anything that needs correction, then click `Insert`.
 
@@ -95,6 +94,24 @@ Self-hosting is more technical and usually only makes sense if you are already c
 - `MathLive` is desktop-only.
 - OCR results are a starting point, not a guarantee. You may still want to fix symbols or spacing.
 - Cloud OCR is usually the simplest option if you just want the feature to work.
+
+## Disclosures
+
+Obsidian asks plugins to state the following up front.
+
+- **Payment.** The visual editor is free. Cloud scanning includes 10 free scans per account; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
+- **Account.** Cloud scanning requires a MathLive account (sign-in with Google) and an API key. The editor and self-hosted scanning need no account.
+- **Network use.** The plugin only connects to the internet for cloud scanning:
+  - `https://mathlive-ocr.danz.blog/predict/` receives the image you chose to scan, with your API key, and returns LaTeX.
+  - `https://mathlive-ocr.danz.blog/access-status` is checked with your API key to show whether your account has unlimited scans.
+  - With `Self-hosted scanner` on, scans go to `http://localhost:8502` instead, and nothing leaves your computer.
+- **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
+- **Data.** The scan server turns the image into LaTeX and does not keep the image. Your account stores your email, your API keys, your scan count and when a key was last used. Server logs record requests and errors to keep the service running.
+- **No telemetry, ads or pop-ups.** The plugin does not track how you use it and shows no ads.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) to report a bug, suggest a feature or send a pull request, and [SECURITY.md](SECURITY.md) to report a security issue privately.
 
 ## Support
 

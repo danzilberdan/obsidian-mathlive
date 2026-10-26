@@ -2,11 +2,11 @@ import {
 	App,
 	Editor,
 	type EditorPosition,
-	MarkdownFileInfo,
 	Modal,
 	Platform,
 	Plugin,
 	PluginSettingTab,
+	requestUrl,
 	Setting,
 	setIcon,
 	type KeymapEventHandler,
@@ -16,12 +16,21 @@ import { createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
 	ensureMathfieldElementRegistered,
+	registerMathliveFonts,
 	appendLatexFromClipboardImage,
 	parseMathSelection,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 
 const CLOUD_ACCESS_STATUS_URL = "https://mathlive-ocr.danz.blog/access-status";
+const BODY_CLASSES = [
+	"mathlive-hide-rendered-inline",
+	"mathlive-hide-rendered-block",
+	"mathlive-hide-mathjax-inline",
+	"mathlive-hide-mathjax-block",
+	"mathlive-inline-widgets-active",
+	"mathlive-block-widgets-active",
+];
 
 export default class MathLivePlugin extends Plugin {
 	settings: PluginSettings;
@@ -36,7 +45,7 @@ export default class MathLivePlugin extends Plugin {
 		this.addCommand({
 			id: 'open-modal',
 			name: 'Add full-line math',
-			editorCallback: (editor: Editor, ctx: MarkdownFileInfo) => {
+			editorCallback: (editor: Editor) => {
 				new MathLiveModal(this.app, editor, this).open();
 			}
 		});
@@ -44,7 +53,7 @@ export default class MathLivePlugin extends Plugin {
 		this.addCommand({
 			id: 'open-modal-inline',
 			name: 'Add inline math',
-			editorCallback: (editor: Editor, ctx: MarkdownFileInfo) => {
+			editorCallback: (editor: Editor) => {
 				new MathLiveModal(this.app, editor, this, true).open();
 			}
 		});
@@ -55,22 +64,35 @@ export default class MathLivePlugin extends Plugin {
 			)
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
+		this.registerEvent(
+			this.app.workspace.on("window-open", (workspaceWindow) => {
+				registerMathliveFonts(workspaceWindow.doc);
+				this.updateMathJaxVisibility();
+			})
+		);
 		this.updateMathJaxVisibility();
 		this.app.workspace.onLayoutReady(() => this.app.workspace.updateOptions());
 	}
 
 	onunload() {
-		document.body.removeClass("mathlive-hide-rendered-inline");
-		document.body.removeClass("mathlive-hide-rendered-block");
-		document.body.removeClass("mathlive-hide-mathjax-inline");
-		document.body.removeClass("mathlive-hide-mathjax-block");
-		document.body.removeClass("mathlive-inline-widgets-active");
-		document.body.removeClass("mathlive-block-widgets-active");
+		for (const doc of this.getOpenDocuments()) {
+			doc.body.removeClasses(BODY_CLASSES);
+		}
 		this.app.workspace.updateOptions();
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const saved = (await this.loadData()) as Partial<PluginSettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
+	}
+
+	// The main window plus any popout windows that are open.
+	private getOpenDocuments(): Document[] {
+		const docs = new Set<Document>([this.app.workspace.containerEl.doc]);
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			docs.add(leaf.view.containerEl.doc);
+		});
+		return Array.from(docs);
 	}
 
 	async saveSettings(options?: { refreshCloudAccessStatus?: boolean }) {
@@ -109,19 +131,21 @@ export default class MathLivePlugin extends Plugin {
 
 		if (!this.cloudAccessStatusPromise) {
 			const apiKey = this.settings.apiKey.trim();
-			this.cloudAccessStatusPromise = fetch(CLOUD_ACCESS_STATUS_URL, {
+			this.cloudAccessStatusPromise = requestUrl({
+				url: CLOUD_ACCESS_STATUS_URL,
 				headers: {
 					"Api-Key": apiKey,
 				},
+				throw: false,
 			})
-				.then(async (response) => {
-					if (!response.ok) {
+				.then((response) => {
+					if (response.status >= 400) {
 						throw new Error(
 							`Cloud access status request failed with status ${response.status}.`
 						);
 					}
 
-					const payload = (await response.json()) as {
+					const payload = response.json as {
 						hasUnlimitedAccess?: unknown;
 					};
 					return payload.hasUnlimitedAccess === true;
@@ -154,18 +178,20 @@ export default class MathLivePlugin extends Plugin {
 			editorOn &&
 			(this.settings.hideRenderedBlockMath || this.settings.enableBlockMathWidgets);
 
-		document.body.toggleClass("mathlive-hide-mathjax-inline", hideInlineInEditor);
-		document.body.toggleClass("mathlive-hide-mathjax-block", hideBlockInEditor);
-		document.body.toggleClass("mathlive-hide-rendered-inline", hideInlineInEditor);
-		document.body.toggleClass("mathlive-hide-rendered-block", hideBlockInEditor);
-		document.body.toggleClass(
-			"mathlive-inline-widgets-active",
-			editorOn && this.settings.enableInlineMathWidgets
-		);
-		document.body.toggleClass(
-			"mathlive-block-widgets-active",
-			editorOn && this.settings.enableBlockMathWidgets
-		);
+		for (const doc of this.getOpenDocuments()) {
+			doc.body.toggleClass("mathlive-hide-mathjax-inline", hideInlineInEditor);
+			doc.body.toggleClass("mathlive-hide-mathjax-block", hideBlockInEditor);
+			doc.body.toggleClass("mathlive-hide-rendered-inline", hideInlineInEditor);
+			doc.body.toggleClass("mathlive-hide-rendered-block", hideBlockInEditor);
+			doc.body.toggleClass(
+				"mathlive-inline-widgets-active",
+				editorOn && this.settings.enableInlineMathWidgets
+			);
+			doc.body.toggleClass(
+				"mathlive-block-widgets-active",
+				editorOn && this.settings.enableBlockMathWidgets
+			);
+		}
 	}
 
 }
@@ -179,75 +205,45 @@ export class MathliveSettingTab extends PluginSettingTab {
   }
 
   display(): void {
-    let { containerEl } = this;
+	const { containerEl } = this;
 
-    containerEl.empty();
+	containerEl.empty();
 
-	const title = document.createElement('h2')
-	title.textContent = 'Obsidian Mathlive'
-	title.setCssStyles({
-		fontSize: '28px'
-	})
-	containerEl.appendChild(title);
-    
-	const intro = `This plugins currently has 2 main features, visual formula editor, and image to MathJax scanner.
-The MathJax image scanner is available for free when self hosting.
-In addition, there is a cloud option that requires no setup.
+	containerEl.createEl("p", {
+		cls: "mathlive-settings-intro",
+		text: "MathLive has two features: a visual formula editor, which is free and works offline, and an image scanner that turns a formula screenshot into LaTeX.",
+	});
 
-* Self hosting the image scanner may require technical knowledge of docker and requires background processing resources. For most people, the cloud options is better.`
-	const introEl = document.createElement('p');
-	introEl.textContent = intro;
-	introEl.style.whiteSpace = 'pre-wrap'
-	containerEl.appendChild(introEl);
-
-	new Setting(containerEl);
-	const cloudTitle = document.createElement('h2')
-	cloudTitle.textContent = 'Cloud Settings'
-	cloudTitle.setCssStyles({
-		fontSize: '24px'
-	})
-	containerEl.appendChild(cloudTitle);
+	new Setting(containerEl).setName("Image scanner").setHeading();
 
 	new Setting(containerEl)
-		.setName('API key')
+		.setName("API key")
+		.setDesc(
+			createFragment((frag) => {
+				frag.appendText(
+					"The cloud scanner needs a MathLive account. Free accounts include 10 scans, and unlimited scanning is a paid plan. Scanned images are sent to mathlive-ocr.danz.blog. Create an account and API key at "
+				);
+				frag.createEl("a", {
+					text: "mathlive.danz.blog",
+					href: "https://mathlive.danz.blog",
+				});
+				frag.appendText(".");
+			})
+		)
 		.addText(tc => tc.setValue(this.plugin.settings.apiKey ?? "").onChange(async val => {
 			this.plugin.settings.apiKey = val;
 			await this.plugin.saveSettings({ refreshCloudAccessStatus: true })
 		}))
-    
-	const homepageLink = document.createElement('a')
-	homepageLink.href = 'https://mathlive.danz.blog'
-	homepageLink.text = 'Create an API key here'
-	containerEl.appendChild(homepageLink)
-
-	const cloudHelp = document.createElement('p');
-	cloudHelp.textContent = 'If cloud OCR returns any 4xx error, open these settings, configure your API key, and make sure your remote account is funded.';
-	cloudHelp.style.whiteSpace = 'pre-wrap';
-	containerEl.appendChild(cloudHelp);
-
-	new Setting(containerEl);
-
-	const selfHostTitle = document.createElement('h2')
-	selfHostTitle.textContent = 'Self Hosting Settings'
-	selfHostTitle.setCssStyles({
-		fontSize: '24px'
-	})
-	containerEl.appendChild(selfHostTitle);
 
 	new Setting(containerEl)
-		.setName('Self hosted')
+		.setName("Self-hosted scanner")
+		.setDesc("Send scans to a scanner you run yourself at localhost:8502 instead of the cloud. Free, but needs Docker and some technical setup.")
 		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
 			this.plugin.settings.useLocalInference = val;
 			await this.plugin.saveSettings({ refreshCloudAccessStatus: true })
 		}));
 
-	new Setting(containerEl);
-	const editorModeTitle = document.createElement("h2");
-	editorModeTitle.textContent = "Inline Editor Mode";
-	editorModeTitle.setCssStyles({
-		fontSize: "24px",
-	});
-	containerEl.appendChild(editorModeTitle);
+	new Setting(containerEl).setName("Inline editor").setHeading();
 
 	new Setting(containerEl)
 		.setName("Enable inline editor mode")
@@ -365,7 +361,7 @@ class MathLiveModal extends Modal {
 	initMathlive(modalContent: Element) {
 		const mathliveModalRoot = modalContent.parentElement?.parentElement
 		mathliveModalRoot?.addClass("mathlive-modal-root")
-		const keyboardContainer = window.createEl('div')
+		const keyboardContainer = createDiv()
 		keyboardContainer.addClass("virt-keyboard")
 		mathliveModalRoot?.append(keyboardContainer)
 
@@ -399,8 +395,25 @@ class MathLiveModal extends Modal {
 
 		modalContent.addClass("mathlive-modal-content");
 		modalContent.appendChild(this.mfe);
-		this.mfe.focus();
-		setTimeout(() => this.mfe?.focus(), 10)
+		this.focusFormulaWhenShown();
+	}
+
+	// Obsidian focuses the window's first button as it opens, and MathLive can't take focus until
+	// the window has finished appearing, so keep focusing the formula until it sticks.
+	private focusFormulaWhenShown() {
+		const win = this.contentEl.win;
+		const doc = this.contentEl.doc;
+		const deadline = Date.now() + 1000;
+		const tryFocus = () => {
+			if (!this.mfe?.isConnected || doc.activeElement === this.mfe) {
+				return;
+			}
+			this.mfe.focus();
+			if (Date.now() < deadline) {
+				win.requestAnimationFrame(tryFocus);
+			}
+		};
+		tryFocus();
 	}
 
 	private resolveSelectionTarget() {
@@ -493,9 +506,9 @@ class MathLiveModal extends Modal {
 
 	initHeader(modalContent: Element) {
 		const header = modalContent.createDiv({ cls: "header mathlive-modal-header" });
-		const title = header.createEl("h2", { 
-			text: this.inline ? "Edit Inline Math" : "Edit Math Block", 
-			cls: "mathlive-modal-title" 
+		header.createEl("h2", {
+			text: this.inline ? "Edit inline math" : "Edit math block",
+			cls: "mathlive-modal-title"
 		});
 		return header;
 	}
@@ -526,7 +539,7 @@ class MathLiveModal extends Modal {
 			dropdown.addClass("mathlive-modal-menu-dropdown--hidden");
 			trigger.setAttr("aria-expanded", "false");
 			if (this.menuOutsideListener) {
-				document.removeEventListener("click", this.menuOutsideListener);
+				wrap.doc.removeEventListener("click", this.menuOutsideListener);
 				this.menuOutsideListener = undefined;
 			}
 		};
@@ -540,7 +553,7 @@ class MathLiveModal extends Modal {
 						closeMenu();
 					}
 				};
-				document.addEventListener("click", this.menuOutsideListener);
+				wrap.doc.addEventListener("click", this.menuOutsideListener);
 			}, 0);
 		};
 
@@ -623,7 +636,7 @@ class MathLiveModal extends Modal {
 
 	onClose() {
 		if (this.menuOutsideListener) {
-			document.removeEventListener("click", this.menuOutsideListener);
+			this.contentEl.doc.removeEventListener("click", this.menuOutsideListener);
 			this.menuOutsideListener = undefined;
 		}
 		if (this.insertHotkey) {
