@@ -27,6 +27,15 @@ async function openSettings(obsidian) {
 	return settingsWindow;
 }
 
+// Obsidian may be halfway through writing the file, so a read can see it empty.
+function readSavedSettings(vault) {
+	try {
+		return JSON.parse(fs.readFileSync(path.join(vault, ".obsidian", "plugins", "mathlive", "data.json"), "utf8"));
+	} catch {
+		return {};
+	}
+}
+
 const settingRow = (settingsWindow, name) =>
 	settingsWindow.locator(".vertical-tab-content .setting-item").filter({
 		has: settingsWindow.locator(".setting-item-name", { hasText: new RegExp(`^${name}$`) }),
@@ -46,6 +55,7 @@ test.describe("settings", () => {
 			expect.arrayContaining([
 				"API key",
 				"Self-hosted scanner",
+				"Self-hosted scanner address",
 				"Enable inline editor mode",
 				"Enable inline math widgets",
 				"Enable block math widgets",
@@ -64,10 +74,20 @@ test.describe("settings", () => {
 		await settingRow(settingsWindow, "API key").locator("input").fill("test-key-123");
 		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();
 
-		const dataFile = path.join(obsidian.vault, ".obsidian", "plugins", "mathlive", "data.json");
 		await expect
-			.poll(() => (fs.existsSync(dataFile) ? JSON.parse(fs.readFileSync(dataFile, "utf8")) : {}))
+			.poll(() => readSavedSettings(obsidian.vault))
 			.toMatchObject({ apiKey: "test-key-123", useLocalInference: true });
+	});
+
+	test("the self-hosted scanner address is saved", async ({ obsidian }) => {
+		const settingsWindow = await openSettings(obsidian);
+		const input = settingRow(settingsWindow, "Self-hosted scanner address").locator("input");
+		await expect(input).toHaveValue("http://localhost:8502");
+		await input.fill("http://192.168.1.20:8502");
+
+		await expect
+			.poll(() => readSavedSettings(obsidian.vault))
+			.toMatchObject({ localInferenceUrl: "http://192.168.1.20:8502" });
 	});
 
 	test("turning off inline widgets keeps block widgets", async ({ obsidian, page }) => {
