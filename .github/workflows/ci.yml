@@ -57,7 +57,7 @@ jobs:
           npx playwright install-deps chromium
 
       - name: Cache Obsidian
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .obsidian-cache
           key: obsidian-${{ env.OBSIDIAN_VERSION }}
