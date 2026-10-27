@@ -73,6 +73,21 @@ test.describe("settings", () => {
 		await expect(settingRow(settingsWindow, "API key").getByRole("link")).toHaveAttribute("href", /mathlive\.danz\.blog/);
 	});
 
+	test("the options show up in Obsidian's settings search", async ({ obsidian }) => {
+		const settingsWindow = await openSettings(obsidian);
+		await settingsWindow.locator(".vertical-tab-header input[type='search']").fill("scanner address");
+		await expect(settingsWindow.locator(".vertical-tab-header")).toContainText("Self-hosted scanner address");
+	});
+
+	test("the account row hides while the self-hosted scanner is on", async ({ obsidian, page: _page }) => {
+		const settingsWindow = await openSettings(obsidian);
+		await expect(settingsWindow.locator(".mathlive-account-setting")).toBeVisible();
+		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();
+		await expect(settingsWindow.locator(".mathlive-account-setting")).toBeHidden();
+		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();
+		await expect(settingsWindow.locator(".mathlive-account-setting")).toBeVisible();
+	});
+
 	// Asks for `page` so the settings start from their defaults, whatever earlier specs changed.
 	test("the API key and self-hosted switch are saved", async ({ obsidian, page: _page }) => {
 		const settingsWindow = await openSettings(obsidian);

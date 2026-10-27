@@ -7,6 +7,8 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	type SettingDefinitionItem,
+	requireApiVersion,
 	setIcon,
 	type TextComponent,
 	type KeymapEventHandler,
@@ -319,6 +321,24 @@ export default class MathLivePlugin extends Plugin {
 
 }
 
+type SettingRow = {
+	name: string;
+	desc: string | DocumentFragment;
+	addControl: (setting: Setting) => void;
+	visible?: () => boolean;
+};
+
+type SettingSection = {
+	heading?: string;
+	rows: SettingRow[];
+};
+
+const SETTINGS_INTRO = "MathLive has two features: a visual formula editor, which is free and works offline, and an image scanner that turns a formula screenshot into LaTeX.";
+
+type BooleanSettingKey = {
+	[K in keyof PluginSettings]: PluginSettings[K] extends boolean ? K : never;
+}[keyof PluginSettings];
+
 export class MathliveSettingTab extends PluginSettingTab {
   plugin: MathLivePlugin;
   private accountEl: HTMLElement | null = null;
@@ -330,6 +350,35 @@ export class MathliveSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
+  // Obsidian 1.13+ builds the tab from these, which also puts the settings in its settings search.
+  getSettingDefinitions(): SettingDefinitionItem[] {
+	this.stopListening?.();
+	this.stopListening = this.plugin.account.onChange(() => this.redraw());
+	const intro: SettingDefinitionItem = {
+		name: "",
+		searchable: false,
+		render: (setting: Setting) => {
+			setting.settingEl.empty();
+			setting.settingEl.addClass("mathlive-settings-intro-row");
+			setting.settingEl.createEl("p", { cls: "mathlive-settings-intro", text: SETTINGS_INTRO });
+		},
+	};
+	return [
+		intro,
+		...this.sections().map((section): SettingDefinitionItem => ({
+			type: "group",
+			heading: section.heading,
+			items: section.rows.map(row => ({
+				name: row.name,
+				desc: row.desc,
+				visible: row.visible,
+				render: (setting: Setting) => row.addControl(setting),
+			})),
+		})),
+	];
+  }
+
+  // Older Obsidian versions call display() instead.
   display(): void {
 	const { containerEl } = this;
 
@@ -337,154 +386,25 @@ export class MathliveSettingTab extends PluginSettingTab {
 
 	containerEl.createEl("p", {
 		cls: "mathlive-settings-intro",
-		text: "MathLive has two features: a visual formula editor, which is free and works offline, and an image scanner that turns a formula screenshot into LaTeX.",
+		text: SETTINGS_INTRO,
 	});
 
-	new Setting(containerEl)
-		.setName("Guide")
-		.setDesc("Everything MathLive can do, with a button to try each part.")
-		.addButton((button) => button.setButtonText("Open the guide").onClick(() => this.plugin.openGuide()));
-
-	new Setting(containerEl).setName("Image scanner").setHeading();
-
-	this.accountEl = containerEl.createDiv();
-	this.stopListening?.();
-	this.stopListening = this.plugin.account.onChange(() => this.renderAccount());
-	this.renderAccount();
-
-	new Setting(containerEl)
-		.setName("Scan other apps")
-		.setDesc(
-			"Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window."
-		)
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.scanOtherApps).onChange(async (val) => {
-				this.plugin.settings.scanOtherApps = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl).setName("Inline editor").setHeading();
-
-	new Setting(containerEl)
-		.setName("Enable inline editor mode")
-		.setDesc("Render editable MathLive widgets directly in the editor for existing math expressions.")
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.enableInlineEditorMode).onChange(async (val) => {
-				this.plugin.settings.enableInlineEditorMode = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl)
-		.setName("Enable inline math widgets")
-		.setDesc("Show MathLive widgets for `$...$` expressions when inline editor mode is enabled.")
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.enableInlineMathWidgets).onChange(async (val) => {
-				this.plugin.settings.enableInlineMathWidgets = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl)
-		.setName("Enable block math widgets")
-		.setDesc("Show MathLive widgets for `$$...$$` expressions when inline editor mode is enabled.")
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.enableBlockMathWidgets).onChange(async (val) => {
-				this.plugin.settings.enableBlockMathWidgets = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl)
-		.setName("Hide rendered inline math")
-		.setDesc(
-			"When inline MathLive widgets are enabled, inline MathJax in the editor is always hidden so clicks reach the widget (otherwise MathJax sits on top and the first click dismisses editing). When widgets are off, this only toggles hiding MathJax for $…$ in Live Preview."
-		)
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.hideRenderedInlineMath).onChange(async (val) => {
-				this.plugin.settings.hideRenderedInlineMath = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl)
-		.setName("Hide rendered block math")
-		.setDesc(
-			"When block MathLive widgets are enabled, block MathJax in the editor is always hidden for the same reason as inline (click-through). When block widgets are off, this only toggles hiding MathJax for $$…$$ in Live Preview."
-		)
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.hideRenderedBlockMath).onChange(async (val) => {
-				this.plugin.settings.hideRenderedBlockMath = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl)
-		.setName("Update inline widgets immediately")
-		.setDesc("When disabled, inline widget edits update the Markdown source on blur instead of on every input.")
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.immediateInlineUpdate).onChange(async (val) => {
-				this.plugin.settings.immediateInlineUpdate = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl)
-		.setName("Arrow key navigation between editor and widgets")
-		.setDesc("Use arrow keys at math boundaries to enter or exit MathLive widgets.")
-		.addToggle((toggle) =>
-			toggle.setValue(this.plugin.settings.arrowKeyNavigation).onChange(async (val) => {
-				this.plugin.settings.arrowKeyNavigation = val;
-				await this.plugin.saveSettings();
-			})
-		);
-
-	new Setting(containerEl).setName("Advanced").setHeading();
-
-	new Setting(containerEl)
-		.setName("API key")
-		.setDesc(
-			createFragment((frag) => {
-				frag.appendText(
-					"Instead of connecting, paste a key from your account page. Most people don't need this. Scanned images are sent to mathlive.danz.blog; see "
-				);
-				frag.createEl("a", {
-					text: "mathlive.danz.blog",
-					href: this.plugin.account.siteUrl("/account"),
-				});
-				frag.appendText(".");
-			})
-		)
-		.addText((tc) =>
-			(this.apiKeyText = tc)
-				.setValue(this.plugin.settings.apiKeySource === null ? (this.plugin.settings.apiKey ?? "") : "")
-				.setPlaceholder(this.plugin.settings.apiKeySource === "device" ? "Connected, no key needed" : "")
-				.onChange(async (val) => {
-					await this.plugin.account.setPastedKey(val.trim() || null);
-				})
-		);
-
-	new Setting(containerEl)
-		.setName("Self-hosted scanner")
-		.setDesc("Send scans to a scanner you run yourself instead of the cloud. Free, but needs Docker and some technical setup.")
-		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
-			this.plugin.settings.useLocalInference = val;
-			await this.plugin.saveSettings({ refreshCloudAccessStatus: true });
-			// The account only matters for the cloud scanner.
-			this.renderAccount();
-		}));
-
-	new Setting(containerEl)
-		.setName("Self-hosted scanner address")
-		.setDesc("Where your scanner runs, for example on another computer in your network.")
-		.addText(tc => tc
-			.setPlaceholder(DEFAULT_SETTINGS.localInferenceUrl)
-			.setValue(this.plugin.settings.localInferenceUrl)
-			.onChange(async val => {
-				this.plugin.settings.localInferenceUrl = val.trim();
-				await this.plugin.saveSettings()
-			}));
+	for (const section of this.sections()) {
+		if (section.heading) {
+			new Setting(containerEl).setName(section.heading).setHeading();
+		}
+		for (const row of section.rows) {
+			if (row.name === "Account") {
+				// The account row redraws by itself while connecting, so the rest of the tab keeps its state.
+				this.accountEl = containerEl.createDiv();
+				this.stopListening?.();
+				this.stopListening = this.plugin.account.onChange(() => this.renderAccount(row));
+				this.renderAccount(row);
+				continue;
+			}
+			row.addControl(new Setting(containerEl).setName(row.name).setDesc(row.desc));
+		}
+	}
   }
 
   hide(): void {
@@ -492,19 +412,171 @@ export class MathliveSettingTab extends PluginSettingTab {
 	this.stopListening = null;
   }
 
-  // The account row redraws by itself while connecting, so the rest of the tab keeps its state.
-  private renderAccount() {
-	const account = this.plugin.account;
+  private renderAccount(row: SettingRow) {
 	const el = this.accountEl;
 	if (!el?.isConnected) {
 		return;
 	}
 	el.empty();
-	if (this.plugin.settings.useLocalInference) {
+	if (row.visible?.() === false) {
 		return;
 	}
+	row.addControl(new Setting(el).setName(row.name));
+  }
 
-	const setting = new Setting(el).setName("Account").setDesc(account.describe());
+  private sections(): SettingSection[] {
+	// Read this.plugin.settings when a row is drawn, not now: Obsidian may keep these definitions
+	// across reopenings of the tab while the settings object is replaced.
+	const toggle = (key: BooleanSettingKey) => (setting: Setting) => {
+		setting.addToggle(tc => tc.setValue(this.plugin.settings[key]).onChange(async val => {
+			this.plugin.settings[key] = val;
+			await this.plugin.saveSettings();
+		}));
+	};
+
+	return [
+		{
+			rows: [
+				{
+					name: "Guide",
+					desc: "Everything MathLive can do, with a button to try each part.",
+					addControl: setting => {
+						setting.addButton((button) => button.setButtonText("Open the guide").onClick(() => this.plugin.openGuide()));
+					},
+				},
+			],
+		},
+		{
+			heading: "Image scanner",
+			rows: [
+				{
+					name: "Account",
+					desc: "",
+					visible: () => !this.plugin.settings.useLocalInference,
+					addControl: setting => this.addAccountControls(setting),
+				},
+				{
+					name: "Scan other apps",
+					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
+					addControl: toggle("scanOtherApps"),
+				},
+			],
+		},
+		{
+			heading: "Inline editor",
+			rows: [
+				{
+					name: "Enable inline editor mode",
+					desc: "Render editable MathLive widgets directly in the editor for existing math expressions.",
+					addControl: toggle("enableInlineEditorMode"),
+				},
+				{
+					name: "Enable inline math widgets",
+					desc: "Show MathLive widgets for `$...$` expressions when inline editor mode is enabled.",
+					addControl: toggle("enableInlineMathWidgets"),
+				},
+				{
+					name: "Enable block math widgets",
+					desc: "Show MathLive widgets for `$$...$$` expressions when inline editor mode is enabled.",
+					addControl: toggle("enableBlockMathWidgets"),
+				},
+				{
+					name: "Hide rendered inline math",
+					desc: "When inline MathLive widgets are enabled, inline MathJax in the editor is always hidden so clicks reach the widget (otherwise MathJax sits on top and the first click dismisses editing). When widgets are off, this only toggles hiding MathJax for $…$ in Live Preview.",
+					addControl: toggle("hideRenderedInlineMath"),
+				},
+				{
+					name: "Hide rendered block math",
+					desc: "When block MathLive widgets are enabled, block MathJax in the editor is always hidden for the same reason as inline (click-through). When block widgets are off, this only toggles hiding MathJax for $$…$$ in Live Preview.",
+					addControl: toggle("hideRenderedBlockMath"),
+				},
+				{
+					name: "Update inline widgets immediately",
+					desc: "When disabled, inline widget edits update the Markdown source on blur instead of on every input.",
+					addControl: toggle("immediateInlineUpdate"),
+				},
+				{
+					name: "Arrow key navigation between editor and widgets",
+					desc: "Use arrow keys at math boundaries to enter or exit MathLive widgets.",
+					addControl: toggle("arrowKeyNavigation"),
+				},
+			],
+		},
+		{
+			heading: "Advanced",
+			rows: [
+				{
+					name: "API key",
+					desc: createFragment((frag) => {
+						frag.appendText(
+							"Instead of connecting, paste a key from your account page. Most people don't need this. Scanned images are sent to mathlive.danz.blog; see "
+						);
+						frag.createEl("a", {
+							text: "mathlive.danz.blog",
+							href: this.plugin.account.siteUrl("/account"),
+						});
+						frag.appendText(".");
+					}),
+					addControl: setting => {
+						setting.addText((tc) =>
+							(this.apiKeyText = tc)
+								.setValue(this.plugin.settings.apiKeySource === null ? (this.plugin.settings.apiKey ?? "") : "")
+								.setPlaceholder(this.plugin.settings.apiKeySource === "device" ? "Connected, no key needed" : "")
+								.onChange(async (val) => {
+									await this.plugin.account.setPastedKey(val.trim() || null);
+								})
+						);
+					},
+				},
+				{
+					name: "Self-hosted scanner",
+					desc: "Send scans to a scanner you run yourself instead of the cloud. Free, but needs Docker and some technical setup.",
+					addControl: setting => {
+						setting.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
+							this.plugin.settings.useLocalInference = val;
+							await this.plugin.saveSettings({ refreshCloudAccessStatus: true });
+							// The account only matters for the cloud scanner.
+							this.refreshAccount();
+						}));
+					},
+				},
+				{
+					name: "Self-hosted scanner address",
+					desc: "Where your scanner runs, for example on another computer in your network.",
+					addControl: setting => {
+						setting.addText(tc => tc
+							.setPlaceholder(DEFAULT_SETTINGS.localInferenceUrl)
+							.setValue(this.plugin.settings.localInferenceUrl)
+							.onChange(async val => {
+								this.plugin.settings.localInferenceUrl = val.trim();
+								await this.plugin.saveSettings()
+							}));
+					},
+				},
+			],
+		},
+	];
+  }
+
+  // display() keeps its own account container; the declarative tab redraws through update().
+  private refreshAccount() {
+	if (this.accountEl?.isConnected) {
+		const account = this.sections()[1].rows[0];
+		this.renderAccount(account);
+	} else {
+		this.redraw();
+	}
+  }
+
+  private redraw() {
+	if (requireApiVersion("1.13.0")) {
+		this.update();
+	}
+  }
+
+  private addAccountControls(setting: Setting) {
+	const account = this.plugin.account;
+	setting.setDesc(account.describe());
 	setting.settingEl.addClass("mathlive-account-setting");
 	if (account.isConnecting()) {
 		setting
