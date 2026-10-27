@@ -24,6 +24,7 @@ import {
 	appendLatexFromClipboardImage,
 	findEnclosingMath,
 	mathfieldScanTarget,
+	scanAnywhereOnScreenInto,
 	scanScreenAreaInto,
 	type ScanTarget,
 	moveVirtualKeyboard,
@@ -74,6 +75,13 @@ export default class MathLivePlugin extends Plugin {
 			name: "Scan formula from screen",
 			callback: () => {
 				void this.scanScreenAreaIntoNote();
+			},
+		});
+		this.addCommand({
+			id: "scan-anywhere-on-screen",
+			name: "Scan formula from anywhere on screen, including other apps",
+			callback: () => {
+				void this.scanScreenAreaIntoNote(true);
 			},
 		});
 		this.addRibbonIcon("scan", "Scan formula from screen", () => {
@@ -229,7 +237,7 @@ export default class MathLivePlugin extends Plugin {
 		return leaf?.view instanceof MarkdownView ? leaf.view : null;
 	}
 
-	async scanScreenAreaIntoNote() {
+	async scanScreenAreaIntoNote(anywhere = false) {
 		const view = this.findNoteForScan();
 		if (!view?.file) {
 			new Notice("Open a note first, so the scanned formula has somewhere to go.");
@@ -244,7 +252,11 @@ export default class MathLivePlugin extends Plugin {
 			addedMessage: "Scanned formula added to the note",
 			closedMessage: "The note was closed before the scan finished. Open it and scan again.",
 		};
-		await scanScreenAreaInto(this.app, target, activeDocument);
+		if (anywhere) {
+			await scanAnywhereOnScreenInto(this.app, target, activeDocument);
+		} else {
+			await scanScreenAreaInto(this.app, target, activeDocument);
+		}
 	}
 
 	async shouldShowUpgradeButton(): Promise<boolean> {
@@ -322,7 +334,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 	new Setting(containerEl)
 		.setName("Scan from screen")
 		.setDesc(
-			"Drag a box around a formula anywhere in Obsidian, such as in a PDF or an image, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, or give the scan command a hotkey."
+			"Drag a box around a formula anywhere in Obsidian, such as in a PDF or an image, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, or give the scan command a hotkey. To scan a formula in another app, such as a browser, use the command that scans anywhere on screen."
 		);
 
 	new Setting(containerEl)

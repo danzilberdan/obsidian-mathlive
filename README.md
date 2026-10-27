@@ -66,6 +66,8 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 **From the screen.** Open the PDF, slide or image next to your note, put the cursor where the formula should go, and click the scan icon in the left ribbon (or run **MathLive: Scan formula from screen**, which you can give a hotkey). Drag a box around the formula. Its LaTeX goes into the note at the cursor: as a math block on an empty line, or as inline math in a line of text. Press `Esc` to cancel. The editor window and a formula's ⋮ menu have **Scan from screen** too, which adds the scan to that formula.
 
+**From another app.** Run **MathLive: Scan formula from anywhere on screen, including other apps** (best with a hotkey). Obsidian steps aside, you drag a box around the formula in your browser, slides or any other app, and Obsidian comes back with the LaTeX in your note. On macOS this needs Screen Recording access for Obsidian the first time; MathLive shows you where to turn it on.
+
 **From the clipboard.** Copy a screenshot of a formula, for example from another app or handwritten notes, then click **Scan clipboard image** in the editor window or choose it from a formula's ⋮ menu.
 
 Check the result and fix anything the scanner got wrong.
@@ -103,7 +105,7 @@ Obsidian asks plugins to state the following up front.
   - `https://mathlive-ocr.danz.blog/access-status` is checked with your API key to show whether your account has unlimited scans.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
-- **Screen.** Scanning from the screen takes a picture of the Obsidian window only, and only when you start it. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
+- **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
 - **Data.** The scan server turns the image into LaTeX and does not keep the image. Your account stores your email, your API keys, your scan count and when a key was last used. Server logs record requests and errors to keep the service running.
 - **No telemetry, ads or pop-ups.** The plugin does not track how you use it and shows no ads.
 

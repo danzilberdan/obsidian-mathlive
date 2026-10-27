@@ -1,7 +1,7 @@
 import type { MathfieldElement } from "mathlive";
 import { type App, type Menu, Notice, requestUrl } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
-import { selectScreenArea } from "./screen-capture";
+import { selectAnywhereOnScreen, selectScreenArea } from "./screen-capture";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
@@ -680,6 +680,29 @@ export async function scanScreenAreaInto(
 		return false;
 	} finally {
 		show?.();
+	}
+	if (!image || !target.isOpen()) {
+		return false;
+	}
+
+	return await scanInto(target, image);
+}
+
+// Like scanScreenAreaInto, but the box can go around anything on the screen, other apps included.
+export async function scanAnywhereOnScreenInto(app: App, target: ScanTarget, doc: Document): Promise<boolean> {
+	if (!checkCanScan(target.settings)) {
+		return false;
+	}
+
+	let image: Blob | null;
+	try {
+		image = await selectAnywhereOnScreen(app, doc, () => {
+			void scanScreenAreaInto(app, target, doc);
+		});
+	} catch (error) {
+		console.error("MathLive: couldn't take a screenshot:", error);
+		new Notice("MathLive couldn't take a screenshot of the screen.");
+		return false;
 	}
 	if (!image || !target.isOpen()) {
 		return false;

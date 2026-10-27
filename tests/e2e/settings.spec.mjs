@@ -69,7 +69,8 @@ test.describe("settings", () => {
 		await expect(settingRow(settingsWindow, "API key").getByRole("link")).toHaveAttribute("href", /mathlive\.danz\.blog/);
 	});
 
-	test("the API key and self-hosted switch are saved", async ({ obsidian }) => {
+	// Asks for `page` so the settings start from their defaults, whatever earlier specs changed.
+	test("the API key and self-hosted switch are saved", async ({ obsidian, page: _page }) => {
 		const settingsWindow = await openSettings(obsidian);
 		await settingRow(settingsWindow, "API key").locator("input").fill("test-key-123");
 		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();

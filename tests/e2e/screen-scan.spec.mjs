@@ -183,3 +183,56 @@ test.describe("scanning a formula from the screen", () => {
 		expect(scanner.requests).toHaveLength(0);
 	});
 });
+
+// Picturing the whole screen: Obsidian steps aside and the box is drawn in a separate full-screen
+// window. On the test machine that window shows an empty desktop, which is enough to check the flow.
+test.describe("scanning anything on the screen", () => {
+	test.beforeEach(async ({ page, scanner }) => {
+		scanner.requests.length = 0;
+		await setSettings(page, { useLocalInference: true, apiKey: "" });
+	});
+
+	const obsidianVisible = (page) =>
+		page.evaluate(() => window.require("electron").remote.getCurrentWindow().isVisible());
+
+	async function openPicker(page, context) {
+		const opened = context.waitForEvent("page", (candidate) => candidate.url().startsWith("data:text/html"));
+		await runCommand(page, "mathlive:scan-anywhere-on-screen");
+		const picker = await opened;
+		await picker.waitForFunction(() => document.getElementById("picture")?.naturalWidth > 0);
+		return picker;
+	}
+
+	test("Obsidian steps aside, and the box drawn on the screen picture is scanned into the note", async ({ page, obsidian, scanner }) => {
+		await setCursor(page, 9, 0);
+		const picker = await openPicker(page, obsidian.context);
+		expect(await obsidianVisible(page)).toBe(false);
+
+		const size = await picker.evaluate(() => ({ width: innerWidth, height: innerHeight, natural: document.getElementById("picture").naturalWidth }));
+		await picker.mouse.move(100, 100);
+		await picker.mouse.down();
+		await picker.mouse.move(250, 160, { steps: 3 });
+		await picker.mouse.move(400, 220, { steps: 3 });
+		await picker.mouse.up();
+
+		await expect.poll(() => obsidianVisible(page)).toBe(true);
+		await expect(notices(page).filter({ hasText: "Scanned formula added to the note" })).toBeVisible();
+		expect(await noteText(page)).toContain(`Plain paragraph between formulas.\n$$\n${SCANNED_LATEX}\n$$\n`);
+		expect(scanner.requests).toHaveLength(1);
+		const scale = size.natural / size.width;
+		expect(scanner.requests[0].pngSize).toEqual({ width: Math.round(300 * scale), height: Math.round(120 * scale) });
+		expect(picker.isClosed()).toBe(true);
+	});
+
+	test("Escape closes the screen picture, brings Obsidian back and scans nothing", async ({ page, obsidian, scanner }) => {
+		const before = await noteText(page);
+		const picker = await openPicker(page, obsidian.context);
+		// The picture closes on the key going down, so the key coming up has nowhere to go.
+		await picker.keyboard.press("Escape").catch(() => {});
+
+		await expect.poll(() => obsidianVisible(page)).toBe(true);
+		expect(picker.isClosed()).toBe(true);
+		expect(await noteText(page)).toBe(before);
+		expect(scanner.requests).toHaveLength(0);
+	});
+});
