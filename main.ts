@@ -33,7 +33,7 @@ import {
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 
-const CLOUD_ACCESS_STATUS_URL = "https://mathlive-ocr.danz.blog/access-status";
+const CLOUD_ACCESS_STATUS_URL = "https://mathlive.danz.blog/ocr/access-status";
 const BODY_CLASSES = [
 	"mathlive-hide-rendered-inline",
 	"mathlive-hide-rendered-block",
@@ -317,7 +317,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 		.setDesc(
 			createFragment((frag) => {
 				frag.appendText(
-					"The cloud scanner needs a MathLive account. Free accounts include 10 scans, and unlimited scanning is a paid plan. Scanned images are sent to mathlive-ocr.danz.blog. Create an account and API key at "
+					"The cloud scanner needs a MathLive account. Free accounts include 10 scans, and unlimited scanning is a paid plan. Scanned images are sent to mathlive.danz.blog. Create an account and API key at "
 				);
 				frag.createEl("a", {
 					text: "mathlive.danz.blog",

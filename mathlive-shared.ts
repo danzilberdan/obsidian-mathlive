@@ -489,7 +489,7 @@ export async function scanImageToLatex(
 	settings: PluginSettings,
 	imageData: Blob
 ): Promise<string> {
-	let address = "https://mathlive-ocr.danz.blog";
+	let address = "https://mathlive.danz.blog/ocr";
 	if (settings.useLocalInference) {
 		address = (settings.localInferenceUrl.trim() || DEFAULT_SETTINGS.localInferenceUrl).replace(/\/+$/, "");
 	}

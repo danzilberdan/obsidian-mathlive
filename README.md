@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.png" alt="MathLive logo" width="128">
+<img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/logo.png" alt="MathLive logo" width="128">
 
 <h1>MathLive</h1>
 
@@ -18,8 +18,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/note-dark.png">
-    <img src="docs/images/note-light.png" alt="A note with inline and block formulas edited in place by MathLive" width="820">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/note-dark.png">
+    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/note-light.png" alt="A note with inline and block formulas edited in place by MathLive" width="820">
   </picture>
 </p>
 
@@ -35,8 +35,8 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/menu-dark.png">
-    <img src="docs/images/menu-light.png" alt="The ⋮ menu of an inline formula: scan clipboard image, open in editor window, show math keyboard" width="820">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/menu-dark.png">
+    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/menu-light.png" alt="The ⋮ menu of an inline formula: scan clipboard image, open in editor window, show math keyboard" width="820">
   </picture>
 </p>
 
@@ -57,8 +57,8 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/editor-window-dark.png">
-    <img src="docs/images/editor-window-light.png" alt="The MathLive editor window with the math keyboard open" width="820">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/editor-window-dark.png">
+    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/editor-window-light.png" alt="The MathLive editor window with the math keyboard open" width="820">
   </picture>
 </p>
 
@@ -101,8 +101,8 @@ Obsidian asks plugins to state the following up front.
 - **Payment.** The visual editor is free. Cloud scanning includes 10 free scans per account; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
 - **Account.** Cloud scanning requires a MathLive account (sign-in with Google) and an API key. The editor and self-hosted scanning need no account.
 - **Network use.** The plugin only connects to the internet for cloud scanning:
-  - `https://mathlive-ocr.danz.blog/predict/` receives the image you chose to scan, with your API key, and returns LaTeX.
-  - `https://mathlive-ocr.danz.blog/access-status` is checked with your API key to show whether your account has unlimited scans.
+  - `https://mathlive.danz.blog/ocr/predict/` receives the image you chose to scan, with your API key, and returns LaTeX.
+  - `https://mathlive.danz.blog/ocr/access-status` is checked with your API key to show whether your account has unlimited scans.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
