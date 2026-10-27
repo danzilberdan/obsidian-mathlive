@@ -376,7 +376,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 		.setDesc(
 			createFragment((frag) => {
 				frag.appendText(
-					"Instead of connecting, paste a key from your account page. Most people don't need this. Scanned images are sent to mathlive-ocr.danz.blog; see "
+					"Instead of connecting, paste a key from your account page. Most people don't need this. Scanned images are sent to mathlive.danz.blog; see "
 				);
 				frag.createEl("a", {
 					text: "mathlive.danz.blog",

@@ -33,6 +33,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	immediateInlineUpdate: true,
 	arrowKeyNavigation: true,
 	welcomeShown: false,
-	cloudScannerUrl: "https://mathlive-ocr.danz.blog",
+	cloudScannerUrl: "https://mathlive.danz.blog/ocr",
 	websiteUrl: "https://mathlive.danz.blog",
 };

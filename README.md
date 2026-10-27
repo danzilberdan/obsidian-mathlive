@@ -102,10 +102,10 @@ Obsidian asks plugins to state the following up front.
 - **Payment.** The visual editor is free. Cloud scanning includes 3 trial scans, then 10 free scans per account and 5 more each month; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
 - **Account.** After 3 trial scans, cloud scanning requires a MathLive account (sign-in with Google). The editor and self-hosted scanning need no account.
 - **Network use.** The plugin only connects to the internet for cloud scanning, and only after you start a scan or click Connect:
-  - `https://mathlive-ocr.danz.blog/trial` gives a trial key on your first cloud scan when you have none.
-  - `https://mathlive-ocr.danz.blog/predict/` receives the image you chose to scan, with your key, and returns LaTeX.
-  - `https://mathlive-ocr.danz.blog/access-status` is checked with your key to show your account and scans left.
-  - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive-ocr.danz.blog/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive-ocr.danz.blog/connect/forget` to delete this device's key.
+  - `https://mathlive.danz.blog/ocr/trial` gives a trial key on your first cloud scan when you have none.
+  - `https://mathlive.danz.blog/ocr/predict/` receives the image you chose to scan, with your key, and returns LaTeX.
+  - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account and scans left.
+  - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
