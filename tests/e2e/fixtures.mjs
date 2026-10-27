@@ -112,11 +112,13 @@ export const noteLine = (page, startsWith) =>
 
 export const notices = (page) => page.locator(".notice");
 
+// The plugin reads its settings from memory, so tests wait for the save only briefly: right after
+// a PDF conversion writes its note, Obsidian has been seen to drop the save's promise unresolved.
 export const setSettings = (page, values) =>
 	page.evaluate(async (values) => {
 		const plugin = window.app.plugins.plugins.mathlive;
 		Object.assign(plugin.settings, values);
-		await plugin.saveSettings();
+		await Promise.race([plugin.saveSettings(), new Promise((resolve) => setTimeout(resolve, 2000))]);
 		return true;
 	}, values);
 
