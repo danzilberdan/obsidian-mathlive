@@ -126,7 +126,6 @@ test.describe("formulas in the note", () => {
 			"Show math keyboard",
 			"What MathLive can do",
 			"Connect to scan images",
-			"Made by Dan Zilberman",
 		]);
 
 		await page.keyboard.press("Escape");
@@ -161,22 +160,19 @@ test.describe("formulas in the note", () => {
 		await expect(inlineField(page, 0)).toBeFocused();
 	});
 
-	test("the ✨ menu's links connect the account and open the author's site", async ({ page }) => {
+	test("the ✨ menu connects the account", async ({ page }) => {
 		await recordOpenedUrls(page);
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await menuItem(page, "Connect to scan images").click();
-		await openWidgetMenu(page, inlineWidget(page, 0));
-		await menuItem(page, "Made by Dan Zilberman").click();
-		await expect.poll(() => openedUrls(page)).toHaveLength(2);
-		const [connect, author] = await openedUrls(page);
+		await expect.poll(() => openedUrls(page)).toHaveLength(1);
+		const [connect] = await openedUrls(page);
 		expect(connect).toMatch(/^https:\/\/mathlive\.danz\.blog\/connect\?state=[0-9a-f]{64}&device=vault%20on%20/);
-		expect(author).toBe("https://danz.blog");
 	});
 
 	test("Connect shows only when the cloud scanner isn't connected", async ({ page }) => {
 		await setSettings(page, { useLocalInference: true });
 		await openWidgetMenu(page, inlineWidget(page, 0));
-		await expect(menuItem(page, "Made by Dan Zilberman")).toBeVisible();
+		await expect(menuItem(page, "Scan clipboard image")).toBeVisible();
 		await expect(menuItem(page, "Connect to scan images")).toHaveCount(0);
 	});
 

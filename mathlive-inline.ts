@@ -388,13 +388,6 @@ class MathLiveWidget extends WidgetType {
 			menu.addSeparator();
 			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("gem").onClick(accountItem.run));
 		}
-		menu.addSeparator();
-		menu.addItem((item) =>
-			item
-				.setTitle("Made by Dan Zilberman")
-				.setIcon("external-link")
-				.onClick(() => window.open(AUTHOR_URL))
-		);
 
 		showMenuBelow(menu, button);
 	}
