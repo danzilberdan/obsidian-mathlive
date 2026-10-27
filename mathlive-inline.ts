@@ -45,13 +45,13 @@ interface MathFieldEntry {
 	isInline: boolean;
 }
 
-export const ACCOUNT_URL = "https://mathlive.danz.blog/console";
 export const AUTHOR_URL = "https://danz.blog";
 
 export interface WidgetHooks {
 	app: App;
 	getSettings: () => PluginSettings;
-	shouldShowUpgradeButton: () => Promise<boolean>;
+	// The account entry in the ⋮ menu: connect, upgrade, or nothing.
+	accountAction: () => Promise<{ title: string; run: () => void } | undefined>;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 }
 
@@ -376,12 +376,7 @@ class MathLiveWidget extends WidgetType {
 		);
 		menu.addSeparator();
 		if (accountItem) {
-			menu.addItem((item) =>
-				item
-					.setTitle(accountItem)
-					.setIcon("user")
-					.onClick(() => window.open(ACCOUNT_URL))
-			);
+			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("user").onClick(accountItem.run));
 		}
 		menu.addItem((item) =>
 			item
@@ -393,13 +388,8 @@ class MathLiveWidget extends WidgetType {
 		showMenuBelow(menu, button);
 	}
 
-	private async getAccountItem(): Promise<string | undefined> {
-		const settings = this.hooks.getSettings();
-		if (!settings.useLocalInference && !settings.apiKey?.trim()) {
-			return "Sign in to scan images";
-		}
-
-		return (await this.hooks.shouldShowUpgradeButton()) ? "Upgrade for more scans" : undefined;
+	private getAccountItem() {
+		return this.hooks.accountAction();
 	}
 }
 

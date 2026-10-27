@@ -390,3 +390,21 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline mjx-container {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* Welcome window, shown once after installing. */
+.mathlive-welcome-list {
+  padding-left: var(--size-4-5);
+  line-height: var(--line-height-normal);
+}
+.mathlive-welcome-list li + li {
+  margin-top: var(--size-4-2);
+}
+
+/* Asking to connect an account when a scan needs one. */
+.mathlive-connect-modal .mathlive-connect-detail {
+  color: var(--text-muted);
+}
+.mathlive-welcome-modal .setting-item,
+.mathlive-connect-modal .setting-item {
+  border-top: none;
+}

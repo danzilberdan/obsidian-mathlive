@@ -84,6 +84,7 @@ async function resetApp(page, defaults) {
 			app.changeTheme("moonstone");
 
 			const plugin = app.plugins.plugins.mathlive;
+			plugin.account.cancelConnect();
 			plugin.settings = { ...defaults };
 			await plugin.saveSettings();
 

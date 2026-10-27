@@ -6,9 +6,9 @@ import {
 	Platform,
 	Plugin,
 	PluginSettingTab,
-	requestUrl,
 	Setting,
 	setIcon,
+	type TextComponent,
 	type KeymapEventHandler,
 	MarkdownView,
 	Menu,
@@ -16,7 +16,8 @@ import {
 } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
-import { ACCOUNT_URL, AUTHOR_URL, createInlineMathEditorExtension } from "./mathlive-inline";
+import { CloudAccount } from "./account";
+import { AUTHOR_URL, createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
 	ensureMathfieldElementRegistered,
@@ -26,14 +27,14 @@ import {
 	mathfieldScanTarget,
 	scanAnywhereOnScreenInto,
 	scanScreenAreaInto,
+	setScanAccount,
 	type ScanTarget,
 	moveVirtualKeyboard,
 	parseMathSelection,
 	showMenuBelow,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
-
-const CLOUD_ACCESS_STATUS_URL = "https://mathlive.danz.blog/ocr/access-status";
+import { WelcomeModal } from "./welcome";
 const BODY_CLASSES = [
 	"mathlive-hide-rendered-inline",
 	"mathlive-hide-rendered-block",
@@ -45,15 +46,22 @@ const BODY_CLASSES = [
 
 export default class MathLivePlugin extends Plugin {
 	settings: PluginSettings;
-	private cloudAccessStatusPromise: Promise<boolean | null> | null = null;
-	private cachedCloudAccessStatus: boolean | null | undefined = undefined;
+	account: CloudAccount;
 	// Where a scan from the screen goes when the hotkey is pressed outside a note, like in a PDF.
 	private lastNoteView: MarkdownView | null = null;
 
 	async onload() {
 		await ensureMathfieldElementRegistered();
 		await this.loadSettings();
-		this.warmCloudAccessStatus();
+		this.account = new CloudAccount(this);
+		setScanAccount(this.account);
+		void this.account.refreshStatus();
+		// The website sends the browser here after the user approves connecting this device.
+		this.registerObsidianProtocolHandler("mathlive-auth", (params) => {
+			void this.account.handleReturn(params);
+		});
+		// Plans bought in the browser show up when the user comes back.
+		this.registerDomEvent(window, "focus", () => this.account.refreshIfStale());
 
 		this.addCommand({
 			id: 'open-modal',
@@ -99,7 +107,7 @@ export default class MathLivePlugin extends Plugin {
 			createInlineMathEditorExtension({
 				app: this.app,
 				getSettings: () => this.settings,
-				shouldShowUpgradeButton: () => this.shouldShowUpgradeButton(),
+				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 			})
 		);
@@ -114,10 +122,27 @@ export default class MathLivePlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			this.lastNoteView = this.app.workspace.getActiveViewOfType(MarkdownView);
 			this.app.workspace.updateOptions();
+			if (!this.settings.welcomeShown) {
+				this.settings.welcomeShown = true;
+				void this.saveSettings();
+				new WelcomeModal(this.app, this.account, () => this.openEditorFromWelcome()).open();
+			}
 		});
 	}
 
+	// "Try the editor" in the welcome window: a full-line formula at the cursor of the open note.
+	private openEditorFromWelcome() {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView) ?? this.lastNoteView;
+		if (!view?.editor) {
+			new Notice("Open a note first, then try the editor from the command palette.");
+			return;
+		}
+		new MathLiveModal(this.app, view.editor, this).open();
+	}
+
 	onunload() {
+		setScanAccount(null);
+		this.account.cancelConnect();
 		for (const doc of this.getOpenDocuments()) {
 			doc.body.removeClasses(BODY_CLASSES);
 		}
@@ -127,6 +152,10 @@ export default class MathLivePlugin extends Plugin {
 	async loadSettings() {
 		const saved = (await this.loadData()) as Partial<PluginSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
+		if (saved && saved.welcomeShown === undefined) {
+			// Updated from a version without the welcome window: this isn't a new user.
+			this.settings.welcomeShown = true;
+		}
 	}
 
 	// The main window plus any popout windows that are open.
@@ -141,69 +170,11 @@ export default class MathLivePlugin extends Plugin {
 	async saveSettings(options?: { refreshCloudAccessStatus?: boolean }) {
 		await this.saveData(this.settings);
 		if (options?.refreshCloudAccessStatus) {
-			this.invalidateCloudAccessStatus();
-			this.warmCloudAccessStatus();
+			this.account.invalidateStatus();
+			void this.account.refreshStatus();
 		}
 		this.updateMathJaxVisibility();
 		this.app.workspace.updateOptions();
-	}
-
-	private invalidateCloudAccessStatus() {
-		this.cloudAccessStatusPromise = null;
-		this.cachedCloudAccessStatus = undefined;
-	}
-
-	private warmCloudAccessStatus() {
-		if (this.settings.useLocalInference || !this.settings.apiKey?.trim()) {
-			this.cachedCloudAccessStatus = null;
-			return;
-		}
-
-		void this.loadCloudAccessStatus();
-	}
-
-	private async loadCloudAccessStatus(): Promise<boolean | null> {
-		if (this.settings.useLocalInference || !this.settings.apiKey?.trim()) {
-			this.cachedCloudAccessStatus = null;
-			return null;
-		}
-
-		if (this.cachedCloudAccessStatus !== undefined) {
-			return this.cachedCloudAccessStatus;
-		}
-
-		if (!this.cloudAccessStatusPromise) {
-			const apiKey = this.settings.apiKey.trim();
-			this.cloudAccessStatusPromise = requestUrl({
-				url: CLOUD_ACCESS_STATUS_URL,
-				headers: {
-					"Api-Key": apiKey,
-				},
-				throw: false,
-			})
-				.then((response) => {
-					if (response.status >= 400) {
-						throw new Error(
-							`Cloud access status request failed with status ${response.status}.`
-						);
-					}
-
-					const payload = response.json as {
-						hasUnlimitedAccess?: unknown;
-					};
-					return payload.hasUnlimitedAccess === true;
-				})
-				.catch((error) => {
-					console.warn("Could not determine MathLive cloud access status.", error);
-					return null;
-				})
-				.finally(() => {
-					this.cloudAccessStatusPromise = null;
-				});
-		}
-
-		this.cachedCloudAccessStatus = await this.cloudAccessStatusPromise;
-		return this.cachedCloudAccessStatus;
 	}
 
 	// Opens the editor window on the formula that contains the position.
@@ -259,10 +230,6 @@ export default class MathLivePlugin extends Plugin {
 		}
 	}
 
-	async shouldShowUpgradeButton(): Promise<boolean> {
-		return (await this.loadCloudAccessStatus()) === false;
-	}
-
 	updateMathJaxVisibility() {
 		const editorOn = this.settings.enableInlineEditorMode;
 		// While MathLive inline widgets are on, Obsidian's inline MathJax must not sit above them in
@@ -294,6 +261,9 @@ export default class MathLivePlugin extends Plugin {
 
 export class MathliveSettingTab extends PluginSettingTab {
   plugin: MathLivePlugin;
+  private accountEl: HTMLElement | null = null;
+  private stopListening: (() => void) | null = null;
+  private apiKeyText: TextComponent | null = null;
 
   constructor(app: App, plugin: MathLivePlugin) {
     super(app, plugin);
@@ -312,49 +282,16 @@ export class MathliveSettingTab extends PluginSettingTab {
 
 	new Setting(containerEl).setName("Image scanner").setHeading();
 
-	new Setting(containerEl)
-		.setName("API key")
-		.setDesc(
-			createFragment((frag) => {
-				frag.appendText(
-					"The cloud scanner needs a MathLive account. Free accounts include 10 scans, and unlimited scanning is a paid plan. Scanned images are sent to mathlive.danz.blog. Create an account and API key at "
-				);
-				frag.createEl("a", {
-					text: "mathlive.danz.blog",
-					href: "https://mathlive.danz.blog",
-				});
-				frag.appendText(".");
-			})
-		)
-		.addText(tc => tc.setValue(this.plugin.settings.apiKey ?? "").onChange(async val => {
-			this.plugin.settings.apiKey = val;
-			await this.plugin.saveSettings({ refreshCloudAccessStatus: true })
-		}))
+	this.accountEl = containerEl.createDiv();
+	this.stopListening?.();
+	this.stopListening = this.plugin.account.onChange(() => this.renderAccount());
+	this.renderAccount();
 
 	new Setting(containerEl)
 		.setName("Scan from screen")
 		.setDesc(
 			"Drag a box around a formula anywhere in Obsidian, such as in a PDF or an image, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, or give the scan command a hotkey. To scan a formula in another app, such as a browser, use the command that scans anywhere on screen."
 		);
-
-	new Setting(containerEl)
-		.setName("Self-hosted scanner")
-		.setDesc("Send scans to a scanner you run yourself instead of the cloud. Free, but needs Docker and some technical setup.")
-		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
-			this.plugin.settings.useLocalInference = val;
-			await this.plugin.saveSettings({ refreshCloudAccessStatus: true })
-		}));
-
-	new Setting(containerEl)
-		.setName("Self-hosted scanner address")
-		.setDesc("Where your scanner runs, for example on another computer in your network.")
-		.addText(tc => tc
-			.setPlaceholder(DEFAULT_SETTINGS.localInferenceUrl)
-			.setValue(this.plugin.settings.localInferenceUrl)
-			.onChange(async val => {
-				this.plugin.settings.localInferenceUrl = val.trim();
-				await this.plugin.saveSettings()
-			}));
 
 	new Setting(containerEl).setName("Inline editor").setHeading();
 
@@ -431,6 +368,104 @@ export class MathliveSettingTab extends PluginSettingTab {
 				await this.plugin.saveSettings();
 			})
 		);
+
+	new Setting(containerEl).setName("Advanced").setHeading();
+
+	new Setting(containerEl)
+		.setName("API key")
+		.setDesc(
+			createFragment((frag) => {
+				frag.appendText(
+					"Instead of connecting, paste a key from your account page. Most people don't need this. Scanned images are sent to mathlive.danz.blog; see "
+				);
+				frag.createEl("a", {
+					text: "mathlive.danz.blog",
+					href: this.plugin.account.siteUrl("/account"),
+				});
+				frag.appendText(".");
+			})
+		)
+		.addText((tc) =>
+			(this.apiKeyText = tc)
+				.setValue(this.plugin.settings.apiKeySource === null ? (this.plugin.settings.apiKey ?? "") : "")
+				.setPlaceholder(this.plugin.settings.apiKeySource === "device" ? "Connected, no key needed" : "")
+				.onChange(async (val) => {
+					await this.plugin.account.setPastedKey(val.trim() || null);
+				})
+		);
+
+	new Setting(containerEl)
+		.setName("Self-hosted scanner")
+		.setDesc("Send scans to a scanner you run yourself instead of the cloud. Free, but needs Docker and some technical setup.")
+		.addToggle(toggle => toggle.setValue(this.plugin.settings.useLocalInference).onChange(async val => {
+			this.plugin.settings.useLocalInference = val;
+			await this.plugin.saveSettings({ refreshCloudAccessStatus: true });
+			// The account only matters for the cloud scanner.
+			this.renderAccount();
+		}));
+
+	new Setting(containerEl)
+		.setName("Self-hosted scanner address")
+		.setDesc("Where your scanner runs, for example on another computer in your network.")
+		.addText(tc => tc
+			.setPlaceholder(DEFAULT_SETTINGS.localInferenceUrl)
+			.setValue(this.plugin.settings.localInferenceUrl)
+			.onChange(async val => {
+				this.plugin.settings.localInferenceUrl = val.trim();
+				await this.plugin.saveSettings()
+			}));
+  }
+
+  hide(): void {
+	this.stopListening?.();
+	this.stopListening = null;
+  }
+
+  // The account row redraws by itself while connecting, so the rest of the tab keeps its state.
+  private renderAccount() {
+	const account = this.plugin.account;
+	const el = this.accountEl;
+	if (!el?.isConnected) {
+		return;
+	}
+	el.empty();
+	if (this.plugin.settings.useLocalInference) {
+		return;
+	}
+
+	const setting = new Setting(el).setName("Account").setDesc(account.describe());
+	setting.settingEl.addClass("mathlive-account-setting");
+	if (account.isConnecting()) {
+		setting
+			.addButton((button) =>
+				button.setButtonText("Open the page again").onClick(() => window.open(account.connectUrl()))
+			)
+			.addButton((button) => button.setButtonText("Cancel").onClick(() => account.cancelConnect()));
+	} else if (account.isConnected()) {
+		if (account.status && !account.status.hasUnlimitedAccess) {
+			setting.addButton((button) =>
+				button.setButtonText("Upgrade").onClick(() => window.open(account.siteUrl("/pricing")))
+			);
+		}
+		setting
+			.addButton((button) =>
+				button.setButtonText("Manage").onClick(() => window.open(account.siteUrl("/account")))
+			)
+			.addButton((button) =>
+				button.setButtonText("Disconnect").onClick(async () => {
+					await account.disconnect();
+					// The API key field may have shown the key that was just removed.
+					this.apiKeyText?.setValue("");
+				})
+			);
+	} else {
+		setting.addButton((button) =>
+			button
+				.setButtonText("Connect")
+				.setCta()
+				.onClick(() => void account.connect())
+		);
+	}
   }
 }
 
@@ -583,18 +618,11 @@ class MathLiveModal extends Modal {
 	}
 
 	private async showMenu(button: HTMLElement) {
-		const settings = this.plugin.settings;
-		const needsSignIn = !settings.useLocalInference && !settings.apiKey?.trim();
-		const canUpgrade = !needsSignIn && (await this.plugin.shouldShowUpgradeButton());
+		const accountAction = await this.plugin.account.menuAction();
 
 		const menu = new Menu();
-		if (needsSignIn || canUpgrade) {
-			menu.addItem((item) =>
-				item
-					.setTitle(needsSignIn ? "Sign in to scan images" : "Upgrade for more scans")
-					.setIcon("user")
-					.onClick(() => window.open(ACCOUNT_URL))
-			);
+		if (accountAction) {
+			menu.addItem((item) => item.setTitle(accountAction.title).setIcon("user").onClick(accountAction.run));
 		}
 		menu.addItem((item) =>
 			item
