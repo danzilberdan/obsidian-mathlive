@@ -1,0 +1,17 @@
+{
+	"name": "mathlive-video",
+	"private": true,
+	"description": "The MathLive 2.0 showcase video: narration, voice clips, screen recordings and the build.",
+	"type": "module",
+	"scripts": {
+		"script": "node tools/write-script.mjs",
+		"voice": "node tools/voice.mjs",
+		"assets": "node tools/make-assets.mjs",
+		"record": "node tools/record.mjs",
+		"build": "node tools/build.mjs",
+		"all": "node tools/voice.mjs && node tools/record.mjs && node tools/build.mjs"
+	},
+	"dependencies": {
+		"yaml": "^2.8.1"
+	}
+}

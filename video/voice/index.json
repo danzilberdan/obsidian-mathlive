@@ -1,0 +1,116 @@
+{
+	"intro-1": {
+		"hash": "2445124f112fda77",
+		"engine": "openrouter",
+		"duration": 7.515,
+		"text": "This is MathLive 2.0, the Obsidian plugin for math notes, now with less typing and more scanning."
+	},
+	"editing-1": {
+		"hash": "34888367950424d9",
+		"engine": "openrouter",
+		"duration": 7.147,
+		"text": "Click any formula in your note and start typing. A fraction appears right there, as you write it, in place."
+	},
+	"editing-2": {
+		"hash": "65ec947d03e0dd5c",
+		"engine": "openrouter",
+		"duration": 7.992,
+		"text": "The formula reads as finished math, and the note's source stays plain LaTeX. Nothing proprietary, nothing locked in."
+	},
+	"ai-fill-1": {
+		"hash": "06c6d3ad42c2eeb3",
+		"engine": "openrouter",
+		"duration": 7.709,
+		"text": "New in 2.0 is the sparkle button. Click it next to a formula, and you can scan from the clipboard or the screen."
+	},
+	"ai-fill-2": {
+		"hash": "292be2de08af6129",
+		"engine": "openrouter",
+		"duration": 8.283,
+		"text": "Choose clipboard image. A progress notice says it's reading the formula, and then the equation fills in, ready to edit."
+	},
+	"scan-screen-1": {
+		"hash": "7fd476c032321503",
+		"engine": "openrouter",
+		"duration": 7.306,
+		"text": "Say a lecture PDF is open beside your note. Choose scan from screen, and the whole screen dims."
+	},
+	"scan-screen-2": {
+		"hash": "94821fbd080f04eb",
+		"engine": "openrouter",
+		"duration": 5.847,
+		"text": "Drag a box around any formula in the PDF. It lands in your note as editable math."
+	},
+	"scan-screen-3": {
+		"hash": "c56bd36389eda7bb",
+		"engine": "openrouter",
+		"duration": 5.856,
+		"text": "It's just a formula like any other, so you can click in and fix a symbol or change a term."
+	},
+	"pdf-notes-1": {
+		"hash": "599687a03887d5c0",
+		"engine": "openrouter",
+		"duration": 8.42,
+		"text": "To bring in a whole document, right-click the PDF and choose Convert to notes with MathLive. The dialog shows the page count."
+	},
+	"pdf-notes-2": {
+		"hash": "154b2cbb0dccd2b9",
+		"engine": "openrouter",
+		"duration": 6.81,
+		"text": "Click Convert, and the dialog counts pages as they're read. Blank pages are skipped and not charged."
+	},
+	"pdf-notes-3": {
+		"hash": "3b3e30bd26d12672",
+		"engine": "openrouter",
+		"duration": 7.74,
+		"text": "The new note opens with each page as Markdown and editable LaTeX, and every page links back to its place in the PDF."
+	},
+	"connect-1": {
+		"hash": "220c0177ec63775d",
+		"engine": "openrouter",
+		"duration": 6.123,
+		"text": "Getting started is easy. Your first three scans are a free trial, and you don't need an account."
+	},
+	"connect-2": {
+		"hash": "680eae3fa737875f",
+		"engine": "openrouter",
+		"duration": 6.806,
+		"text": "When the trial scans are used up, a dialog offers Connect. Click it, and it says to finish in your browser."
+	},
+	"connect-3": {
+		"hash": "3dc5e474a8054c93",
+		"engine": "openrouter",
+		"duration": 6.8,
+		"text": "The MathLive website opens. Sign in with Google, and that's it. There are no API keys to copy."
+	},
+	"connect-4": {
+		"hash": "19a3d307fce3060b",
+		"engine": "openrouter",
+		"duration": 6.831,
+		"text": "Back in Obsidian, a notice says MathLive is connected, and the scan that was waiting finishes on its own."
+	},
+	"website-1": {
+		"hash": "cb7bb01c46791618",
+		"engine": "openrouter",
+		"duration": 8.838,
+		"text": "There's also a new website, at mathlive.danz.blog, with an account page for your plan, scans left, and connected devices."
+	},
+	"website-2": {
+		"hash": "f17fc0f83bf522dd",
+		"engine": "openrouter",
+		"duration": 10.71,
+		"text": "Plans are simple. Free, Monthly at four dollars a month, or Lifetime at forty-nine dollars, once. Typing and editing formulas stay free forever."
+	},
+	"reliable-1": {
+		"hash": "bbab509392ebfd3b",
+		"engine": "openrouter",
+		"duration": 8.59,
+		"text": "Scans run on hosted vision models, with automatic failover to a second provider. You're only charged when a scan returns a result."
+	},
+	"outro-1": {
+		"hash": "2b9f195614548601",
+		"engine": "openrouter",
+		"duration": 9.501,
+		"text": "Get MathLive 2.0 from Community plugins in Obsidian. Search for MathLive, or visit mathlive.danz.blog to learn more."
+	}
+}

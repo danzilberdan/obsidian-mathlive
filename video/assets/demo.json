@@ -1,0 +1,77 @@
+{
+	"note": {
+		"path": "Orbital mechanics.md",
+		"text": "A satellite in a circular orbit moves at $v = \\sqrt{\\frac{GM}{r}}$, where $G$ is the gravitational constant.\n\n$$\nT^2 = \\frac{4\\pi^2}{GM} a^3\n$$\n\nThe energy of the orbit is $E = -\\frac{GMm}{2a}$.\n\n## Escape velocity\n\n$$\n\n$$\n\n## Kepler's equation\n\n$$\n\n$$\n\n## Hohmann transfer\n\nThe first burn:\n\n"
+	},
+	"typing": {
+		"keys": [
+			"v",
+			"_",
+			"e",
+			"ArrowRight",
+			"=",
+			"s",
+			"q",
+			"r",
+			"t",
+			"2",
+			"G",
+			"M",
+			"/",
+			"r"
+		],
+		"latex": "v_{e}=\\sqrt{\\frac{2GM}{r}}"
+	},
+	"clipboard": {
+		"latex": "M = E - e\\,\\sin E"
+	},
+	"lecture": {
+		"file": "Lecture 4 - Orbital transfers.pdf",
+		"course": "Astrodynamics · Lecture 4",
+		"pages": [
+			{
+				"title": "Hohmann transfer",
+				"blocks": [
+					{
+						"text": "The cheapest two-burn move between circular orbits of radius r₁ and r₂. The first burn raises the far point of the orbit to r₂:"
+					},
+					{
+						"latex": "\\Delta v_1 = \\sqrt{\\frac{\\mu}{r_1}}\\left(\\sqrt{\\frac{2r_2}{r_1+r_2}}-1\\right)",
+						"target": true
+					},
+					{
+						"text": "Here μ = GM is the standard gravitational parameter of the central body."
+					}
+				],
+				"markdown": "## Hohmann transfer\n\nThe cheapest two-burn move between circular orbits of radius $r_1$ and $r_2$. The first burn raises the far point of the orbit to $r_2$:\n\n$$\n\\Delta v_1 = \\sqrt{\\frac{\\mu}{r_1}}\\left(\\sqrt{\\frac{2r_2}{r_1+r_2}}-1\\right)\n$$\n\nHere $\\mu = GM$ is the standard gravitational parameter of the central body."
+			},
+			{
+				"title": "The second burn",
+				"blocks": [
+					{
+						"text": "At r₂ the craft is slower than a circular orbit there, so it burns again:"
+					},
+					{
+						"latex": "\\Delta v_2 = \\sqrt{\\frac{\\mu}{r_2}}\\left(1-\\sqrt{\\frac{2r_1}{r_1+r_2}}\\right)"
+					},
+					{
+						"text": "The total cost is Δv = Δv₁ + Δv₂."
+					}
+				],
+				"markdown": "## The second burn\n\nAt $r_2$ the craft is slower than a circular orbit there, so it burns again:\n\n$$\n\\Delta v_2 = \\sqrt{\\frac{\\mu}{r_2}}\\left(1-\\sqrt{\\frac{2r_1}{r_1+r_2}}\\right)\n$$\n\nThe total cost is $\\Delta v = \\Delta v_1 + \\Delta v_2$."
+			},
+			{
+				"title": "Transfer time",
+				"blocks": [
+					{
+						"text": "The transfer is half an ellipse with semi-major axis a = (r₁ + r₂)/2, so by Kepler's third law:"
+					},
+					{
+						"latex": "t_H = \\pi\\sqrt{\\frac{(r_1+r_2)^3}{8\\mu}}"
+					}
+				],
+				"markdown": "## Transfer time\n\nThe transfer is half an ellipse with semi-major axis $a = \\frac{r_1 + r_2}{2}$, so by Kepler's third law:\n\n$$\nt_H = \\pi\\sqrt{\\frac{(r_1+r_2)^3}{8\\mu}}\n$$"
+			}
+		]
+	}
+}
