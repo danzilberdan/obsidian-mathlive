@@ -15,10 +15,13 @@ obsidian_zoom: 1.3 # Obsidian is zoomed in so formulas read well
 output: { width: 1920, height: 1080, fps: 30 }
 
 voice:
+  # takes: Dan's own recordings in takes/, made with tools/prompter.mjs.
   # openrouter: a text-to-speech model on OpenRouter, by default ElevenLabs v4.
   #   Other ElevenLabs models there: eleven-v3, eleven-multilingual-v2, eleven-turbo-v2.5, eleven-flash-v2.5.
   # piper: a free local voice, handy for checking timing without spending anything.
-  engine: openrouter
+  engine: takes
+  takes:
+    cleanup: highpass=f=80,afftdn=nf=-25 # cut rumble and steady background noise
   openrouter:
     model: elevenlabs/eleven-v4
     voice: george
@@ -39,7 +42,7 @@ scenes:
       - id: intro-1
         on_screen: Title card "MathLive 2.0 — Math notes in Obsidian, without the typing".
         words: 14
-        text: "This is MathLive 2.0, the Obsidian plugin for math notes, now with less typing and more scanning."
+        text: "Hi, I'm Dan. This is MathLive 2.0, and it makes math notes in Obsidian a lot less typing."
 
   - id: editing
     kind: obsidian
@@ -47,11 +50,11 @@ scenes:
       - id: editing-1
         on_screen: An Obsidian note on orbital mechanics with rendered formulas. The cursor clicks into a formula and types; a fraction appears as it is typed.
         words: 20
-        text: "Click any formula in your note and start typing. A fraction appears right there, as you write it, in place."
+        text: "In any note, I click a formula and start typing. A fraction appears as I go, and I can see the math take shape."
       - id: editing-2
         on_screen: The same note; the formula now reads as finished math, and the note's source still holds plain LaTeX.
         words: 14
-        text: "The formula reads as finished math, and the note's source stays plain LaTeX. Nothing proprietary, nothing locked in."
+        text: "Now the formula reads as finished math, and the note itself still holds plain LaTeX underneath."
 
   - id: ai-fill
     kind: obsidian
@@ -59,11 +62,11 @@ scenes:
       - id: ai-fill-1
         on_screen: The cursor clicks the ✨ (AI fill) button next to an empty block formula. A menu opens with "Scan clipboard image" and "Scan from screen".
         words: 18
-        text: "New in 2.0 is the sparkle button. Click it next to a formula, and you can scan from the clipboard or the screen."
+        text: "New in 2.0 is a sparkle button on every formula. I click it, and I can scan from the clipboard or from the screen."
       - id: ai-fill-2
         on_screen: The "Scan clipboard image" item is clicked. A progress notice with a moving bar says "Reading the formula…", then the formula fills in with the scanned equation.
         words: 18
-        text: "Choose clipboard image. A progress notice says it's reading the formula, and then the equation fills in, ready to edit."
+        text: "I'll scan a clipboard image. A progress bar shows the formula being read, and then the equation fills in, ready to edit."
 
   - id: scan-screen
     kind: obsidian
@@ -71,15 +74,15 @@ scenes:
       - id: scan-screen-1
         on_screen: A lecture PDF is open beside the note. The ✨ menu's "Scan from screen" is clicked and the whole screen dims.
         words: 16
-        text: "Say a lecture PDF is open beside your note. Choose scan from screen, and the whole screen dims."
+        text: "Here a lecture PDF is open next to my note. I choose Scan from screen, and everything dims."
       - id: scan-screen-2
         on_screen: A box is dragged around a formula in the PDF. The formula appears in the note as editable math.
         words: 18
-        text: "Drag a box around any formula in the PDF. It lands in your note as editable math."
+        text: "I drag a box around a formula in the PDF, and it lands in my note as editable math."
       - id: scan-screen-3
         on_screen: The scanned formula sits in the note; the viewer sees it can be edited like any other.
         words: 14
-        text: "It's just a formula like any other, so you can click in and fix a symbol or change a term."
+        text: "It's just a normal formula now, so I can edit it like any other one."
 
   - id: pdf-notes
     kind: obsidian
@@ -87,15 +90,15 @@ scenes:
       - id: pdf-notes-1
         on_screen: In the file list, the lecture PDF is right-clicked and "Convert to notes with MathLive" is chosen. A dialog says how many pages it has.
         words: 18
-        text: "To bring in a whole document, right-click the PDF and choose Convert to notes with MathLive. The dialog shows the page count."
+        text: "For a whole PDF, I right-click it and choose Convert to notes with MathLive. The dialog shows how many pages it has."
       - id: pdf-notes-2
         on_screen: Convert is clicked; the dialog counts pages as they are read.
         words: 14
-        text: "Click Convert, and the dialog counts pages as they're read. Blank pages are skipped and not charged."
+        text: "I click Convert, and the dialog counts the pages as they are read."
       - id: pdf-notes-3
         on_screen: The new note opens. Each page's text and formulas are Markdown with LaTeX, with a link back to its PDF page.
         words: 20
-        text: "The new note opens with each page as Markdown and editable LaTeX, and every page links back to its place in the PDF."
+        text: "The new note opens with each page as Markdown, with editable LaTeX, and a link back to the page it came from."
 
   - id: connect
     kind: obsidian
@@ -103,19 +106,19 @@ scenes:
       - id: connect-1
         on_screen: A notice says "free trial — 3 scans, no account needed" while the first scan works.
         words: 16
-        text: "Getting started is easy. Your first three scans are a free trial, and you don't need an account."
+        text: "Your first three scans are a free trial, and you don't need an account for them."
       - id: connect-2
         on_screen: Later, a dialog says the trial scans are used up and offers Connect. Connect is clicked; the dialog says "Finish in your browser".
         words: 16
-        text: "When the trial scans are used up, a dialog offers Connect. Click it, and it says to finish in your browser."
+        text: "When they're used up, one click on Connect starts things off. It then says to finish in your browser."
       - id: connect-3
         on_screen: The browser shows the MathLive website's "Connect Obsidian" page with a "Sign in to connect" button (Google sign-in).
         words: 14
-        text: "The MathLive website opens. Sign in with Google, and that's it. There are no API keys to copy."
+        text: "The browser opens the Connect Obsidian page. I sign in with Google, and that's the only step."
       - id: connect-4
         on_screen: Back in Obsidian, a notice says MathLive is connected, and the scan that was waiting finishes on its own.
         words: 16
-        text: "Back in Obsidian, a notice says MathLive is connected, and the scan that was waiting finishes on its own."
+        text: "Back in Obsidian, MathLive is connected, and the scan that was waiting finishes on its own."
 
   - id: website
     kind: browser
@@ -124,11 +127,11 @@ scenes:
       - id: website-1
         on_screen: The new MathLive website home page scrolls by.
         words: 14
-        text: "There's also a new website, at mathlive.danz.blog, with an account page for your plan, scans left, and connected devices."
+        text: "There's also a new website at mathlive.danz.blog, where you can see your plan, scans left, and devices."
       - id: website-2
         on_screen: The pricing page with three plans — Free, Monthly at four dollars, Lifetime at forty-nine dollars.
         words: 22
-        text: "Plans are simple. Free, Monthly at four dollars a month, or Lifetime at forty-nine dollars, once. Typing and editing formulas stay free forever."
+        text: "Pricing is simple. Free, Monthly at four dollars a month, or Lifetime for forty-nine dollars once. Editing formulas stays free."
 
   - id: reliable
     kind: card
@@ -137,7 +140,7 @@ scenes:
       - id: reliable-1
         on_screen: Card "Scans you can count on — hosted vision models, automatic failover, charged only when a scan works".
         words: 20
-        text: "Scans run on hosted vision models, with automatic failover to a second provider. You're only charged when a scan returns a result."
+        text: "Scans run on hosted vision models, with automatic failover to a second provider. You're only charged when a scan works."
 
   - id: outro
     kind: card
@@ -146,4 +149,4 @@ scenes:
       - id: outro-1
         on_screen: End card "Get MathLive 2.0 — Community plugins → MathLive · mathlive.danz.blog".
         words: 16
-        text: "Get MathLive 2.0 from Community plugins in Obsidian. Search for MathLive, or visit mathlive.danz.blog to learn more."
+        text: "Get MathLive 2.0 from Community plugins in Obsidian, and find out more at mathlive.danz.blog."

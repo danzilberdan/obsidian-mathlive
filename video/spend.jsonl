@@ -19,3 +19,4 @@
 {"at":"2026-10-27T15:13:54.434Z","purpose":"voice","model":"elevenlabs/eleven-v4","cost":0.0104,"tokens":null}
 {"at":"2026-10-27T15:13:57.382Z","purpose":"voice","model":"elevenlabs/eleven-v4","cost":0.00928,"tokens":null}
 {"at":"2026-10-27T15:28:23.938Z","purpose":"voice","model":"elevenlabs/eleven-v4","cost":0.00752,"tokens":null}
+{"at":"2026-10-27T19:13:44.274Z","purpose":"script intro-1,editing-1,editing-2,ai-fill-1,ai-fill-2,scan-screen-1,scan-screen-2,scan-screen-3,pdf-notes-1,pdf-notes-2,pdf-notes-3,connect-1,connect-2,connect-3,connect-4,website-1,website-2,reliable-1,outro-1","model":"anthropic/claude-sonnet-5.5","cost":0.01406,"tokens":3762}

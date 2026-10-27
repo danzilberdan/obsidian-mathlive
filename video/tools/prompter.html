@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MathLive Teleprompter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* One stage for the line being read, a strip of every line below it. */
+:root {
+	--bg: #121019;
+	--panel: #1b1825;
+	--line: #2c2838;
+	--fg: #f2effa;
+	--muted: #9b94b3;
+	--accent: #a78bfa;
+	--rec: #f0506e;
+	--ok: #4fd1a1;
+	--warn: #f5b84b;
+	--read: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+	--mono: "JetBrains Mono", ui-monospace, monospace;
+	color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--read); display: grid; grid-template-rows: auto 1fr auto; }
+header { display: flex; align-items: center; gap: 16px; padding: 14px max(16px, 3vw); border-bottom: 1px solid var(--line); }
+header h1 { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 700; }
+header .count { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-left: auto; }
+.meter { width: 120px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--ok); transition: width 60ms linear; }
+
+main { display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 24px max(16px, 8vw); min-height: 0; }
+.where { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: .04em; }
+.screen { color: var(--muted); font-size: 17px; max-width: 70ch; line-height: 1.45; }
+.text { font-size: clamp(30px, 4.4vw, 58px); line-height: 1.3; max-width: 26ch; text-wrap: balance; font-weight: 700; }
+.next { color: var(--muted); font-size: 20px; max-width: 60ch; opacity: .7; }
+.next b { font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: .06em; text-transform: uppercase; margin-right: 8px; }
+
+.timer { display: grid; gap: 8px; max-width: 900px; }
+.bar { position: relative; height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--accent); }
+.bar.over i { background: var(--warn); }
+.bar.recording i { background: var(--rec); }
+.times { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.state { font-family: var(--mono); font-size: 15px; display: flex; gap: 10px; align-items: center; }
+.state .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); }
+.state.recording .dot { background: var(--rec); animation: pulse 1s infinite; }
+.state.review .dot { background: var(--ok); }
+.countdown { font-family: var(--mono); font-size: 80px; color: var(--accent); }
+@keyframes pulse { 50% { opacity: .3; } }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; }
+button { font: 600 15px var(--read); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); color: #17131f; border-color: var(--accent); }
+button.danger { background: var(--rec); border-color: var(--rec); color: #fff; }
+button kbd { font-family: var(--mono); font-size: 11px; opacity: .7; margin-left: 6px; }
+
+footer { border-top: 1px solid var(--line); padding: 10px max(16px, 3vw); overflow-x: auto; }
+.strip { display: flex; gap: 6px; }
+.strip button { font: 400 12px var(--mono); padding: 6px 8px; white-space: nowrap; }
+.strip button.done { border-color: var(--ok); color: var(--ok); }
+.strip button.stale { border-color: var(--warn); color: var(--warn); }
+.strip button.current { background: var(--accent); color: #17131f; border-color: var(--accent); }
+.error { color: var(--rec); font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .state.recording .dot { animation: none; } }
+</style>
+</head>
+<body>
+<header>
+	<h1>MathLive 2.0 · narration</h1>
+	<div class="meter" title="Microphone level"><i id="level"></i></div>
+	<span class="count" id="count"></span>
+</header>
+
+<main>
+	<div class="where" id="where"></div>
+	<div class="screen" id="screen"></div>
+	<div class="text" id="text"></div>
+	<div class="timer">
+		<div class="bar" id="bar"><i id="fill"></i></div>
+		<div class="times"><span id="elapsed">0.0 s</span><span id="target"></span></div>
+	</div>
+	<div class="state" id="state"><span class="dot"></span><span id="status">Press Space to record this line</span></div>
+	<div class="controls">
+		<button class="primary" id="record">Record <kbd>Space</kbd></button>
+		<button id="play" hidden>Play <kbd>P</kbd></button>
+		<button class="primary" id="keep" hidden>Keep and next <kbd>Enter</kbd></button>
+		<button id="redo" hidden>Redo <kbd>R</kbd></button>
+		<button id="prev">Previous <kbd>←</kbd></button>
+		<button id="next">Next <kbd>→</kbd></button>
+	</div>
+	<div class="next" id="upnext"></div>
+	<div class="error" id="error" hidden></div>
+</main>
+
+<footer><div class="strip" id="strip"></div></footer>
+
+<script>
+const LINES = /*LINES*/[];
+const COUNTDOWN = 3;
+let index = Math.max(0, LINES.findIndex((line) => !line.take || line.take.stale));
+let mode = "idle"; // idle, countdown, recording, review
+let stream = null;
+let recorder = null;
+let chunks = [];
+let blob = null;
+let startedAt = 0;
+let lastDuration = 0;
+let timer = 0;
+let audio = null;
+
+const $ = (id) => document.getElementById(id);
+
+function render() {
+	const line = LINES[index];
+	$("where").textContent = `${line.scene} · ${line.id}`;
+	$("screen").textContent = `On screen: ${line.onScreen}`;
+	$("text").textContent = line.text;
+	$("target").textContent = `aim for about ${line.target.toFixed(1)} s`;
+	const next = LINES[index + 1];
+	$("upnext").innerHTML = next ? `<b>Next</b>` : "";
+	if (next) $("upnext").append(next.text);
+	const done = LINES.filter((l) => l.take && !l.take.stale).length;
+	$("count").textContent = `${done} of ${LINES.length} kept`;
+	$("record").hidden = mode === "review";
+	$("record").textContent = mode === "recording" ? "Stop" : "Record";
+	$("record").className = mode === "recording" ? "danger" : "primary";
+	$("record").insertAdjacentHTML("beforeend", " <kbd>Space</kbd>");
+	for (const id of ["play", "keep", "redo"]) $(id).hidden = mode !== "review";
+	$("state").className = `state ${mode}`;
+	const strip = $("strip");
+	strip.replaceChildren(
+		...LINES.map((l, i) => {
+			const button = document.createElement("button");
+			button.textContent = l.id;
+			button.className = [l.take ? (l.take.stale ? "stale" : "done") : "", i === index ? "current" : ""].join(" ");
+			button.title = l.take ? (l.take.stale ? "Kept, but the text changed since" : `Kept, ${l.take.duration} s`) : "Not recorded yet";
+			button.onclick = () => go(i);
+			return button;
+		})
+	);
+	strip.children[index]?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
+function setStatus(text) {
+	$("status").textContent = text;
+}
+
+function showError(text) {
+	$("error").hidden = !text;
+	$("error").textContent = text ?? "";
+}
+
+async function ensureMic() {
+	if (stream) return stream;
+	stream = await navigator.mediaDevices.getUserMedia({
+		audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
+	});
+	const context = new AudioContext();
+	const analyser = context.createAnalyser();
+	analyser.fftSize = 1024;
+	context.createMediaStreamSource(stream).connect(analyser);
+	const data = new Float32Array(analyser.fftSize);
+	const tick = () => {
+		analyser.getFloatTimeDomainData(data);
+		const peak = data.reduce((max, v) => Math.max(max, Math.abs(v)), 0);
+		$("level").style.width = `${Math.min(100, peak * 140)}%`;
+		$("level").style.background = peak > 0.9 ? "var(--rec)" : "var(--ok)";
+		requestAnimationFrame(tick);
+	};
+	tick();
+	return stream;
+}
+
+function drawBar(seconds) {
+	const target = LINES[index].target;
+	$("fill").style.width = `${Math.min(100, (seconds / target) * 100)}%`;
+	$("bar").classList.toggle("over", seconds > target * 1.2);
+	$("elapsed").textContent = `${seconds.toFixed(1)} s`;
+}
+
+async function startRecording() {
+	showError(null);
+	try {
+		await ensureMic();
+	} catch (error) {
+		showError(`The microphone isn't available: ${error.message}. Allow it for this page and try again.`);
+		return;
+	}
+	mode = "countdown";
+	render();
+	for (let n = COUNTDOWN; n > 0; n--) {
+		setStatus(`Starting in ${n}…`);
+		await new Promise((resolve) => setTimeout(resolve, 700));
+		if (mode !== "countdown") return;
+	}
+	chunks = [];
+	recorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus", audioBitsPerSecond: 160000 });
+	recorder.ondataavailable = (event) => chunks.push(event.data);
+	recorder.onstop = () => {
+		blob = new Blob(chunks, { type: "audio/webm" });
+		mode = "review";
+		setStatus(`Recorded ${lastDuration.toFixed(1)} s. Keep it, play it back, or redo.`);
+		render();
+	};
+	recorder.start();
+	startedAt = performance.now();
+	mode = "recording";
+	$("bar").classList.add("recording");
+	setStatus("Recording. Read the line, then press Space.");
+	render();
+	timer = setInterval(() => drawBar((performance.now() - startedAt) / 1000), 50);
+}
+
+function stopRecording() {
+	clearInterval(timer);
+	lastDuration = (performance.now() - startedAt) / 1000;
+	$("bar").classList.remove("recording");
+	recorder.stop();
+}
+
+async function keep() {
+	const line = LINES[index];
+	const response = await fetch(`/takes/${line.id}?duration=${lastDuration.toFixed(2)}`, { method: "POST", body: blob });
+	if (!response.ok) {
+		showError("The take couldn't be saved. Is tools/prompter.mjs still running?");
+		return;
+	}
+	line.take = { duration: Number(lastDuration.toFixed(2)), stale: false };
+	go(Math.min(LINES.length - 1, index + 1));
+	if (LINES.every((l) => l.take && !l.take.stale)) setStatus("Every line is kept. You can close this page.");
+}
+
+function play() {
+	audio?.pause();
+	audio = new Audio(URL.createObjectURL(blob));
+	audio.play();
+}
+
+function go(i) {
+	if (mode === "recording") return;
+	audio?.pause();
+	index = i;
+	mode = "idle";
+	blob = null;
+	drawBar(0);
+	const line = LINES[index];
+	setStatus(line.take ? (line.take.stale ? "The text changed since this take. Record it again." : `Kept (${line.take.duration} s). Space records a new take.`) : "Press Space to record this line");
+	render();
+}
+
+$("record").onclick = () => (mode === "recording" ? stopRecording() : mode === "idle" ? startRecording() : null);
+$("keep").onclick = keep;
+$("redo").onclick = () => go(index);
+$("play").onclick = play;
+$("prev").onclick = () => go(Math.max(0, index - 1));
+$("next").onclick = () => go(Math.min(LINES.length - 1, index + 1));
+document.addEventListener("keydown", (event) => {
+	if (event.target.tagName === "BUTTON" && event.key === " ") event.preventDefault();
+	if (event.key === " ") {
+		event.preventDefault();
+		$("record").click();
+	} else if (event.key === "Enter" && mode === "review") keep();
+	else if (event.key.toLowerCase() === "r" && mode === "review") go(index);
+	else if (event.key.toLowerCase() === "p" && mode === "review") play();
+	else if (event.key === "ArrowLeft") $("prev").click();
+	else if (event.key === "ArrowRight") $("next").click();
+});
+go(index);
+</script>
+</body>
+</html>

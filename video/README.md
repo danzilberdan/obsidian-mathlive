@@ -7,6 +7,7 @@ Everything that makes the 2.0 showcase video, kept as files so it can be changed
 | `brief.md` | What the video should say and how it should sound. The script writer reads it. |
 | `scenes.yaml` | The scenes in order, and each narration line's text. **Edit this to change the words.** |
 | `voice/` | One voice clip per line (`<line id>.m4a`), plus `index.json` recording what each was made from. |
+| `takes/` | Your own recorded lines (`<line id>.webm`), when you narrate it yourself. |
 | `scenes/<id>.mjs` | The recording script for each screen scene. Title cards need no script. |
 | `assets/` | Demo material: the note, the formula picture and the lecture PDF (`demo.json` is the source). |
 | `tools/` | The commands below. |
@@ -24,6 +25,16 @@ node tools/make-assets.mjs                      # formula picture + lecture PDF 
 node tools/record.mjs [--only <scene ids>]      # screen recordings in a real Obsidian on a virtual screen
 node tools/build.mjs                            # the final video + subtitles in out/
 ```
+
+## Narrating it yourself
+
+`voice.engine` is `takes`: the video uses your own voice, one recording per line.
+
+1. `cd video && npm install` (once), then `node tools/prompter.mjs` and open http://localhost:4700.
+2. For each line: press Space, wait for the 3-2-1, read the line, press Space. Play it back with P, keep it with Enter (it moves on), or redo with R. The bar shows a comfortable pace for the line; you don't have to hit it exactly, because the video is timed to your recording. Kept lines turn green at the bottom; a line turns amber if its text changed after you recorded it.
+3. `node tools/voice.mjs` turns the takes into clips (cutting the silence at both ends and steady background noise), then `node tools/record.mjs` and `node tools/build.mjs` as usual.
+
+To redo one line later, open the prompter, click the line at the bottom and record it again; only that clip and its scene are redone. Lines without a take keep their previous clip, so a half-recorded set still builds.
 
 ## Fixing one thing
 

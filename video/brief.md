@@ -18,7 +18,9 @@ MathLive is an Obsidian plugin. You click any `$…$` or `$$…$$` formula in a 
 
 ## Audience and tone
 
-Students, researchers and engineers who take math-heavy notes in Obsidian. Friendly, confident and concrete, like a maker showing their own tool. Short sentences that are easy to say out loud. No hype words ("revolutionary", "game-changer", "seamless"), no rhetorical questions in a row, no emoji.
+Students, researchers and engineers who take math-heavy notes in Obsidian.
+
+The narrator is Dan Zilberman, who made MathLive, reading the lines himself. Write in his voice: first person ("I built", "you can"), friendly, confident and concrete, like showing a friend a tool you made. Short sentences that are easy to read aloud in one breath, with no tongue-twisters or long lists. No hype words ("revolutionary", "game-changer", "seamless"), no rhetorical questions in a row, no emoji.
 
 ## Rules for the narration
 
