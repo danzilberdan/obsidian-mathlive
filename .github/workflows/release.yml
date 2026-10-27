@@ -34,6 +34,9 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Tags like 2.0.0-staging.1 talk to the staging server, for testing before a release.
+          MATHLIVE_ORIGIN: ${{ contains(github.ref_name, '-staging') && 'https://mathlive-staging.danz.blog' || '' }}
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
@@ -48,6 +51,8 @@ jobs:
         with:
           name: ${{ env.PLUGIN_NAME }} ${{ github.ref_name }}
           generate_release_notes: true
+          # Test builds (any tag with a "-") are pre-releases, installed only through BRAT.
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             main.js
             manifest.json

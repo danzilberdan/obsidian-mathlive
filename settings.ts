@@ -1,3 +1,6 @@
+// Set at build time (webpack.config.js): production, or staging for test builds.
+declare const MATHLIVE_ORIGIN: string;
+
 export interface PluginSettings {
 	apiKey: string | null;
 	// How the key got here: "device" by connecting, "trial" for the free trial, null when pasted.
@@ -33,6 +36,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	immediateInlineUpdate: true,
 	arrowKeyNavigation: true,
 	welcomeShown: false,
-	cloudScannerUrl: "https://mathlive.danz.blog/ocr",
-	websiteUrl: "https://mathlive.danz.blog",
+	cloudScannerUrl: `${MATHLIVE_ORIGIN}/ocr`,
+	websiteUrl: MATHLIVE_ORIGIN,
 };

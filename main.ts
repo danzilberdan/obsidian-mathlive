@@ -190,7 +190,11 @@ export default class MathLivePlugin extends Plugin {
 	}
 
 	async saveSettings(options?: { refreshCloudAccessStatus?: boolean }) {
-		await this.saveData(this.settings);
+		// The server addresses are only saved when changed, so a later build's addresses reach everyone.
+		const data: Partial<PluginSettings> = { ...this.settings };
+		if (data.cloudScannerUrl === DEFAULT_SETTINGS.cloudScannerUrl) delete data.cloudScannerUrl;
+		if (data.websiteUrl === DEFAULT_SETTINGS.websiteUrl) delete data.websiteUrl;
+		await this.saveData(data);
 		if (options?.refreshCloudAccessStatus) {
 			this.account.invalidateStatus();
 			void this.account.refreshStatus();
