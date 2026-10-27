@@ -1,7 +1,7 @@
 import type { MathfieldElement } from "mathlive";
-import { type App, type Menu, Notice, requestUrl } from "obsidian";
+import { type App, type Menu, Notice, requestUrl, setIcon } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
-import { selectAnywhereOnScreen, selectScreenArea } from "./screen-capture";
+import { ScreenAccessModal, selectAnywhereOnScreen, selectScreenArea, wholeScreenAccess } from "./screen-capture";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
@@ -543,6 +543,41 @@ export function noticeWithButton(message: string, label: string, onClick: () => 
 	);
 }
 
+// How long a scan runs before the progress notice starts counting the seconds.
+const SHOW_SECONDS_AFTER_MS = 2000;
+
+// A notice that stays up, with a moving bar and a seconds count, for as long as a scan runs, so a
+// slow scan never looks like nothing is happening. `busyEl`, such as the formula being filled,
+// shimmers meanwhile. Returns how to take it all down.
+export function startScanProgress(message: string, busyEl?: HTMLElement): () => void {
+	const row = createDiv({ cls: "mathlive-scan-progress-row" });
+	setIcon(row.createSpan({ cls: "mathlive-scan-progress-icon" }), "sparkles");
+	row.createSpan({ cls: "mathlive-scan-progress-text", text: message });
+	const time = row.createSpan({ cls: "mathlive-scan-progress-time" });
+	const bar = createDiv({ cls: "mathlive-scan-progress-bar" });
+	bar.createDiv();
+	const notice = new Notice(
+		createFragment((frag) => {
+			frag.append(row, bar);
+		}),
+		0
+	);
+	bar.closest(".notice")?.addClass("mathlive-scan-progress");
+	const started = Date.now();
+	const timer = window.setInterval(() => {
+		const elapsed = Date.now() - started;
+		if (elapsed >= SHOW_SECONDS_AFTER_MS) {
+			time.setText(`${Math.floor(elapsed / 1000)} s`);
+		}
+	}, 250);
+	busyEl?.addClass("mathlive-is-scanning");
+	return () => {
+		window.clearInterval(timer);
+		busyEl?.removeClass("mathlive-is-scanning");
+		notice.hide();
+	};
+}
+
 function showScanFailure(message: string, retry?: () => void) {
 	if (!retry) {
 		new Notice(message, 10000);
@@ -559,6 +594,8 @@ export interface ScanTarget {
 	insert(latex: string): void;
 	addedMessage: string;
 	closedMessage: string;
+	// Shimmers while the scan runs, such as the formula being filled.
+	busyEl?: HTMLElement;
 }
 
 export function mathfieldScanTarget(options: {
@@ -574,6 +611,7 @@ export function mathfieldScanTarget(options: {
 			mathfield.value += latex;
 			onValueChange?.(mathfield.value);
 		},
+		busyEl: mathfield,
 		addedMessage: "Scan added to the formula",
 		closedMessage: "The formula was closed before the scan finished. Open it and scan again.",
 	};
@@ -595,9 +633,9 @@ export async function ensureCanScan(settings: PluginSettings, resume: () => void
 async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
 	const { settings } = target;
 
+	const done = startScanProgress("Reading the formula…", target.busyEl);
 	try {
-		new Notice("Scanning math image");
-		const latex = await scanImageToLatex(settings, image);
+		const latex = await scanImageToLatex(settings, image).finally(done);
 		// The formula may have closed or re-rendered while the scan ran.
 		if (!target.isOpen()) {
 			new Notice(target.closedMessage);
@@ -678,9 +716,10 @@ function showEmptyClipboard(scanScreenArea?: () => void) {
 	noticeWithButton(EMPTY_CLIPBOARD_NOTICE + " You can also select the formula on screen.", "Select on screen", scanScreenArea);
 }
 
-// Lets the user drag a box around a formula anywhere in the Obsidian window and scans it.
-// `hideWhileSelecting` hides something, like the editor window, from the picture and returns how
-// to show it again.
+// Lets the user drag a box around a formula on the screen and scans it. With "Scan other apps"
+// on, the box can go anywhere on the screen; otherwise, or where the screen can't be pictured, it
+// goes in Obsidian's window. `hideWhileSelecting` hides something, like the editor window, from a
+// picture of Obsidian's window and returns how to show it again.
 export async function scanScreenAreaInto(
 	app: App,
 	target: ScanTarget,
@@ -696,44 +735,9 @@ export async function scanScreenAreaInto(
 		return false;
 	}
 
-	const show = hideWhileSelecting?.();
 	let image: Blob | null;
 	try {
-		if (show) {
-			// Let the window repaint without it before the picture is taken.
-			await nextFrames(doc, 2);
-		}
-		image = await selectScreenArea(app, doc);
-	} catch (error) {
-		console.error("MathLive: couldn't take a screenshot:", error);
-		new Notice("MathLive couldn't take a screenshot of this window.");
-		return false;
-	} finally {
-		show?.();
-	}
-	if (!image || !target.isOpen()) {
-		return false;
-	}
-
-	return await scanInto(target, image);
-}
-
-// Like scanScreenAreaInto, but the box can go around anything on the screen, other apps included.
-export async function scanAnywhereOnScreenInto(app: App, target: ScanTarget, doc: Document): Promise<boolean> {
-	const resume = () => {
-		if (target.isOpen()) {
-			void scanAnywhereOnScreenInto(app, target, doc);
-		}
-	};
-	if (!(await ensureCanScan(target.settings, resume))) {
-		return false;
-	}
-
-	let image: Blob | null;
-	try {
-		image = await selectAnywhereOnScreen(app, doc, () => {
-			void scanScreenAreaInto(app, target, doc);
-		});
+		image = await pickOnScreen(app, target.settings, doc, hideWhileSelecting);
 	} catch (error) {
 		console.error("MathLive: couldn't take a screenshot:", error);
 		new Notice("MathLive couldn't take a screenshot of the screen.");
@@ -744,6 +748,42 @@ export async function scanAnywhereOnScreenInto(app: App, target: ScanTarget, doc
 	}
 
 	return await scanInto(target, image);
+}
+
+let screenAccessHinted = false;
+
+async function pickOnScreen(
+	app: App,
+	settings: PluginSettings,
+	doc: Document,
+	hideWhileSelecting?: () => () => void
+): Promise<Blob | null> {
+	if (settings.scanOtherApps) {
+		const access = await wholeScreenAccess();
+		if (access === "ok") {
+			return await selectAnywhereOnScreen(doc);
+		}
+		if (access === "needs-access" && !screenAccessHinted) {
+			screenAccessHinted = true;
+			noticeWithButton(
+				"This scan can only reach Obsidian's window. To scan other apps too, macOS needs to let Obsidian record the screen.",
+				"Show me how",
+				() => new ScreenAccessModal(app).open(),
+				15000
+			);
+		}
+	}
+
+	const show = hideWhileSelecting?.();
+	try {
+		if (show) {
+			// Let the window repaint without it before the picture is taken.
+			await nextFrames(doc, 2);
+		}
+		return await selectScreenArea(app, doc);
+	} finally {
+		show?.();
+	}
 }
 
 function nextFrames(doc: Document, count: number): Promise<void> {

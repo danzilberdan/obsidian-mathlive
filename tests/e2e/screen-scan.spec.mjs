@@ -44,10 +44,11 @@ const noteValue = (page) =>
 	page.evaluate(() => window.app.workspace.getLeavesOfType("markdown")[0].view.editor.getValue());
 
 // Scans go to a stub of the self-hosted scanner on localhost:8502.
+// With "Scan other apps" off, the box is drawn on a picture of Obsidian's own window.
 test.describe("scanning a formula from the screen", () => {
 	test.beforeEach(async ({ page, scanner }) => {
 		scanner.requests.length = 0;
-		await setSettings(page, { useLocalInference: true, apiKey: "" });
+		await setSettings(page, { useLocalInference: true, apiKey: "", scanOtherApps: false });
 	});
 
 	test.afterEach(async ({ page }) => {
@@ -155,7 +156,7 @@ test.describe("scanning a formula from the screen", () => {
 		expect(scanner.requests).toHaveLength(0);
 	});
 
-	test("Scan from screen in a formula's ⋮ menu adds the scan to that formula", async ({ page }) => {
+	test("Scan from screen in a formula's ✨ menu adds the scan to that formula", async ({ page }) => {
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await menuItem(page, "Scan from screen").click();
 		await dragBox(page, { x: 400, y: 200 }, { x: 600, y: 280 });
@@ -186,7 +187,7 @@ test.describe("scanning a formula from the screen", () => {
 	});
 });
 
-// Picturing the whole screen: Obsidian steps aside and the box is drawn in a separate full-screen
+// Picturing the whole screen, the default: Obsidian steps aside and the box is drawn in a separate full-screen
 // window. On the test machine that window shows an empty desktop, which is enough to check the flow.
 test.describe("scanning anything on the screen", () => {
 	test.beforeEach(async ({ page, scanner }) => {
@@ -199,7 +200,7 @@ test.describe("scanning anything on the screen", () => {
 
 	async function openPicker(page, context) {
 		const opened = context.waitForEvent("page", (candidate) => candidate.url().startsWith("data:text/html"));
-		await runCommand(page, "mathlive:scan-anywhere-on-screen");
+		await runCommand(page, "mathlive:scan-screen-area");
 		const picker = await opened;
 		await picker.waitForFunction(() => document.getElementById("picture")?.naturalWidth > 0);
 		return picker;
@@ -224,6 +225,23 @@ test.describe("scanning anything on the screen", () => {
 		const scale = size.natural / size.width;
 		expect(scanner.requests[0].pngSize).toEqual({ width: Math.round(300 * scale), height: Math.round(120 * scale) });
 		expect(picker.isClosed()).toBe(true);
+	});
+
+	test("the editor window's Scan from screen can box another app, and fills the formula", async ({ page, obsidian, scanner }) => {
+		await runCommand(page, "mathlive:open-modal");
+		const opened = obsidian.context.waitForEvent("page", (candidate) => candidate.url().startsWith("data:text/html"));
+		await page.locator(".mathlive-modal-root .scan-screen-button").click();
+		const picker = await opened;
+		await picker.waitForFunction(() => document.getElementById("picture")?.naturalWidth > 0);
+		expect(await obsidianVisible(page)).toBe(false);
+		await picker.mouse.move(100, 100);
+		await picker.mouse.down();
+		await picker.mouse.move(300, 200, { steps: 3 });
+		await picker.mouse.up();
+
+		await expect.poll(() => obsidianVisible(page)).toBe(true);
+		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
+		expect(scanner.requests).toHaveLength(1);
 	});
 
 	test("Escape closes the screen picture, brings Obsidian back and scans nothing", async ({ page, obsidian, scanner }) => {

@@ -1,5 +1,5 @@
 import { remote, shell } from "electron";
-import { type App, Modal, Notice, Platform, Scope } from "obsidian";
+import { type App, Modal, Platform, Scope } from "obsidian";
 
 // A drag smaller than this, in either direction, is taken as a click, which cancels.
 const MIN_SELECTION_SIZE = 6;
@@ -36,25 +36,27 @@ function electronWindowOf(doc: Document) {
 const HIDE_DELAY_MS = 350;
 const MACOS_SCREEN_SETTINGS = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture";
 
-// Like selectScreenArea, but for anything on the screen, other apps included: Obsidian's window
-// steps aside, the whole display it was on is pictured, and the box is drawn on a full-screen copy
-// of that picture. Falls back to Obsidian's own window where the screen can't be pictured.
-// `scanObsidianOnly` is offered when macOS hasn't given Obsidian access to the screen yet.
-export async function selectAnywhereOnScreen(
-	app: App,
-	doc: Document,
-	scanObsidianOnly: () => void
-): Promise<Blob | null> {
+// Whether the whole screen, other apps included, can be pictured: not by Obsidian versions without
+// Electron's desktopCapturer, and on macOS only once Obsidian has Screen Recording access.
+export async function wholeScreenAccess(): Promise<"ok" | "unsupported" | "needs-access"> {
 	const { BrowserWindow, desktopCapturer, screen } = remote;
 	if (!BrowserWindow || !desktopCapturer || !screen) {
-		new Notice("This version of Obsidian can only scan its own window. Update Obsidian to scan other apps.");
-		return await selectScreenArea(app, doc);
+		return "unsupported";
 	}
 	if (Platform.isMacOS && !(await hasMacScreenAccess())) {
-		new ScreenAccessModal(app, scanObsidianOnly).open();
-		return null;
+		return "needs-access";
 	}
+	return "ok";
+}
 
+// Like selectScreenArea, but for anything on the screen, other apps included: Obsidian's windows
+// step aside, the whole display Obsidian was on is pictured, and the box is drawn on a full-screen
+// copy of that picture. Check wholeScreenAccess first.
+export async function selectAnywhereOnScreen(doc: Document): Promise<Blob | null> {
+	const { BrowserWindow, desktopCapturer, screen } = remote;
+	if (!BrowserWindow || !desktopCapturer || !screen) {
+		throw new Error("This version of Obsidian can't picture the screen.");
+	}
 	const win = electronWindowOf(doc);
 	const display = screen.getDisplayMatching(win.getBounds());
 	// Popouts step aside too, so nothing of Obsidian's covers what the user wants to scan.
@@ -111,10 +113,9 @@ async function hasMacScreenAccess(): Promise<boolean> {
 	return false;
 }
 
-class ScreenAccessModal extends Modal {
-	constructor(app: App, private readonly scanObsidianOnly: () => void) {
-		super(app);
-	}
+// How to give Obsidian Screen Recording access on macOS, offered after a scan of Obsidian's own
+// window.
+export class ScreenAccessModal extends Modal {
 
 	onOpen() {
 		this.setTitle("Let Obsidian see other apps");
@@ -124,15 +125,10 @@ class ScreenAccessModal extends Modal {
 		const steps = this.contentEl.createEl("ol");
 		steps.createEl("li", { text: "Open System Settings -> Privacy & Security -> Screen Recording." });
 		steps.createEl("li", { text: "Turn on Obsidian." });
-		steps.createEl("li", { text: "Quit and reopen Obsidian, then scan again." });
+		steps.createEl("li", { text: "Quit and reopen Obsidian. Scans from the screen then reach other apps too." });
 
 		const actions = this.contentEl.createDiv({ cls: "modal-button-container" });
-		actions
-			.createEl("button", { text: "Scan in Obsidian instead" })
-			.addEventListener("click", () => {
-				this.close();
-				this.scanObsidianOnly();
-			});
+		actions.createEl("button", { text: "Not now" }).addEventListener("click", () => this.close());
 		actions
 			.createEl("button", { cls: "mod-cta", text: "Open System Settings" })
 			.addEventListener("click", () => {

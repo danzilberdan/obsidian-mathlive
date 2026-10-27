@@ -11,13 +11,12 @@ import {
 	type TextComponent,
 	type KeymapEventHandler,
 	MarkdownView,
-	Menu,
 	Notice,
 } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
 import { CloudAccount } from "./account";
-import { AUTHOR_URL, createInlineMathEditorExtension } from "./mathlive-inline";
+import { createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
 	ensureMathfieldElementRegistered,
@@ -25,16 +24,15 @@ import {
 	appendLatexFromClipboardImage,
 	findEnclosingMath,
 	mathfieldScanTarget,
-	scanAnywhereOnScreenInto,
 	scanScreenAreaInto,
 	setScanAccount,
 	type ScanTarget,
 	moveVirtualKeyboard,
 	parseMathSelection,
-	showMenuBelow,
 } from "./mathlive-shared";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
+import { GuideModal } from "./guide";
 import { WelcomeModal } from "./welcome";
 const BODY_CLASSES = [
 	"mathlive-hide-rendered-inline",
@@ -87,11 +85,9 @@ export default class MathLivePlugin extends Plugin {
 			},
 		});
 		this.addCommand({
-			id: "scan-anywhere-on-screen",
-			name: "Scan formula from anywhere on screen, including other apps",
-			callback: () => {
-				void this.scanScreenAreaIntoNote(true);
-			},
+			id: "open-guide",
+			name: "Open the guide",
+			callback: () => this.openGuide(),
 		});
 		this.addCommand({
 			id: "convert-pdf-to-notes",
@@ -131,6 +127,7 @@ export default class MathLivePlugin extends Plugin {
 				getSettings: () => this.settings,
 				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
+				openGuide: () => this.openGuide(),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -147,9 +144,22 @@ export default class MathLivePlugin extends Plugin {
 			if (!this.settings.welcomeShown) {
 				this.settings.welcomeShown = true;
 				void this.saveSettings();
-				new WelcomeModal(this.app, this.account, () => this.openEditorFromWelcome()).open();
+				new WelcomeModal(this.app, this.account, () => this.openEditorFromWelcome(), () => this.openGuide()).open();
 			}
 		});
+	}
+
+	// Everything MathLive does, with buttons to try each part.
+	openGuide() {
+		new GuideModal(this.app, {
+			account: this.account,
+			addFormula: () => this.openEditorFromWelcome(),
+			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
+			convertPdf: () => {
+				const active = this.app.workspace.getActiveFile();
+				void convertPdfToNotes(this.app, this.settings, isPdf(active) ? active : undefined);
+			},
+		}).open();
 	}
 
 	// "Try the editor" in the welcome window: a full-line formula at the cursor of the open note.
@@ -234,7 +244,7 @@ export default class MathLivePlugin extends Plugin {
 		return leaf?.view instanceof MarkdownView ? leaf.view : null;
 	}
 
-	async scanScreenAreaIntoNote(anywhere = false) {
+	async scanScreenAreaIntoNote() {
 		const view = this.findNoteForScan();
 		if (!view?.file) {
 			new Notice("Open a note first, so the scanned formula has somewhere to go.");
@@ -249,11 +259,7 @@ export default class MathLivePlugin extends Plugin {
 			addedMessage: "Scanned formula added to the note",
 			closedMessage: "The note was closed before the scan finished. Open it and scan again.",
 		};
-		if (anywhere) {
-			await scanAnywhereOnScreenInto(this.app, target, activeDocument);
-		} else {
-			await scanScreenAreaInto(this.app, target, activeDocument);
-		}
+		await scanScreenAreaInto(this.app, target, activeDocument);
 	}
 
 	updateMathJaxVisibility() {
@@ -306,6 +312,11 @@ export class MathliveSettingTab extends PluginSettingTab {
 		text: "MathLive has two features: a visual formula editor, which is free and works offline, and an image scanner that turns a formula screenshot into LaTeX.",
 	});
 
+	new Setting(containerEl)
+		.setName("Guide")
+		.setDesc("Everything MathLive can do, with a button to try each part.")
+		.addButton((button) => button.setButtonText("Open the guide").onClick(() => this.plugin.openGuide()));
+
 	new Setting(containerEl).setName("Image scanner").setHeading();
 
 	this.accountEl = containerEl.createDiv();
@@ -314,9 +325,15 @@ export class MathliveSettingTab extends PluginSettingTab {
 	this.renderAccount();
 
 	new Setting(containerEl)
-		.setName("Scan from screen")
+		.setName("Scan other apps")
 		.setDesc(
-			"Drag a box around a formula anywhere in Obsidian, such as in a PDF or an image, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, or give the scan command a hotkey. To scan a formula in another app, such as a browser, use the command that scans anywhere on screen."
+			"Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window."
+		)
+		.addToggle((toggle) =>
+			toggle.setValue(this.plugin.settings.scanOtherApps).onChange(async (val) => {
+				this.plugin.settings.scanOtherApps = val;
+				await this.plugin.saveSettings();
+			})
 		);
 
 	new Setting(containerEl).setName("Inline editor").setHeading();
@@ -503,6 +520,7 @@ class MathLiveModal extends Modal {
 	inline: boolean 
 	resultRenderTemplate: (res: string) => string
 	private insertHotkey?: KeymapEventHandler
+	private stopListening?: () => void
 	private replaceFrom?: EditorPosition
 	private replaceTo?: EditorPosition
 	
@@ -528,6 +546,7 @@ class MathLiveModal extends Modal {
 		const actionsContainer = modalContent.createDiv({ cls: "mathlive-modal-actions" });
 		this.initImageScanner(actionsContainer)
 		this.initSubmitButton(actionsContainer)
+		this.initFooter(modalContent)
 	}
 
 	initMathlive(modalContent: Element) {
@@ -624,39 +643,36 @@ class MathLiveModal extends Modal {
 	initHeader() {
 		this.setTitle(this.inline ? "Edit inline math" : "Edit math block");
 		this.titleEl.addClass("mathlive-modal-title");
-
-		// A div like Obsidian's own close button, so Obsidian doesn't focus it when the window opens.
-		const menuButton = createDiv({
-			cls: "mathlive-modal-menu-trigger clickable-icon",
-			attr: {
-				role: "button",
-				"aria-label": "More options",
-				"aria-haspopup": "menu",
-			},
-		});
-		setIcon(menuButton, "more-vertical");
-		// Next to the title, where Obsidian also puts the close button.
-		this.titleEl.insertAdjacentElement("afterend", menuButton);
-		menuButton.addEventListener("click", (event) => {
-			event.stopPropagation();
-			void this.showMenu(menuButton);
-		});
 	}
 
-	private async showMenu(button: HTMLElement) {
-		const accountAction = await this.plugin.account.menuAction();
-
-		const menu = new Menu();
-		if (accountAction) {
-			menu.addItem((item) => item.setTitle(accountAction.title).setIcon("user").onClick(accountAction.run));
-		}
-		menu.addItem((item) =>
-			item
-				.setTitle("Made by Dan Zilberman")
-				.setIcon("external-link")
-				.onClick(() => window.open(AUTHOR_URL))
-		);
-		showMenuBelow(menu, button);
+	// Under the buttons: the scans left with a way to get more, and the guide.
+	private initFooter(modalContent: HTMLElement) {
+		const footer = modalContent.createDiv({ cls: "mathlive-modal-footer" });
+		const account = this.plugin.account;
+		const render = () => {
+			footer.empty();
+			const plan = footer.createDiv({ cls: "mathlive-modal-plan" });
+			setIcon(plan.createSpan({ cls: "mathlive-btn-icon" }), "gem");
+			plan.createSpan({ cls: "mathlive-modal-plan-text", text: account.planLine() });
+			const next = account.planAction();
+			if (next) {
+				const link = plan.createEl("a", { cls: "mathlive-modal-plan-action", text: next.title, href: "#" });
+				link.addEventListener("click", (event) => {
+					event.preventDefault();
+					next.run();
+				});
+			}
+			const guide = footer.createEl("a", { cls: "mathlive-modal-guide-link", href: "#" });
+			setIcon(guide.createSpan({ cls: "mathlive-btn-icon" }), "compass");
+			guide.createSpan({ text: "Learn what MathLive can do" });
+			guide.addEventListener("click", (event) => {
+				event.preventDefault();
+				this.plugin.openGuide();
+			});
+		};
+		this.stopListening = account.onChange(render);
+		render();
+		void account.getStatus();
 	}
 
 	initSubmitButton(actions: HTMLElement) {
@@ -674,9 +690,12 @@ class MathLiveModal extends Modal {
 
 	initImageScanner(actions: HTMLElement) {
 		const group = actions.createDiv({ cls: "mathlive-scan-actions" });
+		const label = group.createSpan({ cls: "mathlive-ai-label" });
+		setIcon(label.createSpan({ cls: "mathlive-btn-icon" }), "sparkles");
+		label.createSpan({ text: "AI fill" });
 		const addButton = (cls: string, icon: string, title: string, onClick: () => void) => {
 			const button = group.createEl("button", {
-				cls: `${cls} mathlive-action-btn`,
+				cls: `${cls} mathlive-action-btn mathlive-ai-btn`,
 				attr: { type: "button" },
 			});
 			setIcon(button.createSpan({ cls: "mathlive-btn-icon" }), icon);
@@ -728,6 +747,8 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
+		this.stopListening?.();
+		this.stopListening = undefined;
 		// Give the keyboard back to the note, or formulas there would open it inside this closed window.
 		moveVirtualKeyboard(this.contentEl.doc.body);
 		if (this.insertHotkey) {

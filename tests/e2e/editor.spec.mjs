@@ -32,7 +32,7 @@ test.describe("formulas in the note", () => {
 			bodyClasses: [...document.body.classList].filter((name) => name.startsWith("mathlive-")),
 			fonts: [...document.fonts].filter((font) => font.family.startsWith("KaTeX")).length,
 		}));
-		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-anywhere-on-screen", "mathlive:scan-screen-area"]);
+		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area"]);
 		expect(state.bodyClasses).toEqual(
 			expect.arrayContaining(["mathlive-inline-widgets-active", "mathlive-block-widgets-active"])
 		);
@@ -41,8 +41,9 @@ test.describe("formulas in the note", () => {
 		await expect(inlineField(page, 0)).toHaveJSProperty("value", "x^2 + y^2 = z^2");
 		await expect(inlineField(page, 1)).toHaveJSProperty("value", "\\alpha + \\beta");
 		await expect(blockField(page)).toHaveJSProperty("value", "\n\\int_0^1 f(x)\\,dx\n");
-		// Each formula has a single small menu button and nothing else around it.
-		await expect(page.locator(".cm-content .obsidian-mathlive-widget-menu-button")).toHaveCount(3);
+		// Each formula has an AI fill and an Expand button, and nothing else around it.
+		await expect(page.locator(".cm-content .obsidian-mathlive-widget-ai-button")).toHaveCount(3);
+		await expect(page.locator(".cm-content .obsidian-mathlive-widget-expand-button")).toHaveCount(3);
 		await expect(page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper a")).toHaveCount(0);
 	});
 
@@ -109,20 +110,20 @@ test.describe("formulas in the note", () => {
 		const widget = inlineWidget(page, 1);
 		const box = await widget.boundingBox();
 		expect(box.height).toBeLessThanOrEqual(plain + 2);
-		// The formula's own keyboard and menu buttons are hidden; the ⋮ menu has them.
+		// The formula's own keyboard and menu buttons are hidden; the ✨ menu has them.
 		await expect(inlineField(page, 1).locator("[part=virtual-keyboard-toggle]")).toBeHidden();
 	});
 
-	test("the ⋮ menu lists the formula's actions and closes", async ({ page }) => {
+	test("the ✨ menu lists the formula's actions and closes", async ({ page }) => {
 		const widget = inlineWidget(page, 0);
-		const trigger = widget.getByRole("button", { name: "More options" });
+		const trigger = widget.getByRole("button", { name: "AI fill" });
 		const menu = await openWidgetMenu(page, widget);
 		await expect(trigger).toHaveAttribute("aria-expanded", "true");
 		await expect(menu.locator(".menu-item-title")).toHaveText([
 			"Scan clipboard image",
 			"Scan from screen",
-			"Open in editor window",
 			"Show math keyboard",
+			"What MathLive can do",
 			"Connect to scan images",
 			"Made by Dan Zilberman",
 		]);
@@ -133,9 +134,8 @@ test.describe("formulas in the note", () => {
 		expect(await noteText(page)).toContain("$x^2 + y^2 = z^2$");
 	});
 
-	test("the ⋮ menu opens the formula in the editor window", async ({ page }) => {
-		await openWidgetMenu(page, inlineWidget(page, 1));
-		await menuItem(page, "Open in editor window").click();
+	test("Expand opens the formula in the editor window", async ({ page }) => {
+		await inlineWidget(page, 1).getByRole("button", { name: "Expand" }).click();
 
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit inline math");
 		await expect(modalField(page)).toHaveJSProperty("value", "\\alpha + \\beta");
@@ -147,21 +147,20 @@ test.describe("formulas in the note", () => {
 		await expect.poll(() => noteLine(page, "Last line")).toBe("Last line $\\alpha+\\beta+y$ done.");
 	});
 
-	test("the ⋮ menu opens a block formula in the editor window", async ({ page }) => {
-		await openWidgetMenu(page, blockWidget(page));
-		await menuItem(page, "Open in editor window").click();
+	test("Expand opens a block formula in the editor window", async ({ page }) => {
+		await blockWidget(page).getByRole("button", { name: "Expand" }).click();
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit math block");
 		await expect(modalField(page)).toHaveJSProperty("value", "\n\\int_0^1 f(x)\\,dx\n");
 	});
 
-	test("the ⋮ menu shows the math keyboard for that formula", async ({ page }) => {
+	test("the ✨ menu shows the math keyboard for that formula", async ({ page }) => {
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await menuItem(page, "Show math keyboard").click();
 		await expect(page.locator(".ML__keyboard")).toBeVisible();
 		await expect(inlineField(page, 0)).toBeFocused();
 	});
 
-	test("the ⋮ menu's links connect the account and open the author's site", async ({ page }) => {
+	test("the ✨ menu's links connect the account and open the author's site", async ({ page }) => {
 		await recordOpenedUrls(page);
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await menuItem(page, "Connect to scan images").click();
@@ -180,13 +179,45 @@ test.describe("formulas in the note", () => {
 		await expect(menuItem(page, "Connect to scan images")).toHaveCount(0);
 	});
 
-	test("block formulas keep their own keyboard and menu buttons beside the ⋮ menu", async ({ page }) => {
+	test("block formulas show AI fill and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
 		const widget = blockWidget(page);
-		await expect(blockField(page).locator("[part=virtual-keyboard-toggle]")).toBeVisible();
+		const keyboard = await blockField(page).locator("[part=virtual-keyboard-toggle]").boundingBox();
+		const menu = await blockField(page).locator("[part=menu-toggle]").boundingBox();
 		const field = await blockField(page).boundingBox();
-		const button = await widget.getByRole("button", { name: "More options" }).boundingBox();
-		// The button sits to the right of the formula, not on a row of its own.
-		expect(button.x).toBeGreaterThan(field.x + field.width - 1);
-		expect(button.y).toBeLessThan(field.y + field.height);
+		const ai = await widget.getByRole("button", { name: "AI fill" }).boundingBox();
+		const expand = await widget.getByRole("button", { name: "Expand" }).boundingBox();
+		// One row, same size, in order, all inside the input's border.
+		for (const button of [menu, ai, expand]) {
+			expect(Math.abs(button.y + button.height / 2 - (keyboard.y + keyboard.height / 2))).toBeLessThanOrEqual(2);
+			expect(Math.abs(button.width - keyboard.width)).toBeLessThanOrEqual(1);
+		}
+		expect(keyboard.x).toBeLessThan(menu.x);
+		expect(menu.x + menu.width).toBeLessThanOrEqual(ai.x);
+		expect(ai.x + ai.width).toBeLessThanOrEqual(expand.x);
+		expect(expand.x + expand.width).toBeLessThanOrEqual(field.x + field.width);
+		expect(ai.y).toBeGreaterThanOrEqual(field.y);
+		expect(ai.y + ai.height).toBeLessThanOrEqual(field.y + field.height);
+	});
+
+	test("the ✨ menu opens the guide, which tries features from there", async ({ page }) => {
+		await openWidgetMenu(page, inlineWidget(page, 0));
+		await menuItem(page, "What MathLive can do").click();
+		const guide = page.locator(".mathlive-guide-modal");
+		await expect(guide.locator(".modal-title")).toHaveText("What MathLive can do");
+		await expect(guide.locator(".mathlive-guide-section h3")).toHaveText([
+			"Edit formulas as you see them",
+			"Add a formula",
+			"AI fill: scan a formula instead of typing it",
+			"Expand for a bigger editor",
+			"Math keyboard",
+			"Turn a PDF into notes",
+			"Your scans",
+		]);
+		await expect(guide).toContainText("Free accounts get 10 scans");
+		await expect(guide.getByRole("button", { name: "Get 10 free scans" })).toBeVisible();
+		await guide.getByRole("button", { name: "Add a formula now" }).click();
+		await expect(guide).toHaveCount(0);
+		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit math block");
+		await page.keyboard.press("Escape");
 	});
 });

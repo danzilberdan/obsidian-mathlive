@@ -444,6 +444,52 @@ export class CloudAccount {
 		return undefined;
 	}
 
+	// A few words on the scans left, for the editor window: "7 free scans left".
+	planLine(): string {
+		if (!this.usesCloud()) {
+			return "Self-hosted scanner";
+		}
+		const left = this.status?.scansLeft;
+		const count = (kind: string) =>
+			typeof left === "number" ? `${left} ${kind}${left === 1 ? "scan" : "scans"} left` : "";
+		if (this.isTrial()) {
+			return count("trial ") || "Trial scans";
+		}
+		if (!this.hasKey()) {
+			return "First scans free, no account needed";
+		}
+		if (this.status?.hasUnlimitedAccess) {
+			return "Unlimited scans";
+		}
+		return count("free ") || "Free plan";
+	}
+
+	// The plan in a sentence or two, for the guide.
+	planDetail(): string {
+		if (!this.usesCloud()) {
+			return "Scans go to your self-hosted scanner, so they're free and unlimited.";
+		}
+		if (this.status?.hasUnlimitedAccess && this.isConnected()) {
+			return "You have unlimited scans. Thank you for supporting MathLive!";
+		}
+		const now = this.isConnected() || this.isTrial() ? `${this.planLine()}. ` : "Your first scans need no account. ";
+		return `${now}${FREE_ACCOUNT_SCANS} Upgrade for unlimited scans and more PDF pages each month, monthly or once for life.`;
+	}
+
+	// What to do next about the plan: connect for more free scans, or upgrade.
+	planAction(): { title: string; run: () => void } | undefined {
+		if (!this.usesCloud() || this.isConnecting()) {
+			return undefined;
+		}
+		if (!this.isConnected()) {
+			return { title: "Get 10 free scans", run: () => void this.connect() };
+		}
+		if (this.status && !this.status.hasUnlimitedAccess) {
+			return { title: "Upgrade", run: () => window.open(this.siteUrl("/pricing")) };
+		}
+		return undefined;
+	}
+
 	// One line about the account for the settings tab.
 	describe(): string {
 		if (this.isConnecting()) {

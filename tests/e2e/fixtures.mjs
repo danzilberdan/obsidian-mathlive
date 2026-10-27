@@ -145,9 +145,9 @@ export const inlineWidget = (page, index = 0) => page.locator(".cm-content .obsi
 export const blockWidget = (page) => page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper:not(.inline)").first();
 export const menuItem = (page, title) => page.locator(".menu .menu-item", { hasText: title });
 
-// Opens a formula's ⋮ menu and returns Obsidian's menu.
+// Opens a formula's ✨ menu and returns Obsidian's menu.
 export async function openWidgetMenu(page, widget) {
-	await widget.getByRole("button", { name: "More options" }).click();
+	await widget.getByRole("button", { name: "AI fill" }).click();
 	const menu = page.locator(".menu");
 	await expect(menu).toBeVisible();
 	return menu;

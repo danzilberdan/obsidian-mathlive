@@ -15,6 +15,8 @@ export interface PluginSettings {
 	hideRenderedBlockMath: boolean;
 	immediateInlineUpdate: boolean;
 	arrowKeyNavigation: boolean;
+	// Scans from the screen can box anything on it, other apps included, not just Obsidian.
+	scanOtherApps: boolean;
 	// The welcome window shows once, on a fresh install.
 	welcomeShown: boolean;
 	// Not in the settings tab: where the cloud scanner and website are, so tests can point the
@@ -35,6 +37,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	hideRenderedBlockMath: true,
 	immediateInlineUpdate: true,
 	arrowKeyNavigation: true,
+	scanOtherApps: true,
 	welcomeShown: false,
 	cloudScannerUrl: `${MATHLIVE_ORIGIN}/ocr`,
 	websiteUrl: MATHLIVE_ORIGIN,

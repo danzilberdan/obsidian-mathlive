@@ -6,7 +6,8 @@ export class WelcomeModal extends Modal {
 	constructor(
 		app: App,
 		private readonly account: CloudAccount,
-		private readonly tryEditor: () => void
+		private readonly tryEditor: () => void,
+		private readonly openGuide: () => void
 	) {
 		super(app);
 	}
@@ -28,12 +29,16 @@ export class WelcomeModal extends Modal {
 			"Click any $…$ or $$…$$ formula in a note and type: fractions, roots and matrices appear as you write. It's free and works offline."
 		);
 		item(
-			"Add a formula.",
-			"Run “Add full-line math” or “Add inline math” from the command palette, or give them a hotkey."
+			"Fill formulas with AI.",
+			"Click ✨ next to a formula to scan a screenshot, or draw a box around a formula anywhere on your screen, even in another app. Your first scans need no account."
 		);
 		item(
-			"Scan a formula from an image.",
-			"Copy a screenshot of a formula and click Scan in the editor, or use the scan icon in the left ribbon to select it on screen. Your first scans need no account."
+			"Expand for more room.",
+			"The ⤢ button next to a formula opens a bigger editor with the math keyboard."
+		);
+		item(
+			"Turn PDFs into notes.",
+			"Right-click a PDF to convert its pages into Markdown with editable LaTeX."
 		);
 
 		new Setting(contentEl)
@@ -41,6 +46,12 @@ export class WelcomeModal extends Modal {
 				button.setButtonText("Connect account").onClick(() => {
 					this.close();
 					void this.account.connect();
+				})
+			)
+			.addButton((button) =>
+				button.setButtonText("See everything").onClick(() => {
+					this.close();
+					this.openGuide();
 				})
 			)
 			.addButton((button) =>

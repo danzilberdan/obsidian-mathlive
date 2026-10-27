@@ -54,7 +54,9 @@ test.describe("settings", () => {
 		expect(rows.filter((row) => row.heading).map((row) => row.name)).toEqual(["Image scanner", "Inline editor", "Advanced"]);
 		expect(rows.map((row) => row.name)).toEqual(
 			expect.arrayContaining([
+				"Guide",
 				"Account",
+				"Scan other apps",
 				"API key",
 				"Self-hosted scanner",
 				"Self-hosted scanner address",

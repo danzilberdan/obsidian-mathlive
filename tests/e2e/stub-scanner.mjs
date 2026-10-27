@@ -1,6 +1,7 @@
 // A stand-in for the scanner's /predict/ endpoint. It records each request and answers by API key:
 // "unauthorized" gets 401, "server-error" gets 500, "flaky" gets 503 on its first request only,
-// "no-scans-left" and "no-math" get the cloud scanner's coded errors, anything else gets LaTeX.
+// "no-scans-left" and "no-math" get the cloud scanner's coded errors, "slow" gets LaTeX after 3 s,
+// anything else gets LaTeX at once.
 // It also stands in for the cloud scanner's account endpoints: trials, connecting a device
 // (approve a challenge with `approve`), disconnecting and the account status.
 // /pages/ answers a page as Markdown, and a blank page (a tiny PNG) as blank. "old-scanner" gets
@@ -158,6 +159,8 @@ export function startStubScanner(port = 8502) {
 				reply(400, { detail: "No scans left.", code: "no_scans_left" });
 			} else if (apiKey === "no-math") {
 				reply(502, { detail: "No math found in this image.", code: "no_math" });
+			} else if (apiKey === "slow") {
+				setTimeout(() => reply(200, SCANNED_LATEX), 3000);
 			} else {
 				reply(200, SCANNED_LATEX);
 			}

@@ -26,7 +26,7 @@ test.describe("scanning a formula image", () => {
 		expect(await putImageOnClipboard(page)).toBe(true);
 	});
 
-	test("Scan clipboard image in a formula's ⋮ menu adds the scanned LaTeX", async ({ page, scanner }) => {
+	test("Scan clipboard image in a formula's ✨ menu adds the scanned LaTeX", async ({ page, scanner }) => {
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await menuItem(page, "Scan clipboard image").click();
 
@@ -44,6 +44,23 @@ test.describe("scanning a formula image", () => {
 		await page.locator(".mathlive-modal-root .scan-button").click();
 		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
 		await expect(notices(page).filter({ hasText: "Scan added to the formula" })).toBeVisible();
+	});
+
+	test("a slow scan shows a moving progress notice until the LaTeX arrives", async ({ page }) => {
+		await setSettings(page, { apiKey: "slow" });
+		await runCommand(page, "mathlive:open-modal");
+		await page.locator(".mathlive-modal-root .scan-button").click();
+
+		const progress = page.locator(".notice.mathlive-scan-progress");
+		await expect(progress).toBeVisible();
+		await expect(progress.locator(".mathlive-scan-progress-text")).toHaveText("Reading the formula…");
+		await expect(progress.locator(".mathlive-scan-progress-bar")).toBeVisible();
+		await expect(modalField(page)).toHaveClass(/mathlive-is-scanning/);
+		// It counts the seconds once the scan takes a while, and stays up the whole time.
+		await expect(progress.locator(".mathlive-scan-progress-time")).toHaveText("2 s", { timeout: 2900 });
+		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX, { timeout: 5000 });
+		await expect(progress).toHaveCount(0);
+		await expect(modalField(page)).not.toHaveClass(/mathlive-is-scanning/);
 	});
 
 	test("an empty clipboard says so and sends nothing", async ({ page, scanner }) => {

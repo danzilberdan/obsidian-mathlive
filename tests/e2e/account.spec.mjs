@@ -173,6 +173,7 @@ test("a fresh install says welcome once and opens the editor from there", async 
 	const welcome = page.locator(".mathlive-welcome-modal");
 	await expect(welcome.locator(".modal-title")).toHaveText("Welcome to MathLive");
 	await expect(welcome).toContainText("Your first scans need no account.");
+	await expect(welcome.getByRole("button", { name: "See everything" })).toBeVisible();
 	await welcome.getByRole("button", { name: "Try the editor" }).click();
 	await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit math block");
 	expect(await pluginSettings(page)).toMatchObject({ welcomeShown: true });
