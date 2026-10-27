@@ -77,7 +77,7 @@ Check the result and fix anything the scanner got wrong.
 
 Right-click a PDF in the file list and choose **Convert to notes with MathLive**, or run **MathLive: Convert PDF to notes** while the PDF is open. Pick the pages you want and click **Convert**. MathLive reads the pages one by one into a new note next to the PDF: text as Markdown, formulas as `$...$` and `$$...$$` you can edit, and a link back to each page of the PDF. The note fills in as pages finish. You can close the window; MathLive tells you when it's done.
 
-Each page uses one scan; blank pages are free. A page that can't be read gets a warning in the note, and **Retry failed pages** fills it in later. Your self-hosted scanner can do this too if it answers `/pages/` the way the MathLive scanner does.
+On the free plan each page uses one scan. Paid plans include a number of pages each month (500 on Monthly, 300 on Lifetime), and you can buy more pages when you need them. Blank pages and pages that can't be read are free. Before converting, MathLive shows how many pages you have left; if the PDF is longer, it converts the first pages that fit and you can get more pages for the rest. A page that can't be read gets a warning in the note, and **Retry failed pages** fills it in later. Your self-hosted scanner can do this too if it answers `/pages/` the way the MathLive scanner does.
 
 You can scan with either of these:
 

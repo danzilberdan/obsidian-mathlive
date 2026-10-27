@@ -154,4 +154,43 @@ test.describe("converting a PDF to notes", () => {
 		await button(page, "Continue").click();
 		await expect(status(page)).toHaveText("Read 2 of 3 pages. 1 blank, not charged.", { timeout: 30_000 });
 	});
+
+	test("a PDF longer than the pages left converts only what's left and offers more", async ({ page, scanner }) => {
+		await setSettings(page, { apiKey: "two-pages-left" });
+		await runCommand(page, "mathlive:convert-pdf-to-notes");
+		await page.keyboard.type("Lecture");
+		await page.keyboard.press("Enter");
+
+		await expect(modal(page).locator(".mathlive-pdf-cost")).toHaveText(
+			"These are 3 pages. You have 2 pages left this month. Your pages start again on November 1."
+		);
+		await expect(button(page, "Get more pages")).toBeVisible();
+		// Picking pages that fit gives the ordinary quote back.
+		await modal(page).getByLabel("Last page").fill("1");
+		await expect(modal(page).locator(".mathlive-pdf-cost")).toHaveText(
+			"Reads 1 page. Blank pages are free. You have 2 pages left this month."
+		);
+		await expect(button(page, "Get more pages")).toBeHidden();
+		await modal(page).getByLabel("Last page").fill("3");
+
+		await button(page, "Convert the first 2").click();
+		await expect(status(page)).toHaveText("Read 1 of 2 pages. 1 blank, not charged.", { timeout: 30_000 });
+		expect(scanner.requests.filter((request) => request.url === "/pages/")).toHaveLength(2);
+		expect(await readNote(page, "Lecture.md")).toBe(`---\nsource: "[[Lecture.pdf]]"\n---\n\n${pageSection(1)}`);
+	});
+
+	test("running out of pages stops the conversion and offers more", async ({ page }) => {
+		await setSettings(page, { apiKey: "page-limit" });
+		await runCommand(page, "mathlive:convert-pdf-to-notes");
+		await page.keyboard.type("Lecture");
+		await page.keyboard.press("Enter");
+		await button(page, "Convert").click();
+
+		await expect(status(page)).toHaveText(
+			"You've used this month's pages. 3 pages are still to do. Get more pages, or continue when your pages start again."
+		);
+		await expect(button(page, "Continue")).toBeVisible();
+		await expect(button(page, "Get more pages")).toBeVisible();
+		expect(await readNote(page, "Lecture.md")).toBeNull();
+	});
 });

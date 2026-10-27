@@ -2,7 +2,8 @@
 // "unauthorized" gets 401, "server-error" gets 500, "flaky" gets 503 on its first request only,
 // "no-scans-left" and "no-math" get the cloud scanner's coded errors, anything else gets LaTeX.
 // /pages/ answers a page as Markdown, and a blank page (a tiny PNG) as blank. "old-scanner" gets
-// 404 there, like a scanner from before pages, and "pages-down" always gets 503.
+// 404 there, like a scanner from before pages, and "pages-down" always gets 503. "two-pages-left"
+// has a monthly plan with 2 pages left in /access-status, and "page-limit" is told 402 page_limit.
 import http from "node:http";
 import zlib from "node:zlib";
 
@@ -70,13 +71,28 @@ export function startStubScanner(port = 8502) {
 				res.writeHead(status, { "Content-Type": "application/json" });
 				res.end(JSON.stringify(payload));
 			};
-			if (req.method === "POST" && req.url === "/pages/") {
+			if (req.method === "GET" && req.url === "/access-status" && apiKey === "two-pages-left") {
+				reply(200, {
+					hasUnlimitedAccess: true,
+					pages: {
+						plan: "monthly",
+						included: 500,
+						used: 498,
+						credits: 0,
+						left: 2,
+						resetsAt: "2026-11-01T00:00:00Z",
+						costCeilingReached: false,
+					},
+				});
+			} else if (req.method === "POST" && req.url === "/pages/") {
 				if (apiKey === "old-scanner") {
 					reply(404, { detail: "Not found" });
 				} else if (apiKey === "pages-down") {
 					reply(503, { detail: "Couldn't read this page.", code: "scan_failed" });
 				} else if (apiKey === "no-scans-left") {
 					reply(400, { detail: "No scans left.", code: "no_scans_left" });
+				} else if (apiKey === "page-limit") {
+					reply(402, { detail: "You've used this month's pages.", code: "page_limit" });
 				} else if (isBlankPng(body)) {
 					reply(200, { markdown: "", blank: true });
 				} else {

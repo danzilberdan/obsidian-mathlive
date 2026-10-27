@@ -1,5 +1,6 @@
 import {
 	type App,
+	type ButtonComponent,
 	FuzzySuggestModal,
 	loadPdfJs,
 	Modal,
@@ -16,6 +17,7 @@ import {
 	NO_SCANS_LEFT_NOTICE,
 	scannerAddress,
 } from "./mathlive-shared";
+import { ACCOUNT_URL } from "./mathlive-inline";
 import type { PluginSettings } from "./settings";
 
 // The scanner reads pages up to 2048 px on the longest side, so render them at that size.
@@ -26,6 +28,11 @@ const PAGE_TIMEOUT_MS = 170_000;
 const PARALLEL_PAGES = 2;
 const RATE_LIMIT_WAIT_MS = 30_000;
 const MAX_ATTEMPTS = 3;
+
+// A slip of the range shouldn't send a whole archive to the scanner.
+const MAX_PAGES_PER_CONVERSION = 1000;
+
+const PAGE_LIMIT_NOTICE = "You've used this month's pages.";
 
 const UNSUPPORTED_NOTICE =
 	"Your self-hosted scanner can't read whole pages. Turn off Self-hosted scanner in MathLive's settings to use the MathLive scanner.";
@@ -45,7 +52,14 @@ interface PdfPage {
 	cleanup(): void;
 }
 
-type PageFailure = "auth" | "no_scans_left" | "unsupported" | "rate_limited" | "bad_page" | "unavailable";
+type PageFailure =
+	| "auth"
+	| "no_scans_left"
+	| "page_limit"
+	| "unsupported"
+	| "rate_limited"
+	| "bad_page"
+	| "unavailable";
 
 class PageError extends Error {
 	constructor(readonly failure: PageFailure, message: string) {
@@ -55,7 +69,7 @@ class PageError extends Error {
 
 // These stop the whole conversion: every other page would fail the same way.
 function isFatal(failure: PageFailure): boolean {
-	return failure === "auth" || failure === "no_scans_left" || failure === "unsupported";
+	return failure === "auth" || failure === "no_scans_left" || failure === "page_limit" || failure === "unsupported";
 }
 
 function pageFailure(status: number, code: string | null): PageFailure {
@@ -65,6 +79,8 @@ function pageFailure(status: number, code: string | null): PageFailure {
 			return "auth";
 		case "no_scans_left":
 			return "no_scans_left";
+		case "page_limit":
+			return "page_limit";
 		case "pages_unavailable":
 			return "unsupported";
 		case "rate_limited":
@@ -82,6 +98,57 @@ function pageFailure(status: number, code: string | null): PageFailure {
 		return "rate_limited";
 	}
 	return status < 500 ? "auth" : "unavailable";
+}
+
+// Where the account stands on pages this month, from the scanner's /access-status.
+export interface PageQuota {
+	// free, monthly or lifetime
+	plan: string;
+	// Pages a month the plan includes; null on the free plan, which pays for pages with scans.
+	included: number | null;
+	// Pages that can be read now.
+	left: number;
+	// When the plan's pages start again, as an ISO date.
+	resetsAt: string | null;
+}
+
+// The account's page quota, or null when the scanner doesn't say (a self-hosted pix2tex, an
+// older scanner, or no connection). Only used to quote a PDF: the scanner checks every page.
+export async function fetchPageQuota(settings: PluginSettings): Promise<PageQuota | null> {
+	try {
+		const res = await requestUrl({
+			url: scannerAddress(settings) + "/access-status",
+			headers: { "Api-Key": settings.apiKey ?? "" },
+			throw: false,
+		});
+		if (res.status >= 400) {
+			return null;
+		}
+		const pages = (res.json as { pages?: Record<string, unknown> } | null)?.pages;
+		if (!pages || typeof pages.left !== "number" || typeof pages.plan !== "string") {
+			return null;
+		}
+		return {
+			plan: pages.plan,
+			included: typeof pages.included === "number" ? pages.included : null,
+			left: Math.max(0, pages.left),
+			resetsAt: typeof pages.resetsAt === "string" ? pages.resetsAt : null,
+		};
+	} catch {
+		return null;
+	}
+}
+
+function resetDate(quota: PageQuota): string | null {
+	const date = quota.resetsAt ? new Date(quota.resetsAt) : null;
+	if (!date || Number.isNaN(date.getTime())) {
+		return null;
+	}
+	return date.toLocaleDateString(undefined, { month: "long", day: "numeric", timeZone: "UTC" });
+}
+
+function plural(n: number, one: string, many: string): string {
+	return `${n} ${n === 1 ? one : many}`;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -421,18 +488,52 @@ export class PdfToNotesModal extends Modal {
 		contentEl.empty();
 		let from = 1;
 		let to = this.pageCount;
+		let quota: PageQuota | null = null;
+		let convertButton: ButtonComponent | null = null;
+		let moreButton: ButtonComponent | null = null;
 
 		contentEl.createEl("p", {
 			text: `${this.pdfFile.name} has ${this.pageCount} ${this.pageCount === 1 ? "page" : "pages"}. MathLive reads each page into a new note next to the PDF, with formulas you can edit.`,
 		});
 		const cost = contentEl.createEl("p", { cls: "mathlive-pdf-cost" });
+		// How many of the chosen pages can be read now; all of them when the scanner doesn't say.
+		const covered = () => {
+			const pages = Math.max(0, to - from + 1);
+			return quota ? Math.min(pages, quota.left) : pages;
+		};
 		const updateCost = () => {
 			const pages = Math.max(0, to - from + 1);
-			cost.setText(
-				this.settings.useLocalInference
-					? `Reads ${pages} ${pages === 1 ? "page" : "pages"} with your self-hosted scanner.`
-					: `Uses up to ${pages} ${pages === 1 ? "scan" : "scans"}, one per page. Blank pages are free.`
-			);
+			if (!quota) {
+				cost.setText(
+					this.settings.useLocalInference
+						? `Reads ${plural(pages, "page", "pages")} with your self-hosted scanner.`
+						: `Uses up to ${plural(pages, "scan", "scans")}, one per page. Blank pages are free.`
+				);
+			} else {
+				const free = quota.included === null;
+				const left = free
+					? `You have ${plural(quota.left, "scan", "scans")} left.`
+					: `You have ${plural(quota.left, "page", "pages")} left this month.`;
+				const resets = resetDate(quota);
+				if (pages <= quota.left) {
+					cost.setText(
+						free
+							? `Uses up to ${plural(pages, "scan", "scans")}, one per page. Blank pages are free. ${left}`
+							: `Reads ${plural(pages, "page", "pages")}. Blank pages are free. ${left}`
+					);
+				} else {
+					cost.setText(
+						`These are ${plural(pages, "page", "pages")}. ${left}` +
+							(!free && resets ? ` Your pages start again on ${resets}.` : "")
+					);
+				}
+			}
+			const short = quota !== null && pages > quota.left;
+			convertButton?.setButtonText(short && covered() > 0 ? `Convert the first ${covered()}` : "Convert");
+			if (convertButton) {
+				convertButton.buttonEl.disabled = covered() === 0;
+			}
+			moreButton?.buttonEl.toggle(short);
 		};
 
 		const clamp = (value: string, fallback: number) => {
@@ -463,7 +564,8 @@ export class PdfToNotesModal extends Modal {
 		updateCost();
 
 		new Setting(contentEl)
-			.addButton((button) =>
+			.addButton((button) => {
+				convertButton = button;
 				button
 					.setButtonText("Convert")
 					.setCta()
@@ -472,13 +574,28 @@ export class PdfToNotesModal extends Modal {
 							new Notice("The last page must come after the first.");
 							return;
 						}
-						this.conversion = new PdfConversion(this.app, this.settings, this.pdfFile, from, to, () =>
+						const last = from + covered() - 1;
+						if (last - from + 1 > MAX_PAGES_PER_CONVERSION) {
+							new Notice(`Convert at most ${MAX_PAGES_PER_CONVERSION} pages at a time.`);
+							return;
+						}
+						this.conversion = new PdfConversion(this.app, this.settings, this.pdfFile, from, last, () =>
 							this.renderProgress()
 						);
 						void this.start();
-					})
-			)
+					});
+			})
+			.addButton((button) => {
+				moreButton = button;
+				button.setButtonText("Get more pages").onClick(() => window.open(ACCOUNT_URL));
+			})
 			.addButton((button) => button.setButtonText("Cancel").onClick(() => this.close()));
+		updateCost();
+
+		void fetchPageQuota(this.settings).then((found) => {
+			quota = found;
+			updateCost();
+		});
 	}
 
 	private renderRunning() {
@@ -509,6 +626,10 @@ export class PdfToNotesModal extends Modal {
 			);
 		} else if (conversion.stopReason === "no_scans_left") {
 			this.statusEl.setText(`${NO_SCANS_LEFT_NOTICE} ${pending} ${pending === 1 ? "page is" : "pages are"} still to do.`);
+		} else if (conversion.stopReason === "page_limit") {
+			this.statusEl.setText(
+				`${PAGE_LIMIT_NOTICE} ${pending} ${pending === 1 ? "page is" : "pages are"} still to do. Get more pages, or continue when your pages start again.`
+			);
 		} else if (conversion.stopReason === "unsupported") {
 			this.statusEl.setText(UNSUPPORTED_NOTICE);
 		} else if (conversion.stopReason === "auth") {
@@ -545,6 +666,11 @@ export class PdfToNotesModal extends Modal {
 					.setCta()
 					.onClick(() => void this.start())
 			);
+			if (conversion.stopReason === "page_limit") {
+				setting.addButton((button) =>
+					button.setButtonText("Get more pages").onClick(() => window.open(ACCOUNT_URL))
+				);
+			}
 		}
 		if (conversion.note) {
 			const note = conversion.note;
@@ -583,7 +709,9 @@ export class PdfToNotesModal extends Modal {
 		const message =
 			conversion.stopReason === "no_scans_left"
 				? NO_SCANS_LEFT_NOTICE
-				: failed > 0
+				: conversion.stopReason === "page_limit"
+					? `${PAGE_LIMIT_NOTICE} ${failed} ${failed === 1 ? "page" : "pages"} of ${this.pdfFile.name} ${failed === 1 ? "is" : "are"} still to do.`
+					: failed > 0
 					? `MathLive converted ${this.pdfFile.name}, but ${failed} ${failed === 1 ? "page" : "pages"} couldn't be read.`
 					: `MathLive converted ${this.pdfFile.name}.`;
 		const note = conversion.note;
