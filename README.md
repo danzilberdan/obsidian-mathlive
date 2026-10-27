@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.png" alt="MathLive logo" width="128">
+<img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/logo.png" alt="MathLive logo" width="128">
 
 <h1>MathLive</h1>
 
@@ -18,8 +18,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/note-dark.png">
-    <img src="docs/images/note-light.png" alt="A note with inline and block formulas edited in place by MathLive" width="820">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/note-dark.png">
+    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/note-light.png" alt="A note with inline and block formulas edited in place by MathLive" width="820">
   </picture>
 </p>
 
@@ -35,8 +35,8 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/menu-dark.png">
-    <img src="docs/images/menu-light.png" alt="The ⋮ menu of an inline formula: scan clipboard image, open in editor window, show math keyboard" width="820">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/menu-dark.png">
+    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/menu-light.png" alt="The ⋮ menu of an inline formula: scan clipboard image, open in editor window, show math keyboard" width="820">
   </picture>
 </p>
 
@@ -57,8 +57,8 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/editor-window-dark.png">
-    <img src="docs/images/editor-window-light.png" alt="The MathLive editor window with the math keyboard open" width="820">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/editor-window-dark.png">
+    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/editor-window-light.png" alt="The MathLive editor window with the math keyboard open" width="820">
   </picture>
 </p>
 
