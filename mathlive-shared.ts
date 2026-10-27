@@ -210,6 +210,8 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 
 	const mfe = new mathfieldElementCtor();
+	// styles.css targets this class, since the scorecard's CSS check rejects the math-field type selector.
+	mfe.addClass("mathlive-field");
 	if (config.id) {
 		mfe.id = config.id;
 	}

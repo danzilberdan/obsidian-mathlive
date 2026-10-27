@@ -1,0 +1,8 @@
+{
+	"plugins": ["stylelint-no-unsupported-browser-features"],
+	"rules": {
+		"selector-type-no-unknown": true,
+		"declaration-no-important": true,
+		"plugin/no-unsupported-browser-features": [true, { "browsers": ["Chrome 114"], "severity": "warning" }]
+	}
+}

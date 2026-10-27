@@ -8,7 +8,7 @@
 		"dev": "webpack --watch",
 		"link-vault": "node scripts/link-vault.mjs",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"lint": "tsc --noEmit -p . && eslint . --max-warnings 0",
+		"lint": "tsc --noEmit -p . && eslint . --max-warnings 0 && stylelint styles.css --max-warnings 0",
 		"test:e2e": "npm run build && playwright test"
 	},
 	"keywords": [],
@@ -24,6 +24,8 @@
 		"eslint-plugin-obsidianmd": "^0.4.2",
 		"file-loader": "^6.2.0",
 		"obsidian": "^1.14.4",
+		"stylelint": "^17.16.0",
+		"stylelint-no-unsupported-browser-features": "^8.1.2",
 		"ts-loader": "^9.4.4",
 		"tslib": "2.4.0",
 		"typescript": "^5.9.3",

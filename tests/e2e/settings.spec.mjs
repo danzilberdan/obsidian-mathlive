@@ -69,6 +69,12 @@ test.describe("settings", () => {
 		await expect(settingRow(settingsWindow, "API key").getByRole("link")).toHaveAttribute("href", /mathlive\.danz\.blog/);
 	});
 
+	test("the options show up in Obsidian's settings search", async ({ obsidian }) => {
+		const settingsWindow = await openSettings(obsidian);
+		await settingsWindow.locator(".vertical-tab-header input[type='search']").fill("scanner address");
+		await expect(settingsWindow.locator(".vertical-tab-header")).toContainText("Self-hosted scanner address");
+	});
+
 	test("the API key and self-hosted switch are saved", async ({ obsidian }) => {
 		const settingsWindow = await openSettings(obsidian);
 		await settingRow(settingsWindow, "API key").locator("input").fill("test-key-123");
