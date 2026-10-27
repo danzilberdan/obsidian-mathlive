@@ -31,6 +31,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Editor window.** A focused editor for longer expressions, with `Ctrl/Cmd + Enter` to insert into the note.
 - **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
 - **Scan formulas into LaTeX.** Draw a box around a formula anywhere in Obsidian, such as a PDF you have open, or scan a screenshot from your clipboard. Uses the MathLive cloud scanner or your own self-hosted one.
+- **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Stays out of the way.** Each formula has one small ⋮ menu. Everything is still plain LaTeX in your Markdown files.
 
 <p align="center">
@@ -72,6 +73,12 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 Check the result and fix anything the scanner got wrong.
 
+## Converting a PDF to notes
+
+Right-click a PDF in the file list and choose **Convert to notes with MathLive**, or run **MathLive: Convert PDF to notes** while the PDF is open. Pick the pages you want and click **Convert**. MathLive reads the pages one by one into a new note next to the PDF: text as Markdown, formulas as `$...$` and `$$...$$` you can edit, and a link back to each page of the PDF. The note fills in as pages finish. You can close the window; MathLive tells you when it's done.
+
+Each page uses one scan; blank pages are free. A page that can't be read gets a warning in the note, and **Retry failed pages** fills it in later. Your self-hosted scanner can do this too if it answers `/pages/` the way the MathLive scanner does.
+
 You can scan with either of these:
 
 | | Cloud scanner | Self-hosted scanner |
@@ -102,11 +109,12 @@ Obsidian asks plugins to state the following up front.
 - **Account.** Cloud scanning requires a MathLive account (sign-in with Google) and an API key. The editor and self-hosted scanning need no account.
 - **Network use.** The plugin only connects to the internet for cloud scanning:
   - `https://mathlive-ocr.danz.blog/predict/` receives the image you chose to scan, with your API key, and returns LaTeX.
+  - `https://mathlive-ocr.danz.blog/pages/` receives a picture of each PDF page you chose to convert, with your API key, and returns the page as Markdown.
   - `https://mathlive-ocr.danz.blog/access-status` is checked with your API key to show whether your account has unlimited scans.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
-- **Data.** The scan server turns the image into LaTeX and does not keep the image. Your account stores your email, your API keys, your scan count and when a key was last used. Server logs record requests and errors to keep the service running.
+- **Data.** The scan server turns the image into LaTeX (or a PDF page into Markdown) and does not keep the image. Your account stores your email, your API keys, your scan count and when a key was last used. Server logs record requests and errors to keep the service running.
 - **No telemetry, ads or pop-ups.** The plugin does not track how you use it and shows no ads.
 
 ## Contributing

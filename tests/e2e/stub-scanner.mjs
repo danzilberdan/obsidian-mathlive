@@ -1,9 +1,13 @@
 // A stand-in for the scanner's /predict/ endpoint. It records each request and answers by API key:
 // "unauthorized" gets 401, "server-error" gets 500, "flaky" gets 503 on its first request only,
 // "no-scans-left" and "no-math" get the cloud scanner's coded errors, anything else gets LaTeX.
+// /pages/ answers a page as Markdown, and a blank page (a tiny PNG) as blank. "old-scanner" gets
+// 404 there, like a scanner from before pages, and "pages-down" always gets 503.
 import http from "node:http";
+import zlib from "node:zlib";
 
 export const SCANNED_LATEX = "\\sqrt[3]{x}";
+export const PAGE_MARKDOWN = "## Circles\n\nThe area is $A = \\pi r^2$.";
 
 // The width and height of the first PNG in a request body.
 function pngSize(body) {
@@ -12,6 +16,35 @@ function pngSize(body) {
 		return null;
 	}
 	return { width: body.readUInt32BE(start + 16), height: body.readUInt32BE(start + 20) };
+}
+
+// Whether the first PNG in a request body is a plain white picture, like a blank page.
+function isBlankPng(body) {
+	const start = body.indexOf(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+	if (start < 0) {
+		return false;
+	}
+	const data = [];
+	for (let at = start + 8; at + 8 <= body.length; ) {
+		const length = body.readUInt32BE(at);
+		const type = body.toString("latin1", at + 4, at + 8);
+		if (type === "IDAT") {
+			data.push(body.subarray(at + 8, at + 8 + length));
+		}
+		if (type === "IEND") {
+			break;
+		}
+		at += 12 + length;
+	}
+	// White rows come out as 255s, or as 0s after PNG's row filters; any ink adds other values.
+	const pixels = zlib.inflateSync(Buffer.concat(data));
+	let ink = 0;
+	for (const value of pixels) {
+		if (value !== 0 && value !== 255 && value > 4) {
+			ink++;
+		}
+	}
+	return ink === 0;
 }
 
 export function startStubScanner(port = 8502) {
@@ -30,13 +63,26 @@ export function startStubScanner(port = 8502) {
 				contentType: req.headers["content-type"] ?? "",
 				hasPng: body.includes(Buffer.from([0x89, 0x50, 0x4e, 0x47])),
 				pngSize: pngSize(body),
+				bytes: body.length,
 			});
 
 			const reply = (status, payload) => {
 				res.writeHead(status, { "Content-Type": "application/json" });
 				res.end(JSON.stringify(payload));
 			};
-			if (req.method !== "POST" || req.url !== "/predict/") {
+			if (req.method === "POST" && req.url === "/pages/") {
+				if (apiKey === "old-scanner") {
+					reply(404, { detail: "Not found" });
+				} else if (apiKey === "pages-down") {
+					reply(503, { detail: "Couldn't read this page.", code: "scan_failed" });
+				} else if (apiKey === "no-scans-left") {
+					reply(400, { detail: "No scans left.", code: "no_scans_left" });
+				} else if (isBlankPng(body)) {
+					reply(200, { markdown: "", blank: true });
+				} else {
+					reply(200, { markdown: PAGE_MARKDOWN });
+				}
+			} else if (req.method !== "POST" || req.url !== "/predict/") {
 				reply(404, { detail: "Not found" });
 			} else if (apiKey === "unauthorized") {
 				reply(401, { detail: "Invalid API key" });

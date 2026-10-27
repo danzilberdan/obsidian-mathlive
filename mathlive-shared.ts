@@ -304,7 +304,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 }
 
 const SCAN_FAILED_NOTICE = "Couldn't scan the image. Check your connection and try again.";
-const NO_SCANS_LEFT_NOTICE =
+export const NO_SCANS_LEFT_NOTICE =
 	"You've used all your free scans. Open Settings -> MathLive to upgrade to unlimited scans.";
 const NO_MATH_NOTICE = "No math found in this image. Try cropping closer to the formula. Nothing was charged.";
 const EMPTY_CLIPBOARD_NOTICE = "No image found in clipboard.";
@@ -373,7 +373,7 @@ async function shrinkImage(image: Blob): Promise<Blob> {
 	}
 }
 
-async function buildMultipartBody(
+export async function buildMultipartBody(
 	fieldName: string,
 	file: Blob
 ): Promise<{ body: ArrayBuffer; contentType: string }> {
@@ -415,7 +415,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 // The scanner answers errors with {detail, code}. Older scanners send only detail, and the
 // self-hosted one sends neither, so the status decides when there's no code.
-function errorCode(res: { json: unknown }): string | null {
+export function errorCode(res: { json: unknown }): string | null {
 	try {
 		const body = res.json as { code?: unknown } | null;
 		return typeof body?.code === "string" ? body.code : null;
@@ -485,14 +485,19 @@ async function requestScan(address: string, apiKey: string, image: Blob): Promis
 	return latex;
 }
 
+// The MathLive scanner, or the user's own one when Self-hosted scanner is on.
+export function scannerAddress(settings: PluginSettings): string {
+	if (settings.useLocalInference) {
+		return (settings.localInferenceUrl.trim() || DEFAULT_SETTINGS.localInferenceUrl).replace(/\/+$/, "");
+	}
+	return "https://mathlive-ocr.danz.blog";
+}
+
 export async function scanImageToLatex(
 	settings: PluginSettings,
 	imageData: Blob
 ): Promise<string> {
-	let address = "https://mathlive-ocr.danz.blog";
-	if (settings.useLocalInference) {
-		address = (settings.localInferenceUrl.trim() || DEFAULT_SETTINGS.localInferenceUrl).replace(/\/+$/, "");
-	}
+	const address = scannerAddress(settings);
 
 	const image = await shrinkImage(imageData);
 	const apiKey = settings.apiKey ?? "";
@@ -559,7 +564,7 @@ export function mathfieldScanTarget(options: {
 }
 
 // The cloud scanner needs an account, so say so before the user picks an image.
-function checkCanScan(settings: PluginSettings): boolean {
+export function checkCanScan(settings: PluginSettings): boolean {
 	if (!settings.useLocalInference && !settings.apiKey) {
 		new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
 		return false;
