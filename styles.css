@@ -408,3 +408,15 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline mjx-container {
 .mathlive-connect-modal .setting-item {
   border-top: none;
 }
+
+.mathlive-pdf-page-input {
+	width: 5em;
+}
+
+.mathlive-pdf-progress {
+	width: 100%;
+}
+
+.mathlive-pdf-cost {
+	color: var(--text-muted);
+}

@@ -33,6 +33,7 @@ import {
 	parseMathSelection,
 	showMenuBelow,
 } from "./mathlive-shared";
+import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { WelcomeModal } from "./welcome";
 const BODY_CLASSES = [
@@ -92,6 +93,27 @@ export default class MathLivePlugin extends Plugin {
 				void this.scanScreenAreaIntoNote(true);
 			},
 		});
+		this.addCommand({
+			id: "convert-pdf-to-notes",
+			name: "Convert PDF to notes",
+			callback: () => {
+				const active = this.app.workspace.getActiveFile();
+				void convertPdfToNotes(this.app, this.settings, isPdf(active) ? active : undefined);
+			},
+		});
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, file) => {
+				if (!isPdf(file)) {
+					return;
+				}
+				menu.addItem((item) =>
+					item
+						.setTitle("Convert to notes with MathLive")
+						.setIcon("file-text")
+						.onClick(() => void convertPdfToNotes(this.app, this.settings, file))
+				);
+			})
+		);
 		this.addRibbonIcon("scan", "Scan formula from screen", () => {
 			void this.scanScreenAreaIntoNote();
 		});
