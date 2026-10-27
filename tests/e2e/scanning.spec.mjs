@@ -16,7 +16,6 @@ import {
 	test,
 } from "./fixtures.mjs";
 
-const AUTH_NOTICE = /configure your API key/;
 const FAILED_NOTICE = "Couldn't scan the image. Check your connection and try again.";
 
 // Scans go to a stub of the self-hosted scanner on localhost:8502.
@@ -135,11 +134,5 @@ test.describe("scanning a formula image", () => {
 		expect(scanner.requests[0].pngSize).toEqual({ width: 115, height: 58 });
 	});
 
-	test("the cloud scanner without an API key asks for one and sends nothing", async ({ page, scanner }) => {
-		await setSettings(page, { useLocalInference: false, apiKey: "" });
-		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
-		await expect(notices(page).filter({ hasText: AUTH_NOTICE })).toBeVisible();
-		expect(scanner.requests).toHaveLength(0);
-	});
+
 });

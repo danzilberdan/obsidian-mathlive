@@ -90,8 +90,21 @@ export interface MathfieldConfig {
 	onInput?: (value: string) => void;
 }
 
-export const CLOUD_OCR_AUTH_NOTICE =
-	'Open Settings -> MathLive and configure your API key. If you use cloud OCR, make sure your remote account is funded. More info is available in settings.';
+export const CLOUD_OCR_AUTH_NOTICE = "Open Settings → MathLive and click Connect to scan images.";
+
+// What scanning needs from the plugin's account: a key before the first scan, and a way to ask
+// the user to connect when the scanner refuses one. Set by the plugin while it is loaded.
+export interface ScanAccount {
+	ensureKey(resume: () => void): Promise<boolean>;
+	needsAccount(reason: "auth" | "no_scans_left", resume: () => void): void;
+	afterScan(): void;
+}
+
+let scanAccount: ScanAccount | null = null;
+
+export function setScanAccount(account: ScanAccount | null) {
+	scanAccount = account;
+}
 
 export async function ensureMathfieldElementRegistered(doc: Document = activeDocument) {
 	const loaded = await loadMathfieldElement();
@@ -304,8 +317,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 }
 
 const SCAN_FAILED_NOTICE = "Couldn't scan the image. Check your connection and try again.";
-const NO_SCANS_LEFT_NOTICE =
-	"You've used all your free scans. Open Settings -> MathLive to upgrade to unlimited scans.";
+const NO_SCANS_LEFT_NOTICE = "You've used all your free scans. Open Settings → MathLive to upgrade to unlimited scans.";
 const NO_MATH_NOTICE = "No math found in this image. Try cropping closer to the formula. Nothing was charged.";
 const EMPTY_CLIPBOARD_NOTICE = "No image found in clipboard.";
 const BAD_IMAGE_NOTICE = "MathLive couldn't read this image. Copy the formula as a screenshot and try again.";
@@ -489,7 +501,7 @@ export async function scanImageToLatex(
 	settings: PluginSettings,
 	imageData: Blob
 ): Promise<string> {
-	let address = "https://mathlive-ocr.danz.blog";
+	let address = (settings.cloudScannerUrl || DEFAULT_SETTINGS.cloudScannerUrl).replace(/\/+$/, "");
 	if (settings.useLocalInference) {
 		address = (settings.localInferenceUrl.trim() || DEFAULT_SETTINGS.localInferenceUrl).replace(/\/+$/, "");
 	}
@@ -510,24 +522,28 @@ export async function scanImageToLatex(
 	}
 }
 
+// A notice with one button, such as Retry. Clicking the button closes the notice.
+export function noticeWithButton(message: string, label: string, onClick: () => void, duration = 10000) {
+	const notice = new Notice(
+		createFragment((frag) => {
+			frag.appendText(message + " ");
+			const button = frag.createEl("button", { cls: "mathlive-notice-retry", text: label });
+			button.addEventListener("click", (event) => {
+				event.stopPropagation();
+				notice.hide();
+				onClick();
+			});
+		}),
+		duration
+	);
+}
+
 function showScanFailure(message: string, retry?: () => void) {
 	if (!retry) {
 		new Notice(message, 10000);
 		return;
 	}
-
-	const notice = new Notice(
-		createFragment((frag) => {
-			frag.appendText(message + " ");
-			const button = frag.createEl("button", { cls: "mathlive-notice-retry", text: "Retry" });
-			button.addEventListener("click", (event) => {
-				event.stopPropagation();
-				notice.hide();
-				retry();
-			});
-		}),
-		15000
-	);
+	noticeWithButton(message, "Retry", retry, 15000);
 }
 
 // Where a scan's LaTeX goes: a formula, or the cursor in a note.
@@ -558,13 +574,17 @@ export function mathfieldScanTarget(options: {
 	};
 }
 
-// The cloud scanner needs an account, so say so before the user picks an image.
-function checkCanScan(settings: PluginSettings): boolean {
-	if (!settings.useLocalInference && !settings.apiKey) {
-		new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
-		return false;
+// The cloud scanner needs a key, so get one (a trial, or by connecting) before the user picks an
+// image. `resume` starts the scan over once the user has connected.
+async function ensureCanScan(settings: PluginSettings, resume: () => void): Promise<boolean> {
+	if (settings.useLocalInference || settings.apiKey?.trim()) {
+		return true;
 	}
-	return true;
+	if (scanAccount) {
+		return await scanAccount.ensureKey(resume);
+	}
+	new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
+	return false;
 }
 
 async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
@@ -580,12 +600,23 @@ async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
 		}
 		target.insert(latex);
 		new Notice(target.addedMessage);
+		if (!settings.useLocalInference) {
+			scanAccount?.afterScan();
+		}
 		return true;
 	} catch (error) {
 		const failure = error instanceof ScanError ? error.failure : "unavailable";
 		console.error("MathLive: scan failed:", error);
 
-		if (failure === "auth" && !settings.useLocalInference) {
+		// Once the user has connected or paid, the same image is scanned again.
+		const resume = () => {
+			if (target.isOpen()) {
+				void scanInto(target, image);
+			}
+		};
+		if ((failure === "auth" || failure === "no_scans_left") && !settings.useLocalInference && scanAccount) {
+			scanAccount.needsAccount(failure, resume);
+		} else if (failure === "auth" && !settings.useLocalInference) {
 			showScanFailure(CLOUD_OCR_AUTH_NOTICE);
 		} else if (failure === "no_scans_left") {
 			showScanFailure(NO_SCANS_LEFT_NOTICE);
@@ -595,11 +626,7 @@ async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
 			showScanFailure(BAD_IMAGE_NOTICE);
 		} else {
 			// The retry keeps the image, so it works even after the clipboard has changed.
-			showScanFailure(SCAN_FAILED_NOTICE, () => {
-				if (target.isOpen()) {
-					void scanInto(target, image);
-				}
-			});
+			showScanFailure(SCAN_FAILED_NOTICE, resume);
 		}
 		return false;
 	}
@@ -614,7 +641,12 @@ export async function appendLatexFromClipboardImage(
 	// Offered instead when the clipboard has no image.
 	scanScreenArea?: () => void
 ): Promise<boolean> {
-	if (!checkCanScan(options.settings)) {
+	const resume = () => {
+		if (options.mathfield.isConnected) {
+			void appendLatexFromClipboardImage(options, scanScreenArea);
+		}
+	};
+	if (!(await ensureCanScan(options.settings, resume))) {
 		return false;
 	}
 
@@ -638,19 +670,7 @@ function showEmptyClipboard(scanScreenArea?: () => void) {
 		new Notice(EMPTY_CLIPBOARD_NOTICE);
 		return;
 	}
-
-	const notice = new Notice(
-		createFragment((frag) => {
-			frag.appendText(EMPTY_CLIPBOARD_NOTICE + " You can also select the formula on screen. ");
-			const button = frag.createEl("button", { cls: "mathlive-notice-retry", text: "Select on screen" });
-			button.addEventListener("click", (event) => {
-				event.stopPropagation();
-				notice.hide();
-				scanScreenArea();
-			});
-		}),
-		10000
-	);
+	noticeWithButton(EMPTY_CLIPBOARD_NOTICE + " You can also select the formula on screen.", "Select on screen", scanScreenArea);
 }
 
 // Lets the user drag a box around a formula anywhere in the Obsidian window and scans it.
@@ -662,7 +682,12 @@ export async function scanScreenAreaInto(
 	doc: Document,
 	hideWhileSelecting?: () => () => void
 ): Promise<boolean> {
-	if (!checkCanScan(target.settings)) {
+	const resume = () => {
+		if (target.isOpen()) {
+			void scanScreenAreaInto(app, target, doc, hideWhileSelecting);
+		}
+	};
+	if (!(await ensureCanScan(target.settings, resume))) {
 		return false;
 	}
 
@@ -690,7 +715,12 @@ export async function scanScreenAreaInto(
 
 // Like scanScreenAreaInto, but the box can go around anything on the screen, other apps included.
 export async function scanAnywhereOnScreenInto(app: App, target: ScanTarget, doc: Document): Promise<boolean> {
-	if (!checkCanScan(target.settings)) {
+	const resume = () => {
+		if (target.isOpen()) {
+			void scanAnywhereOnScreenInto(app, target, doc);
+		}
+	};
+	if (!(await ensureCanScan(target.settings, resume))) {
 		return false;
 	}
 

@@ -175,12 +175,14 @@ test.describe("scanning a formula from the screen", () => {
 		expect(scanner.requests).toHaveLength(1);
 	});
 
-	test("the cloud scanner without an API key asks for one before showing the box", async ({ page, scanner }) => {
-		await setSettings(page, { useLocalInference: false, apiKey: "" });
+	test("the cloud scanner asks to connect before showing the box when no trial is left", async ({ page, scanner }) => {
+		scanner.account.trialAvailable = false;
+		await setSettings(page, { useLocalInference: false, apiKey: "", cloudScannerUrl: "http://127.0.0.1:8502" });
 		await runCommand(page, "mathlive:scan-screen-area");
-		await expect(notices(page).filter({ hasText: /configure your API key/ })).toBeVisible();
+		await expect(page.locator(".mathlive-connect-modal .modal-title")).toHaveText("Connect MathLive to scan");
 		await expect(overlay(page)).toHaveCount(0);
-		expect(scanner.requests).toHaveLength(0);
+		expect(scanner.requests.filter((request) => request.url === "/predict/")).toHaveLength(0);
+		scanner.account.reset();
 	});
 });
 

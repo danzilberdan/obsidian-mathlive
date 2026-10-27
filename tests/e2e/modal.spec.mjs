@@ -104,7 +104,7 @@ test.describe("formula editor window", () => {
 
 		await trigger.click();
 		await expect(menuItem(page, "Made by Dan Zilberman")).toBeVisible();
-		await expect(menuItem(page, "Sign in to scan images")).toBeVisible();
+		await expect(menuItem(page, "Connect to scan images")).toBeVisible();
 		// A click elsewhere in the window closes the menu and leaves the window open.
 		await page.locator(".mathlive-modal-title").click();
 		await expect(page.locator(".menu")).toHaveCount(0);

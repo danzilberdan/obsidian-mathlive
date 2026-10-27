@@ -42,7 +42,8 @@ const settingRow = (settingsWindow, name) =>
 	});
 
 test.describe("settings", () => {
-	test("the settings tab lists every option under its heading", async ({ obsidian }) => {
+	// Asks for `page` so the settings start from their defaults, whatever earlier specs changed.
+	test("the settings tab lists every option under its heading", async ({ obsidian, page: _page }) => {
 		const settingsWindow = await openSettings(obsidian);
 		const rows = await settingsWindow.locator(".vertical-tab-content .setting-item").evaluateAll((items) =>
 			items.map((item) => ({
@@ -50,9 +51,10 @@ test.describe("settings", () => {
 				heading: item.classList.contains("setting-item-heading"),
 			}))
 		);
-		expect(rows.filter((row) => row.heading).map((row) => row.name)).toEqual(["Image scanner", "Inline editor"]);
+		expect(rows.filter((row) => row.heading).map((row) => row.name)).toEqual(["Image scanner", "Inline editor", "Advanced"]);
 		expect(rows.map((row) => row.name)).toEqual(
 			expect.arrayContaining([
+				"Account",
 				"API key",
 				"Self-hosted scanner",
 				"Self-hosted scanner address",

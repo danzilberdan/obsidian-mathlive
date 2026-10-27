@@ -123,7 +123,7 @@ test.describe("formulas in the note", () => {
 			"Scan from screen",
 			"Open in editor window",
 			"Show math keyboard",
-			"Sign in to scan images",
+			"Connect to scan images",
 			"Made by Dan Zilberman",
 		]);
 
@@ -161,20 +161,23 @@ test.describe("formulas in the note", () => {
 		await expect(inlineField(page, 0)).toBeFocused();
 	});
 
-	test("the ⋮ menu's links open the account page and the author's site", async ({ page }) => {
+	test("the ⋮ menu's links connect the account and open the author's site", async ({ page }) => {
 		await recordOpenedUrls(page);
 		await openWidgetMenu(page, inlineWidget(page, 0));
-		await menuItem(page, "Sign in to scan images").click();
+		await menuItem(page, "Connect to scan images").click();
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await menuItem(page, "Made by Dan Zilberman").click();
-		expect(await openedUrls(page)).toEqual(["https://mathlive.danz.blog/console", "https://danz.blog"]);
+		await expect.poll(() => openedUrls(page)).toHaveLength(2);
+		const [connect, author] = await openedUrls(page);
+		expect(connect).toMatch(/^https:\/\/mathlive\.danz\.blog\/connect\?state=[0-9a-f]{64}&device=vault%20on%20/);
+		expect(author).toBe("https://danz.blog");
 	});
 
-	test("Sign in shows only when the cloud scanner has no API key", async ({ page }) => {
+	test("Connect shows only when the cloud scanner isn't connected", async ({ page }) => {
 		await setSettings(page, { useLocalInference: true });
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await expect(menuItem(page, "Made by Dan Zilberman")).toBeVisible();
-		await expect(menuItem(page, "Sign in to scan images")).toHaveCount(0);
+		await expect(menuItem(page, "Connect to scan images")).toHaveCount(0);
 	});
 
 	test("block formulas keep their own keyboard and menu buttons beside the ⋮ menu", async ({ page }) => {
