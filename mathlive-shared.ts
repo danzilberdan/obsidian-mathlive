@@ -490,7 +490,7 @@ export function scannerAddress(settings: PluginSettings): string {
 	if (settings.useLocalInference) {
 		return (settings.localInferenceUrl.trim() || DEFAULT_SETTINGS.localInferenceUrl).replace(/\/+$/, "");
 	}
-	return "https://mathlive-ocr.danz.blog";
+	return "https://mathlive.danz.blog/ocr";
 }
 
 export async function scanImageToLatex(
