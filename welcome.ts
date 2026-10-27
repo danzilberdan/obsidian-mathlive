@@ -38,7 +38,7 @@ export class WelcomeModal extends Modal {
 		);
 		item(
 			"Turn PDFs into notes.",
-			"Right-click a PDF to convert its pages into Markdown with editable LaTeX."
+			"Open a PDF and click “Convert to notes” at its top right to turn its pages into Markdown with editable LaTeX."
 		);
 
 		new Setting(contentEl)

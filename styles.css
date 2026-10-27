@@ -603,6 +603,25 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline mjx-container {
   border-top: none;
 }
 
+/* The button in an open PDF's header. */
+.view-action.mathlive-pdf-convert-action {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: auto;
+	padding: 0 0.6rem;
+	border-radius: var(--radius-s, 4px);
+	background: hsla(var(--interactive-accent-hsl, 260, 80%, 60%), 0.14);
+	color: var(--text-accent);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold, 600);
+}
+
+.view-action.mathlive-pdf-convert-action:hover {
+	background: hsla(var(--interactive-accent-hsl, 260, 80%, 60%), 0.24);
+	color: var(--text-accent-hover, var(--text-accent));
+}
+
 .mathlive-pdf-page-input {
 	width: 5em;
 }

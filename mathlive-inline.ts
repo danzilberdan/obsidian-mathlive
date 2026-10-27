@@ -54,6 +54,7 @@ export interface WidgetHooks {
 	accountAction: () => Promise<{ title: string; run: () => void } | undefined>;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 	openGuide: () => void;
+	convertPdf: () => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -365,6 +366,9 @@ class MathLiveWidget extends WidgetType {
 		);
 		menu.addItem((item) =>
 			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
+		);
+		menu.addItem((item) =>
+			item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.hooks.convertPdf())
 		);
 		menu.addSeparator();
 		menu.addItem((item) =>

@@ -122,6 +122,7 @@ test.describe("formulas in the note", () => {
 		await expect(menu.locator(".menu-item-title")).toHaveText([
 			"Scan clipboard image",
 			"Scan from screen",
+			"Convert a PDF to notes",
 			"Show math keyboard",
 			"What MathLive can do",
 			"Connect to scan images",

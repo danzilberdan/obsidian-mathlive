@@ -50,6 +50,27 @@ test.describe("converting a PDF to notes", () => {
 		await expect(page.locator(".workspace-tab-header", { hasText: "Lecture" })).toHaveCount(0);
 	});
 
+	test("an open PDF has a button in its header that converts it", async ({ page }) => {
+		await page.evaluate(async () => {
+			await window.app.workspace.getLeaf("tab").openFile(window.app.vault.getAbstractFileByPath("Lecture.pdf"));
+			return true;
+		});
+		const action = page.locator(".workspace-leaf.mod-active .mathlive-pdf-convert-action");
+		await expect(action).toHaveAttribute("aria-label", "Convert to notes with MathLive");
+		await action.click();
+		await expect(modal(page)).toContainText("Lecture.pdf");
+		await expect(button(page, "Convert")).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(modal(page)).toHaveCount(0);
+	});
+
+	test("the ribbon has a PDF to notes button", async ({ page }) => {
+		await page.locator('.side-dock-ribbon-action[aria-label="Convert PDF to notes"]').click();
+		// No PDF is open, so it asks for one first.
+		await expect(page.locator(".prompt")).toBeVisible();
+		await page.keyboard.press("Escape");
+	});
+
 	test("the PDF's file menu turns it into a note in page order, without blank pages", async ({ page, scanner }) => {
 		await page.evaluate(async () => {
 			const leaf = window.app.workspace.getLeftLeaf(false);

@@ -80,7 +80,7 @@ export class GuideModal extends Modal {
 		section(
 			"file-text",
 			"Turn a PDF into notes",
-			"Lecture slides, papers or handwritten pages become a Markdown note with every formula as editable LaTeX. Right-click a PDF and choose “Convert to notes with MathLive”.",
+			"Lecture slides, papers or handwritten pages become a Markdown note with every formula as editable LaTeX. Open a PDF and click “Convert to notes” at its top right, or use the note icon in the left ribbon.",
 			{ text: "Convert a PDF", run: () => this.actions.convertPdf() }
 		);
 

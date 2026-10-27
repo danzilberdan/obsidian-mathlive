@@ -11,6 +11,9 @@ import {
 	type TextComponent,
 	type KeymapEventHandler,
 	MarkdownView,
+	type ItemView,
+	type TFile,
+	type View,
 	Notice,
 } from "obsidian";
 import type { EditorView } from "@codemirror/view";
@@ -48,6 +51,7 @@ export default class MathLivePlugin extends Plugin {
 	account: CloudAccount;
 	// Where a scan from the screen goes when the hotkey is pressed outside a note, like in a PDF.
 	private lastNoteView: MarkdownView | null = null;
+	private pdfViewsWithButton = new WeakSet<View>();
 
 	async onload() {
 		await ensureMathfieldElementRegistered();
@@ -92,10 +96,7 @@ export default class MathLivePlugin extends Plugin {
 		this.addCommand({
 			id: "convert-pdf-to-notes",
 			name: "Convert PDF to notes",
-			callback: () => {
-				const active = this.app.workspace.getActiveFile();
-				void convertPdfToNotes(this.app, this.settings, isPdf(active) ? active : undefined);
-			},
+			callback: () => this.convertPdf(),
 		});
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
@@ -113,6 +114,10 @@ export default class MathLivePlugin extends Plugin {
 		this.addRibbonIcon("scan", "Scan formula from screen", () => {
 			void this.scanScreenAreaIntoNote();
 		});
+		this.addRibbonIcon("file-text", "Convert PDF to notes", () => this.convertPdf());
+		// Every open PDF gets a button in its header, where people look when they have a PDF open.
+		this.registerEvent(this.app.workspace.on("layout-change", () => this.addPdfButtons()));
+		this.registerEvent(this.app.workspace.on("file-open", () => this.addPdfButtons()));
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", (leaf) => {
 				if (leaf?.view instanceof MarkdownView) {
@@ -128,6 +133,7 @@ export default class MathLivePlugin extends Plugin {
 				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
+				convertPdf: () => this.convertPdf(),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -141,6 +147,7 @@ export default class MathLivePlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			this.lastNoteView = this.app.workspace.getActiveViewOfType(MarkdownView);
 			this.app.workspace.updateOptions();
+			this.addPdfButtons();
 			if (!this.settings.welcomeShown) {
 				this.settings.welcomeShown = true;
 				void this.saveSettings();
@@ -155,11 +162,32 @@ export default class MathLivePlugin extends Plugin {
 			account: this.account,
 			addFormula: () => this.openEditorFromWelcome(),
 			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
-			convertPdf: () => {
-				const active = this.app.workspace.getActiveFile();
-				void convertPdfToNotes(this.app, this.settings, isPdf(active) ? active : undefined);
-			},
+			convertPdf: () => this.convertPdf(),
 		}).open();
+	}
+
+	// Converts the open PDF, or asks which one.
+	convertPdf() {
+		const active = this.app.workspace.getActiveFile();
+		void convertPdfToNotes(this.app, this.settings, isPdf(active) ? active : undefined);
+	}
+
+	private addPdfButtons() {
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			const view = leaf.view;
+			if (view.getViewType() !== "pdf" || this.pdfViewsWithButton.has(view)) {
+				return;
+			}
+			this.pdfViewsWithButton.add(view);
+			const button = (view as ItemView).addAction("file-text", "Convert to notes with MathLive", () => {
+				const file = (view as ItemView & { file?: TFile | null }).file;
+				void convertPdfToNotes(this.app, this.settings, isPdf(file) ? file : undefined);
+			});
+			// A labelled button, not just an icon, so it's seen.
+			button.addClass("mathlive-pdf-convert-action");
+			button.createSpan({ cls: "mathlive-pdf-convert-label", text: "Convert to notes" });
+			this.register(() => button.remove());
+		});
 	}
 
 	// "Try the editor" in the welcome window: a full-line formula at the cursor of the open note.
