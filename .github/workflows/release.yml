@@ -4,6 +4,17 @@ on:
   push:
     tags:
       - "*"
+  # Release from the Actions tab: tags master's head with `version` and publishes it, for when a tag
+  # can't be pushed. `dry_run` builds and checks without tagging or publishing.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release (must match manifest.json on master)
+        required: true
+      dry_run:
+        description: Build and check only
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -12,6 +23,7 @@ permissions:
 
 env:
   PLUGIN_NAME: MathLive
+  VERSION: ${{ inputs.version || github.ref_name }}
 
 jobs:
   build:
@@ -26,6 +38,12 @@ jobs:
           node-version: "20.x"
           cache: npm
 
+      - name: Check the version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          test "$(node -p 'require("./manifest.json").version')" = "$VERSION" || { echo "manifest.json is not $VERSION"; exit 1; }
+          ! git ls-remote --exit-code --tags origin "refs/tags/$VERSION" || { echo "tag $VERSION already exists"; exit 1; }
+
       - name: Install dependencies
         run: npm ci
 
@@ -36,9 +54,10 @@ jobs:
         run: npm run build
         env:
           # Tags like 2.0.0-staging.1 talk to the staging server, for testing before a release.
-          MATHLIVE_ORIGIN: ${{ contains(github.ref_name, '-staging') && 'https://mathlive-staging.danz.blog' || '' }}
+          MATHLIVE_ORIGIN: ${{ contains(env.VERSION, '-staging') && 'https://mathlive-staging.danz.blog' || '' }}
 
       - name: Attest build provenance
+        if: ${{ !inputs.dry_run }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
@@ -47,12 +66,15 @@ jobs:
             styles.css
 
       - name: Release with Notes
+        if: ${{ !inputs.dry_run }}
         uses: softprops/action-gh-release@v3
         with:
-          name: ${{ env.PLUGIN_NAME }} ${{ github.ref_name }}
+          tag_name: ${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ env.PLUGIN_NAME }} ${{ env.VERSION }}
           generate_release_notes: true
           # Test builds (any tag with a "-") are pre-releases, installed only through BRAT.
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.VERSION, '-') }}
           files: |
             main.js
             manifest.json
