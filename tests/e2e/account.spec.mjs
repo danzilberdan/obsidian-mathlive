@@ -156,7 +156,8 @@ test.describe("account", () => {
 		await expect(row).toContainText("Connected as ada@example.com · 9 scans left.", { timeout: 15_000 });
 		await row.getByRole("button", { name: "Disconnect" }).click();
 		await expect(row.getByRole("button", { name: "Connect" })).toBeVisible();
-		expect(scanner.account.forgotten).toEqual(["device-key"]);
+		// The Connect button comes back before the forget request lands.
+		await expect.poll(() => scanner.account.forgotten).toEqual(["device-key"]);
 		expect(await pluginSettings(page)).toMatchObject({ apiKey: null, apiKeySource: null });
 		const saved = JSON.parse(fs.readFileSync(path.join(obsidian.vault, ".obsidian", "plugins", "mathlive", "data.json"), "utf8"));
 		expect(saved.apiKey).toBeNull();
