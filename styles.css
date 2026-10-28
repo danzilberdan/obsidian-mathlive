@@ -454,6 +454,10 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
   border: 1px solid hsla(var(--interactive-accent-hsl, 260, 80%, 60%), 0.45);
 }
 
+.mathlive-icon-btn {
+  padding-inline: 0.5rem;
+}
+
 .mathlive-ai-btn .mathlive-btn-icon {
   color: var(--text-accent);
 }

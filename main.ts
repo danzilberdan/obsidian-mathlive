@@ -849,9 +849,13 @@ class MathLiveModal extends Modal {
 		addButton("scan-screen-button", "scan", "Scan from screen", () => {
 			void this.onScreenScanRequest();
 		});
-		addButton("find-formula-button", "search", "Find a formula", () => {
-			this.onFindFormulaRequest();
+		// Icon only, so the row still fits beside Insert into note. Obsidian shows the label on hover.
+		const find = group.createEl("button", {
+			cls: "find-formula-button mathlive-action-btn mathlive-ai-btn mathlive-icon-btn",
+			attr: { type: "button", "aria-label": "Find a formula" },
 		});
+		setIcon(find.createSpan({ cls: "mathlive-btn-icon" }), "search");
+		find.addEventListener("click", () => this.onFindFormulaRequest());
 	}
 
 	private scanTarget(mathfield: MathfieldElement) {
