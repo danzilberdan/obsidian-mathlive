@@ -24,6 +24,7 @@ import {
 	createMathfield,
 	moveVirtualKeyboard,
 	showMenuBelow,
+	insertIntoMathfield,
 } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
@@ -55,6 +56,8 @@ export interface WidgetHooks {
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 	openGuide: () => void;
 	convertPdf: () => void;
+	// Opens Find a formula; `insert` puts the picked one in place and says whether it could.
+	findFormula: (insert: (latex: string) => boolean) => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -208,6 +211,17 @@ class MathLiveWidget extends WidgetType {
 		const scanClipboardImage = () => {
 			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
 		};
+		const findFormula = () => {
+			this.hooks.findFormula((latex) => {
+				if (!mfe.isConnected) {
+					return false;
+				}
+				insertIntoMathfield(mfe, latex);
+				dispatchChange(mfe.value);
+				refocusMathfield();
+				return true;
+			});
+		};
 
 		// Two buttons after each formula: ✨ fills it in with AI and holds the other actions, and
 		// Expand opens the editor window.
@@ -229,7 +243,7 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			void this.showMenu(aiButton, mfe, scanClipboardImage, scanScreenArea);
+			void this.showMenu(aiButton, mfe, scanClipboardImage, scanScreenArea, findFormula);
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -357,10 +371,12 @@ class MathLiveWidget extends WidgetType {
 		button: HTMLElement,
 		mfe: MathfieldElement,
 		scanClipboardImage: () => void,
-		scanScreenArea: () => void
+		scanScreenArea: () => void,
+		findFormula: () => void
 	) {
 		const accountItem = await this.getAccountItem();
 		const menu = new Menu();
+		menu.addItem((item) => item.setTitle("Find a formula").setIcon("search").onClick(findFormula));
 		menu.addItem((item) =>
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
 		);

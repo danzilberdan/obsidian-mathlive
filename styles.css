@@ -635,3 +635,45 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 .mathlive-pdf-cost {
 	color: var(--text-muted);
 }
+
+/* Find a formula */
+.mathlive-formula-search .suggestion-item.mathlive-formula-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.mathlive-formula-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.mathlive-formula-name {
+  font-weight: var(--font-semibold);
+}
+
+.mathlive-formula-topic {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+.mathlive-formula-preview {
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: var(--text-normal);
+}
+
+.mathlive-formula-meta {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mathlive-formula-write .mathlive-formula-name {
+  color: var(--text-accent);
+}

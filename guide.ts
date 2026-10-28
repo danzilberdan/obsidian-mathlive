@@ -8,6 +8,7 @@ export interface GuideActions {
 	addFormula(): void;
 	scanFromScreen(): void;
 	convertPdf(): void;
+	findFormula(): void;
 }
 
 // Everything MathLive does, one section each, with a button to try it. Opens from the welcome
@@ -66,6 +67,12 @@ export class GuideModal extends Modal {
 			"AI fill: scan a formula instead of typing it",
 			"Click ✨ next to any formula, or in the editor window. Scan a screenshot from your clipboard, or draw a box around a formula anywhere on your screen: a PDF, a website, a video, another app. The LaTeX lands in your formula, ready to edit.",
 			{ text: "Scan from screen", run: () => this.actions.scanFromScreen(), cta: true }
+		);
+		section(
+			"search",
+			"Find a formula",
+			"Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and put one in your note. Free. If it isn't there, ✨ Write it with AI uses one scan.",
+			{ text: "Find a formula", run: () => this.actions.findFormula() }
 		);
 		section(
 			"maximize-2",

@@ -24,6 +24,7 @@ import { CloudAccount } from "./account";
 import { createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
+	insertIntoMathfield,
 	ensureMathfieldElementRegistered,
 	registerMathliveFonts,
 	appendLatexFromClipboardImage,
@@ -35,6 +36,7 @@ import {
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
+import { FormulaSearchModal } from "./formula-search";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -96,6 +98,11 @@ export default class MathLivePlugin extends Plugin {
 			callback: () => this.openGuide(),
 		});
 		this.addCommand({
+			id: "find-formula",
+			name: "Find a formula",
+			callback: () => this.findFormula(),
+		});
+		this.addCommand({
 			id: "convert-pdf-to-notes",
 			name: "Convert PDF to notes",
 			callback: () => this.convertPdf(),
@@ -110,6 +117,17 @@ export default class MathLivePlugin extends Plugin {
 						.setTitle("Convert to notes with MathLive")
 						.setIcon("file-text")
 						.onClick(() => void convertPdfToNotes(this.app, this.settings, file))
+				);
+			})
+		);
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor) => {
+				menu.addItem((item) =>
+					item
+						.setTitle("Find a formula")
+						.setIcon("search")
+						.setSection("insert")
+						.onClick(() => this.findFormula(editor))
 				);
 			})
 		);
@@ -136,6 +154,7 @@ export default class MathLivePlugin extends Plugin {
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
 				convertPdf: () => this.convertPdf(),
+				findFormula: (insert) => this.openFormulaSearch(insert),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -165,7 +184,29 @@ export default class MathLivePlugin extends Plugin {
 			addFormula: () => this.openEditorFromWelcome(),
 			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
 			convertPdf: () => this.convertPdf(),
+			findFormula: () => this.findFormula(),
 		}).open();
+	}
+
+	// Find a formula in the library and put it at the cursor of the open note, or of `editor`.
+	findFormula(editor?: Editor) {
+		const target = editor ?? (this.app.workspace.getActiveViewOfType(MarkdownView) ?? this.lastNoteView)?.editor;
+		if (!target) {
+			new Notice("Open a note first, then find a formula to put in it.");
+			return;
+		}
+		const selection = target.getSelection().trim();
+		this.openFormulaSearch(
+			(latex) => {
+				insertScannedMath(target, latex);
+				return true;
+			},
+			selection.length <= 80 && !selection.includes("$") ? selection : ""
+		);
+	}
+
+	openFormulaSearch(insert: (latex: string) => boolean, initialQuery = "") {
+		new FormulaSearchModal(this.app, this.settings, this.account, insert, initialQuery).open();
 	}
 
 	// Converts the open PDF, or asks which one.
@@ -808,6 +849,9 @@ class MathLiveModal extends Modal {
 		addButton("scan-screen-button", "scan", "Scan from screen", () => {
 			void this.onScreenScanRequest();
 		});
+		addButton("find-formula-button", "search", "Find a formula", () => {
+			this.onFindFormulaRequest();
+		});
 	}
 
 	private scanTarget(mathfield: MathfieldElement) {
@@ -827,6 +871,23 @@ class MathLiveModal extends Modal {
 
 		await appendLatexFromClipboardImage(this.scanTarget(this.mfe), () => {
 			void this.onScreenScanRequest();
+		});
+	}
+
+	// Puts a formula from the library at the cursor in this window's formula.
+	onFindFormulaRequest() {
+		const mathfield = this.mfe;
+		if (!mathfield) {
+			return;
+		}
+		this.plugin.openFormulaSearch((latex) => {
+			if (!mathfield.isConnected) {
+				return false;
+			}
+			insertIntoMathfield(mathfield, latex);
+			this.renderedResult = this.resultRenderTemplate(mathfield.value);
+			this.focusFormulaWhenShown();
+			return true;
 		});
 	}
 

@@ -31,6 +31,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Editor window.** A focused editor for longer expressions, with `Ctrl/Cmd + Enter` to insert into the note.
 - **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
 - **Scan formulas into LaTeX.** Draw a box around a formula anywhere in Obsidian, such as a PDF you have open, or scan a screenshot from your clipboard. Uses the MathLive cloud scanner or your own self-hosted one.
+- **Find a formula.** Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and insert one in a click. Free, no account needed. If the library doesn't have it, **Write it with AI** writes it for one scan.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Stays out of the way.** Each formula has two small buttons: ✨ AI fill and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
 
@@ -71,6 +72,12 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 Check the result and fix anything the scanner got wrong.
 
+## Finding a formula
+
+Put the cursor where the formula should go and run **MathLive: Find a formula** (or right-click in the note, or choose **Find a formula** in a formula's ✨ menu or the editor window). Type its name ("ideal gas law"), what it does ("energy of a moving object"), its name in your language ("Satz des Pythagoras"), or part of it in LaTeX (`E=mc^2`). Press `Enter` to insert the highlighted formula: as a math block on an empty line, as inline math in a line of text, or into the formula you opened it from. If you selected some words first, the search starts with them.
+
+Searching is free and needs no account. The library comes from [Wikidata](https://www.wikidata.org)'s formulas, with clean LaTeX, names, variables and descriptions written and checked with AI, and it grows from the searches that find nothing. When nothing fits, the last choice is **✨ Write it with AI**: Claude writes the formula for one scan, charged only when it comes back as valid LaTeX (free on paid plans).
+
 ## Converting a PDF to notes
 
 Open a PDF and click **Convert to notes** at its top right. You can also use the note icon in the left ribbon, **Convert a PDF to notes** in a formula's ✨ menu, or right-click a PDF in the file list. Pick the pages you want and click **Convert**. MathLive reads the pages one by one into a new note next to the PDF: text as Markdown, formulas as `$...$` and `$$...$$` you can edit, and a link back to each page of the PDF. The note fills in as pages finish. You can close the window; MathLive tells you when it's done.
@@ -104,12 +111,14 @@ The self-hosted scanner uses `http://localhost:8502` unless you set another addr
 
 Obsidian asks plugins to state the following up front.
 
-- **Payment.** The visual editor is free. Cloud scanning includes 3 trial scans, then 10 free scans per account and 5 more each month; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
+- **Payment.** The visual editor and formula search are free. Cloud scanning includes 3 trial scans, then 10 free scans per account and 5 more each month; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
 - **Account.** After 3 trial scans, cloud scanning requires a MathLive account (sign-in with Google). The editor and self-hosted scanning need no account.
-- **Network use.** The plugin only connects to the internet for cloud scanning, and only after you start a scan or click Connect:
+- **Network use.** The plugin only connects to the internet for cloud scanning and finding formulas, and only after you start a scan, search for a formula or click Connect:
   - `https://mathlive.danz.blog/ocr/trial` gives a trial key on your first cloud scan when you have none.
   - `https://mathlive.danz.blog/ocr/predict/` receives the image you chose to scan, with your key, and returns LaTeX.
   - `https://mathlive.danz.blog/ocr/pages/` receives a picture of each PDF page you chose to convert, with your key, and returns the page as Markdown.
+  - `https://mathlive.danz.blog/ocr/formulas/search` receives what you type in **Find a formula**, without your key, and returns matching formulas. It always goes to MathLive's server, also with **Self-hosted scanner** on. The server keeps the text of searches that found nothing (without your key or address) for 180 days, to add the missing formulas.
+  - `https://mathlive.danz.blog/ocr/formulas/write` receives your search text, with your key, when you choose **Write it with AI**, and returns the formula. Claude by Anthropic writes it.
   - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, scans left, and pages left before converting a PDF.
   - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
