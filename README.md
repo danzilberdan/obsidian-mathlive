@@ -38,7 +38,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/menu-dark.png">
-    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/menu-light.png" alt="The ✨ menu of a formula: scan clipboard image, scan from screen, show math keyboard" width="820">
+    <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/menu-light.png" alt="The ✨ menu of a formula: scan clipboard image, scan from screen" width="820">
   </picture>
 </p>
 
@@ -53,7 +53,7 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 **Edit a formula in your note.** Write `$x^2$` or a `$$` block in Live Preview and click it. Type to edit, use the arrow keys to move in and out of the formula, click ✨ to fill it in from a screenshot, or ⤢ to expand it into the editor window. ✨ also opens the guide, which shows everything MathLive can do.
 
-**Use the editor window.** Open the command palette (`Ctrl/Cmd + P`) and run **MathLive: Add inline math** or **MathLive: Add full-line math**. If you selected a formula first, the editor window opens with it. Click **Insert into note** or press `Ctrl/Cmd + Enter` to put it in your note.
+**Use the editor window.** Open the command palette (`Ctrl/Cmd + P`) and run **MathLive: Add inline math** or **MathLive: Add full-line math**. If you selected a formula first, the editor window opens with it. Click **Insert** or press `Ctrl/Cmd + Enter` to put it in your note.
 
 **Set a hotkey.** If you write math often, assign hotkeys to the commands in **Settings → Hotkeys**.
 
@@ -66,7 +66,7 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 ## Scanning formulas
 
-**From the screen.** Open the PDF, slide or image next to your note, put the cursor where the formula should go, and click the scan icon in the left ribbon (or run **MathLive: Scan formula from screen**, which you can give a hotkey). Obsidian steps aside and you drag a box around the formula anywhere on your screen, in Obsidian or in another app such as your browser or slides. Its LaTeX goes into the note at the cursor: as a math block on an empty line, or as inline math in a line of text. Press `Esc` to cancel. The editor window and a formula's ✨ menu have **Scan from screen** too, which adds the scan to that formula. On macOS, scanning other apps needs Screen Recording access for Obsidian; until then scans stay inside Obsidian's window and MathLive shows you where to turn it on. To always scan inside Obsidian only, turn off **Scan other apps** in the settings.
+**From the screen.** Open the PDF, slide or image next to your note, put the cursor where the formula should go, and click ✨ in the left ribbon and pick **Scan formula from screen** (or run **MathLive: Scan formula from screen**, which you can give a hotkey). Obsidian steps aside and you drag a box around the formula anywhere on your screen, in Obsidian or in another app such as your browser or slides. Its LaTeX goes into the note at the cursor: as a math block on an empty line, or as inline math in a line of text. Press `Esc` to cancel. The editor window and a formula's ✨ menu have **Scan from screen** too, which adds the scan to that formula. On macOS, scanning other apps needs Screen Recording access for Obsidian; until then scans stay inside Obsidian's window and MathLive shows you where to turn it on. To always scan inside Obsidian only, turn off **Scan other apps** in the settings.
 
 **From the clipboard.** Copy a screenshot of a formula, for example from another app or handwritten notes, then click **Scan clipboard image** in the editor window or choose it from a formula's ✨ menu.
 
@@ -74,13 +74,13 @@ Check the result and fix anything the scanner got wrong.
 
 ## Finding a formula
 
-Put the cursor where the formula should go and run **MathLive: Find a formula** (or right-click in the note, or choose **Find a formula** in a formula's ✨ menu or the editor window). Type its name ("ideal gas law"), what it does ("energy of a moving object"), its name in your language ("Satz des Pythagoras"), or part of it in LaTeX (`E=mc^2`). Press `Enter` to insert the highlighted formula: as a math block on an empty line, as inline math in a line of text, or into the formula you opened it from. If you selected some words first, the search starts with them.
+Put the cursor where the formula should go and run **MathLive: Find a formula** (or right-click in the note, or choose **Find a formula** from ✨ in the left ribbon, a formula's ✨ menu or the editor window). Type its name ("ideal gas law"), what it does ("energy of a moving object"), its name in your language ("Satz des Pythagoras"), or part of it in LaTeX (`E=mc^2`). Press `Enter` to insert the highlighted formula: as a math block on an empty line, as inline math in a line of text, or into the formula you opened it from. If you selected some words first, the search starts with them.
 
 Searching is free and needs no account. The library comes from [Wikidata](https://www.wikidata.org)'s formulas, with clean LaTeX, names, variables and descriptions written and checked with AI, and it grows from the searches that find nothing. When nothing fits, the last choice is **✨ Write it with AI**: Claude writes the formula for one scan, charged only when it comes back as valid LaTeX (free on paid plans).
 
 ## Converting a PDF to notes
 
-Open a PDF and click **Convert to notes** at its top right. You can also use the note icon in the left ribbon, **Convert a PDF to notes** in a formula's ✨ menu, or right-click a PDF in the file list. Pick the pages you want and click **Convert**. MathLive reads the pages one by one into a new note next to the PDF: text as Markdown, formulas as `$...$` and `$$...$$` you can edit, and a link back to each page of the PDF. The note fills in as pages finish. You can close the window; MathLive tells you when it's done.
+Open a PDF and click **Convert to notes** at its top right. You can also click ✨ in the left ribbon and pick **Convert a PDF to notes**, or right-click a PDF in the file list. Pick the pages you want and click **Convert**. MathLive reads the pages one by one into a new note next to the PDF: text as Markdown, formulas as `$...$` and `$$...$$` you can edit, and a link back to each page of the PDF. The note fills in as pages finish. You can close the window; MathLive tells you when it's done.
 
 On the free plan each page uses one scan. Paid plans include a number of pages each month (500 on Monthly, 300 on Lifetime), and you can buy more pages when you need them. Blank pages and pages that can't be read are free. Before converting, MathLive shows how many pages you have left; if the PDF is longer, it converts the first pages that fit and you can get more pages for the rest. A page that can't be read gets a warning in the note, and **Retry failed pages** fills it in later. Your self-hosted scanner can do this too if it answers `/pages/` the way the MathLive scanner does.
 

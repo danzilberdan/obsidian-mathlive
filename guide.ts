@@ -82,12 +82,12 @@ export class GuideModal extends Modal {
 		section(
 			"keyboard",
 			"Math keyboard",
-			"Greek letters, operators and matrices without remembering LaTeX. Open it from the ✨ menu, or with the keyboard icon on full-line formulas."
+			"Greek letters, operators and matrices without remembering LaTeX. Open it with the keyboard icon on full-line formulas, or in the editor window."
 		);
 		section(
 			"file-text",
 			"Turn a PDF into notes",
-			"Lecture slides, papers or handwritten pages become a Markdown note with every formula as editable LaTeX. Open a PDF and click “Convert to notes” at its top right, or use the note icon in the left ribbon.",
+			"Lecture slides, papers or handwritten pages become a Markdown note with every formula as editable LaTeX. Open a PDF and click “Convert to notes” at its top right, or use ✨ in the left ribbon.",
 			{ text: "Convert a PDF", run: () => this.actions.convertPdf() }
 		);
 

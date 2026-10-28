@@ -60,6 +60,15 @@ test.describe("find a formula", () => {
 		expect(searches.at(-1).url).toBe("/formulas/search?limit=8&q=gas%20law");
 	});
 
+	test("the ribbon's ✨ menu has Find a formula", async ({ page }) => {
+		await putCursor(page, 1);
+		await page.locator('.side-dock-ribbon-action[aria-label="MathLive"]').click();
+		await menuItem(page, "Find a formula").click();
+		await searchInput(page).fill("gas law");
+		await suggestion(page, IDEAL_GAS.name).click();
+		await expect.poll(() => noteText(page)).toContain(`# Test note\n$$\n${IDEAL_GAS.latex}\n$$\n`);
+	});
+
 	test("in a sentence the formula goes in as inline math", async ({ page }) => {
 		await putCursor(page, 8, "Plain paragraph".length);
 		await runCommand(page, "mathlive:find-formula");

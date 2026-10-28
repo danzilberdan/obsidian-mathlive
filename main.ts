@@ -13,8 +13,9 @@ import {
 	type TextComponent,
 	type KeymapEventHandler,
 	MarkdownView,
+	Menu,
 	type ItemView,
-	type TFile,
+	TFile,
 	type View,
 	Notice,
 } from "obsidian";
@@ -55,6 +56,8 @@ export default class MathLivePlugin extends Plugin {
 	account: CloudAccount;
 	// Where a scan from the screen goes when the hotkey is pressed outside a note, like in a PDF.
 	private lastNoteView: MarkdownView | null = null;
+	// Switched from a note's ⋮ menu, and not saved.
+	private showRawLatex = false;
 	private pdfViewsWithButton = new WeakSet<View>();
 
 	async onload() {
@@ -98,6 +101,11 @@ export default class MathLivePlugin extends Plugin {
 			callback: () => this.openGuide(),
 		});
 		this.addCommand({
+			id: "toggle-raw-latex",
+			name: "Show raw LaTeX in notes, or editors again",
+			callback: () => this.toggleRawLatex(),
+		});
+		this.addCommand({
 			id: "find-formula",
 			name: "Find a formula",
 			callback: () => this.findFormula(),
@@ -107,6 +115,21 @@ export default class MathLivePlugin extends Plugin {
 			name: "Convert PDF to notes",
 			callback: () => this.convertPdf(),
 		});
+		// The note's ⋮ menu switches its formulas to LaTeX for a while, and back.
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, file, source) => {
+				if (source !== "more-options" || !(file instanceof TFile) || file.extension !== "md" || !this.settings.enableInlineEditorMode) {
+					return;
+				}
+				menu.addItem((item) =>
+					item
+						.setTitle(this.showRawLatex ? "Show formulas as editors" : "Show raw LaTeX")
+						.setIcon(this.showRawLatex ? "sigma" : "code")
+						.setSection("view")
+						.onClick(() => this.toggleRawLatex())
+				);
+			})
+		);
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
 				if (!isPdf(file)) {
@@ -131,10 +154,21 @@ export default class MathLivePlugin extends Plugin {
 				);
 			})
 		);
-		this.addRibbonIcon("scan", "Scan formula from screen", () => {
-			void this.scanScreenAreaIntoNote();
+		// One ✨ in the ribbon for what MathLive does anywhere in Obsidian. A formula's own ✨ has what
+		// it can do for that formula.
+		this.addRibbonIcon("sparkles", "MathLive", (event) => {
+			const menu = new Menu();
+			menu.addItem((item) =>
+				item.setTitle("Find a formula").setIcon("search").onClick(() => this.findFormula())
+			);
+			menu.addItem((item) =>
+				item.setTitle("Scan formula from screen").setIcon("scan").onClick(() => void this.scanScreenAreaIntoNote())
+			);
+			menu.addItem((item) =>
+				item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.convertPdf())
+			);
+			menu.showAtMouseEvent(event);
 		});
-		this.addRibbonIcon("file-text", "Convert PDF to notes", () => this.convertPdf());
 		// Every open PDF gets a button in its header, where people look when they have a PDF open.
 		this.registerEvent(this.app.workspace.on("layout-change", () => this.addPdfButtons()));
 		this.registerEvent(this.app.workspace.on("file-open", () => this.addPdfButtons()));
@@ -153,7 +187,7 @@ export default class MathLivePlugin extends Plugin {
 				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
-				convertPdf: () => this.convertPdf(),
+				showsRawLatex: () => this.showRawLatex,
 				findFormula: (insert) => this.openFormulaSearch(insert),
 			})
 		);
@@ -333,8 +367,15 @@ export default class MathLivePlugin extends Plugin {
 		await scanScreenAreaInto(this.app, target, activeDocument);
 	}
 
+	// Until switched back or Obsidian restarts, notes show formulas as LaTeX the Obsidian way.
+	toggleRawLatex() {
+		this.showRawLatex = !this.showRawLatex;
+		this.updateMathJaxVisibility();
+		this.app.workspace.updateOptions();
+	}
+
 	updateMathJaxVisibility() {
-		const editorOn = this.settings.enableInlineEditorMode;
+		const editorOn = this.settings.enableInlineEditorMode && !this.showRawLatex;
 		// While MathLive inline widgets are on, Obsidian's inline MathJax must not sit above them in
 		// the hit-testing stack — the first click would hit mjx, exit math-edit state, and remove the widget.
 		const hideInlineInEditor =
@@ -498,7 +539,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 				},
 				{
 					name: "Scan other apps",
-					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
+					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from ✨ in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
 					addControl: toggle("scanOtherApps"),
 				},
 			],
@@ -829,7 +870,7 @@ class MathLiveModal extends Modal {
 			cls: "submit mathlive-action-btn mod-cta",
 			attr: { type: "button" },
 		});
-		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert into note" });
+		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert" });
 		submitButton.createEl("kbd", {
 			cls: "mathlive-btn-hint",
 			text: Platform.isMacOS ? "⌘ Enter" : "Ctrl+Enter",
@@ -839,16 +880,13 @@ class MathLiveModal extends Modal {
 
 	initImageScanner(actions: HTMLElement) {
 		const group = actions.createDiv({ cls: "mathlive-scan-actions" });
-		const label = group.createSpan({ cls: "mathlive-ai-label" });
-		setIcon(label.createSpan({ cls: "mathlive-btn-icon" }), "sparkles");
-		label.createSpan({ text: "AI fill" });
+		// Small icons, named by their tooltips.
 		const addButton = (cls: string, icon: string, title: string, onClick: () => void) => {
 			const button = group.createEl("button", {
 				cls: `${cls} mathlive-action-btn mathlive-ai-btn`,
-				attr: { type: "button" },
+				attr: { type: "button", "aria-label": title },
 			});
 			setIcon(button.createSpan({ cls: "mathlive-btn-icon" }), icon);
-			button.createSpan({ cls: "mathlive-btn-title", text: title });
 			button.addEventListener("click", onClick);
 		};
 		addButton("scan-button", "image-plus", "Scan clipboard image", () => {

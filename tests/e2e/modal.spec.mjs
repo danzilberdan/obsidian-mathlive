@@ -98,7 +98,6 @@ test.describe("formula editor window", () => {
 		await waitForModalField(page);
 		const footer = page.locator(".mathlive-modal-root .mathlive-modal-footer");
 		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("First scans free, no account neededGet 10 free scans");
-		await expect(page.locator(".mathlive-modal-root .mathlive-ai-label")).toHaveText("AI fill");
 
 		await setSettings(page, { apiKey: "low-key", apiKeySource: "device" });
 		await page.keyboard.press("Escape");
@@ -124,7 +123,23 @@ test.describe("formula editor window", () => {
 		const field = await modalField(page).boundingBox();
 		expect(Math.abs(scan.y - insert.y)).toBeLessThanOrEqual(2);
 		expect(scan.y).toBeGreaterThan(field.y + field.height);
-		await expect(page.locator(".mathlive-modal-root button.submit")).toContainText("Insert into note");
+		await expect(page.locator(".mathlive-modal-root button.submit")).toHaveText(/^Insert(Ctrl\+Enter|⌘ Enter)$/);
+	});
+
+	test("the scan buttons are small icons named by their tooltips", async ({ page }) => {
+		await runCommand(page, "mathlive:open-modal");
+		await waitForModalField(page);
+		const actions = page.locator(".mathlive-modal-root .mathlive-scan-actions");
+		await expect(actions).toHaveText("");
+		for (const name of ["Scan clipboard image", "Scan from screen"]) {
+			const button = actions.getByRole("button", { name });
+			const box = await button.boundingBox();
+			expect(box.width).toBeLessThanOrEqual(34);
+			expect(box.height).toBeLessThanOrEqual(34);
+			await button.hover();
+			await expect(page.locator(".tooltip")).toHaveText(name);
+			await page.mouse.move(5, 5);
+		}
 	});
 
 	test("the virtual keyboard opens inside the window", async ({ page }) => {
