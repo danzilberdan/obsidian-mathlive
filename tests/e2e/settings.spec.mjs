@@ -42,7 +42,8 @@ const settingRow = (settingsWindow, name) =>
 	});
 
 test.describe("settings", () => {
-	test("the settings tab lists every option under its heading", async ({ obsidian }) => {
+	// Asks for `page` so the settings start from their defaults, whatever earlier specs changed.
+	test("the settings tab lists every option under its heading", async ({ obsidian, page: _page }) => {
 		const settingsWindow = await openSettings(obsidian);
 		const rows = await settingsWindow.locator(".vertical-tab-content .setting-item").evaluateAll((items) =>
 			items.map((item) => ({
@@ -50,9 +51,12 @@ test.describe("settings", () => {
 				heading: item.classList.contains("setting-item-heading"),
 			}))
 		);
-		expect(rows.filter((row) => row.heading).map((row) => row.name)).toEqual(["Image scanner", "Inline editor"]);
+		expect(rows.filter((row) => row.heading).map((row) => row.name)).toEqual(["Image scanner", "Inline editor", "Advanced"]);
 		expect(rows.map((row) => row.name)).toEqual(
 			expect.arrayContaining([
+				"Guide",
+				"Account",
+				"Scan other apps",
 				"API key",
 				"Self-hosted scanner",
 				"Self-hosted scanner address",
@@ -75,7 +79,17 @@ test.describe("settings", () => {
 		await expect(settingsWindow.locator(".vertical-tab-header")).toContainText("Self-hosted scanner address");
 	});
 
-	test("the API key and self-hosted switch are saved", async ({ obsidian }) => {
+	test("the account row hides while the self-hosted scanner is on", async ({ obsidian, page: _page }) => {
+		const settingsWindow = await openSettings(obsidian);
+		await expect(settingsWindow.locator(".mathlive-account-setting")).toBeVisible();
+		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();
+		await expect(settingsWindow.locator(".mathlive-account-setting")).toBeHidden();
+		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();
+		await expect(settingsWindow.locator(".mathlive-account-setting")).toBeVisible();
+	});
+
+	// Asks for `page` so the settings start from their defaults, whatever earlier specs changed.
+	test("the API key and self-hosted switch are saved", async ({ obsidian, page: _page }) => {
 		const settingsWindow = await openSettings(obsidian);
 		await settingRow(settingsWindow, "API key").locator("input").fill("test-key-123");
 		await settingRow(settingsWindow, "Self-hosted scanner").locator(".checkbox-container").click();

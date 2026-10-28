@@ -84,6 +84,7 @@ async function resetApp(page, defaults) {
 			app.changeTheme("moonstone");
 
 			const plugin = app.plugins.plugins.mathlive;
+			plugin.account.cancelConnect();
 			plugin.settings = { ...defaults };
 			await plugin.saveSettings();
 
@@ -111,11 +112,13 @@ export const noteLine = (page, startsWith) =>
 
 export const notices = (page) => page.locator(".notice");
 
+// The plugin reads its settings from memory, so tests wait for the save only briefly: right after
+// a PDF conversion writes its note, Obsidian has been seen to drop the save's promise unresolved.
 export const setSettings = (page, values) =>
 	page.evaluate(async (values) => {
 		const plugin = window.app.plugins.plugins.mathlive;
 		Object.assign(plugin.settings, values);
-		await plugin.saveSettings();
+		await Promise.race([plugin.saveSettings(), new Promise((resolve) => setTimeout(resolve, 2000))]);
 		return true;
 	}, values);
 
@@ -142,9 +145,9 @@ export const inlineWidget = (page, index = 0) => page.locator(".cm-content .obsi
 export const blockWidget = (page) => page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper:not(.inline)").first();
 export const menuItem = (page, title) => page.locator(".menu .menu-item", { hasText: title });
 
-// Opens a formula's ⋮ menu and returns Obsidian's menu.
+// Opens a formula's ✨ menu and returns Obsidian's menu.
 export async function openWidgetMenu(page, widget) {
-	await widget.getByRole("button", { name: "More options" }).click();
+	await widget.getByRole("button", { name: "AI fill" }).click();
 	const menu = page.locator(".menu");
 	await expect(menu).toBeVisible();
 	return menu;

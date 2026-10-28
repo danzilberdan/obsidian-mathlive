@@ -1,4 +1,4 @@
-import { blockField, expect, focusField, menuItem, modalField, noteLine, noteText, runCommand, test, waitForModalField } from "./fixtures.mjs";
+import { blockField, expect, focusField, menuItem, modalField, noteLine, noteText, openedUrls, recordOpenedUrls, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
 
 const selectInLine = (page, prefix, from, to) =>
 	page.evaluate(
@@ -91,24 +91,29 @@ test.describe("formula editor window", () => {
 		expect(await noteLine(page, "Plain paragraph")).toBe("Plain paragraph between formulas. $e^{x}$");
 	});
 
-	test("the window's ⋮ menu sits by the close button and opens Obsidian's menu", async ({ page }) => {
+	test("the window shows the scans left with a way to get more, and opens the guide", async ({ page, scanner: _scanner }) => {
+		await recordOpenedUrls(page);
+		await setSettings(page, { cloudScannerUrl: "http://127.0.0.1:8502", websiteUrl: "http://127.0.0.1:8502/site" });
 		await runCommand(page, "mathlive:open-modal");
 		await waitForModalField(page);
-		const trigger = page.locator(".mathlive-modal-root .mathlive-modal-menu-trigger");
-		const close = page.locator(".mathlive-modal-root .modal-close-button, .mathlive-modal-root .modal > .modal-header-button");
-		const triggerBox = await trigger.boundingBox();
-		const closeBox = await close.first().boundingBox();
-		// Same row as the close button, just to its left, without overlapping it.
-		expect(Math.abs(triggerBox.y - closeBox.y)).toBeLessThanOrEqual(2);
-		expect(triggerBox.x + triggerBox.width).toBeLessThanOrEqual(closeBox.x);
+		const footer = page.locator(".mathlive-modal-root .mathlive-modal-footer");
+		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("First scans free, no account neededGet 10 free scans");
+		await expect(page.locator(".mathlive-modal-root .mathlive-ai-label")).toHaveText("AI fill");
 
-		await trigger.click();
-		await expect(menuItem(page, "Made by Dan Zilberman")).toBeVisible();
-		await expect(menuItem(page, "Sign in to scan images")).toBeVisible();
-		// A click elsewhere in the window closes the menu and leaves the window open.
-		await page.locator(".mathlive-modal-title").click();
-		await expect(page.locator(".menu")).toHaveCount(0);
-		await expect(modalField(page)).toBeVisible();
+		await setSettings(page, { apiKey: "low-key", apiKeySource: "device" });
+		await page.keyboard.press("Escape");
+		await page.evaluate(() => window.app.plugins.plugins.mathlive.account.refreshStatus());
+		await runCommand(page, "mathlive:open-modal");
+		await waitForModalField(page);
+		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("2 free scans leftUpgrade");
+		await footer.getByText("Upgrade").click();
+		await expect.poll(() => openedUrls(page)).toEqual(["http://127.0.0.1:8502/site/pricing"]);
+
+		await footer.getByText("Learn what MathLive can do").click();
+		await expect(page.locator(".mathlive-guide-modal")).toBeVisible();
+		await expect(page.locator(".mathlive-guide-modal")).toContainText("2 free scans left.");
+		await page.keyboard.press("Escape");
+		await page.keyboard.press("Escape");
 	});
 
 	test("the window's buttons sit on one row under the formula", async ({ page }) => {

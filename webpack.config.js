@@ -15,6 +15,8 @@ const codemirrorExternals = [
 	return acc;
 }, {});
 
+const webpack = require("webpack");
+
 module.exports = {
     mode: "development",
     devtool: false,
@@ -44,6 +46,12 @@ module.exports = {
       electron: "commonjs electron",
       ...codemirrorExternals,
     },
+    plugins: [
+      // The MathLive server the build talks to. Release tags with "-staging" build against staging.
+      new webpack.DefinePlugin({
+        MATHLIVE_ORIGIN: JSON.stringify(process.env.MATHLIVE_ORIGIN || "https://mathlive.danz.blog"),
+      }),
+    ],
     output: {
       path: __dirname + '/dist',
       filename: "../main.js",

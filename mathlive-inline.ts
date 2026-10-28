@@ -16,9 +16,11 @@ import {
 	WidgetType,
 } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
-import { Menu, setIcon } from "obsidian";
+import { type App, Menu, setIcon } from "obsidian";
 import {
 	appendLatexFromClipboardImage,
+	mathfieldScanTarget,
+	scanScreenAreaInto,
 	createMathfield,
 	moveVirtualKeyboard,
 	showMenuBelow,
@@ -43,13 +45,16 @@ interface MathFieldEntry {
 	isInline: boolean;
 }
 
-export const ACCOUNT_URL = "https://mathlive.danz.blog/console";
 export const AUTHOR_URL = "https://danz.blog";
 
 export interface WidgetHooks {
+	app: App;
 	getSettings: () => PluginSettings;
-	shouldShowUpgradeButton: () => Promise<boolean>;
+	// The account entry in the ⋮ menu: connect, upgrade, or nothing.
+	accountAction: () => Promise<{ title: string; run: () => void } | undefined>;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
+	openGuide: () => void;
+	convertPdf: () => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -189,34 +194,49 @@ class MathLiveWidget extends WidgetType {
 			}, 0);
 		};
 
-		const scanClipboardImage = () => {
-			void appendLatexFromClipboardImage({
-				settings: this.hooks.getSettings(),
-				mathfield: mfe,
-				onValueChange: (value) => {
-					dispatchChange(value);
-					refocusMathfield();
-				},
-			});
-		};
-
-		const menuButton = wrapper.createEl("button", {
-			cls: "obsidian-mathlive-widget-menu-button clickable-icon",
-			attr: {
-				type: "button",
-				"aria-label": "More options",
-				"aria-haspopup": "menu",
+		const scanOptions = () => ({
+			settings: this.hooks.getSettings(),
+			mathfield: mfe,
+			onValueChange: (value: string) => {
+				dispatchChange(value);
+				refocusMathfield();
 			},
 		});
-		setIcon(menuButton, "more-vertical");
-		menuButton.addEventListener("mousedown", (event) => {
-			// Keep the cursor where it is.
-			event.preventDefault();
-		});
-		menuButton.addEventListener("click", (event) => {
+		const scanScreenArea = () => {
+			void scanScreenAreaInto(this.hooks.app, mathfieldScanTarget(scanOptions()), mfe.doc);
+		};
+		const scanClipboardImage = () => {
+			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
+		};
+
+		// Two buttons after each formula: ✨ fills it in with AI and holds the other actions, and
+		// Expand opens the editor window.
+		// On full-line formulas they sit inside the input, beside MathLive's keyboard and ☰ buttons.
+		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
+		const addButton = (cls: string, icon: string, label: string, attr: Record<string, string> = {}) => {
+			const button = buttons.createEl("button", {
+				cls: `obsidian-mathlive-widget-button ${cls} clickable-icon`,
+				attr: { type: "button", "aria-label": label, ...attr },
+			});
+			setIcon(button, icon);
+			button.addEventListener("mousedown", (event) => {
+				// Keep the cursor where it is.
+				event.preventDefault();
+			});
+			return button;
+		};
+		const aiButton = addButton("obsidian-mathlive-widget-ai-button", "sparkles", "AI fill", { "aria-haspopup": "menu" });
+		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			void this.showMenu(menuButton, mfe, view, scanClipboardImage);
+			void this.showMenu(aiButton, mfe, scanClipboardImage, scanScreenArea);
+		});
+		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
+		expandButton.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const from = Number.parseInt(mfe.dataset.from ?? `${this.config.from}`, 10);
+			this.hooks.openEditorWindow(view, from, this.isInline);
 		});
 
 		if (this.hooks.getSettings().immediateInlineUpdate) {
@@ -336,8 +356,8 @@ class MathLiveWidget extends WidgetType {
 	private async showMenu(
 		button: HTMLElement,
 		mfe: MathfieldElement,
-		view: EditorView,
-		scanClipboardImage: () => void
+		scanClipboardImage: () => void,
+		scanScreenArea: () => void
 	) {
 		const accountItem = await this.getAccountItem();
 		const menu = new Menu();
@@ -345,14 +365,12 @@ class MathLiveWidget extends WidgetType {
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
 		);
 		menu.addItem((item) =>
-			item
-				.setTitle("Open in editor window")
-				.setIcon("maximize-2")
-				.onClick(() => {
-					const from = Number.parseInt(mfe.dataset.from ?? `${this.config.from}`, 10);
-					this.hooks.openEditorWindow(view, from, this.isInline);
-				})
+			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
 		);
+		menu.addItem((item) =>
+			item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.hooks.convertPdf())
+		);
+		menu.addSeparator();
 		menu.addItem((item) =>
 			item
 				.setTitle("Show math keyboard")
@@ -363,32 +381,19 @@ class MathLiveWidget extends WidgetType {
 					mfe.executeCommand("showVirtualKeyboard");
 				})
 		);
-		menu.addSeparator();
-		if (accountItem) {
-			menu.addItem((item) =>
-				item
-					.setTitle(accountItem)
-					.setIcon("user")
-					.onClick(() => window.open(ACCOUNT_URL))
-			);
-		}
 		menu.addItem((item) =>
-			item
-				.setTitle("Made by Dan Zilberman")
-				.setIcon("external-link")
-				.onClick(() => window.open(AUTHOR_URL))
+			item.setTitle("What MathLive can do").setIcon("compass").onClick(() => this.hooks.openGuide())
 		);
+		if (accountItem) {
+			menu.addSeparator();
+			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("gem").onClick(accountItem.run));
+		}
 
 		showMenuBelow(menu, button);
 	}
 
-	private async getAccountItem(): Promise<string | undefined> {
-		const settings = this.hooks.getSettings();
-		if (!settings.useLocalInference && !settings.apiKey?.trim()) {
-			return "Sign in to scan images";
-		}
-
-		return (await this.hooks.shouldShowUpgradeButton()) ? "Upgrade for more scans" : undefined;
+	private getAccountItem() {
+		return this.hooks.accountAction();
 	}
 }
 
