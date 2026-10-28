@@ -161,4 +161,17 @@ test.describe("formula editor window", () => {
 		await page.keyboard.press("Escape");
 		await expect(page.getByText("Insert Matrix")).toBeHidden();
 	});
+
+	test("MathLive's own menu takes clicks, though the formula's buttons show only on hover", async ({ page }) => {
+		const field = blockField(page);
+		await focusField(field);
+		await field.hover();
+		await field.locator("[part=menu-toggle]").click();
+		// A submenu opens on hover, and an item does what it says.
+		await page.getByText("Font Style").hover();
+		await expect(page.getByText("Roman Upright")).toBeVisible();
+		await page.getByText("Select All").click();
+		await expect(page.getByText("Insert Matrix")).toBeHidden();
+		await expect.poll(() => field.evaluate((f) => JSON.stringify(f.selection.ranges[0]) === JSON.stringify([0, f.lastOffset]))).toBe(true);
+	});
 });

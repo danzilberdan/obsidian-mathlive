@@ -272,6 +272,12 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
     transition-delay: 0s;
   }
 
+  /* MathLive opens its ☰ menu inside the ☰ button, so the menu inherits the button's
+     pointer-events: none. Let it take the pointer: hovering it then keeps the formula hovered. */
+  .obsidian-mathlive-codemirror-wrapper .mathlive-field::part(ui-menu-container) {
+    pointer-events: auto;
+  }
+
   /* Inline, they float over the text after the formula instead of leaving a gap in the line. */
   .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-buttons {
     position: absolute;
