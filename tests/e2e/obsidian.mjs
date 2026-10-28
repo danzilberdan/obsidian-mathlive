@@ -90,7 +90,10 @@ export async function launchObsidian() {
 	const exe = ensureObsidian();
 	const { base, vault, config } = createVault();
 	const port = await freePort();
-	const args = ["--no-sandbox", "--disable-gpu", `--remote-debugging-port=${port}`];
+	// OBSIDIAN_ARGS adds Chromium switches, such as a fake microphone that plays a file:
+	// --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=speech.wav
+	const extra = (process.env.OBSIDIAN_ARGS ?? "").split(" ").filter(Boolean);
+	const args = ["--no-sandbox", "--disable-gpu", `--remote-debugging-port=${port}`, ...extra];
 	const [command, commandArgs] = process.env.DISPLAY
 		? [exe, args]
 		: ["xvfb-run", ["-a", "-s", "-screen 0 1400x900x24", exe, ...args]];

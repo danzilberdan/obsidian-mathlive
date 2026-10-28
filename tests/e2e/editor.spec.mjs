@@ -1,6 +1,7 @@
 import {
 	blockField,
 	blockWidget,
+	clickWidgetButton,
 	expect,
 	focusField,
 	inlineField,
@@ -32,7 +33,7 @@ test.describe("formulas in the note", () => {
 			bodyClasses: [...document.body.classList].filter((name) => name.startsWith("mathlive-")),
 			fonts: [...document.fonts].filter((font) => font.family.startsWith("KaTeX")).length,
 		}));
-		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area"]);
+		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:draw-formula", "mathlive:find-formula", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
 		expect(state.bodyClasses).toEqual(
 			expect.arrayContaining(["mathlive-inline-widgets-active", "mathlive-block-widgets-active"])
 		);
@@ -87,6 +88,81 @@ test.describe("formulas in the note", () => {
 		await expect(inlineField(page, 0)).toBeFocused();
 	});
 
+	test("the LaTeX never shows next to a formula, wherever the cursor is", async ({ page }) => {
+		const visibleText = () => page.locator(".cm-content").innerText();
+		for (const [line, ch] of [[2, 12], [2, 29], [3, 0], [4, 0], [6, 2], [7, 0], [10, 10]]) {
+			await page.evaluate(({ line, ch }) => {
+				const editor = window.app.workspace.activeEditor.editor;
+				editor.focus();
+				editor.setCursor({ line, ch });
+				return true;
+			}, { line, ch });
+			await page.waitForTimeout(100);
+			const text = await visibleText();
+			expect(text, `cursor at ${line}:${ch}`).not.toContain("$");
+			expect(text, `cursor at ${line}:${ch}`).not.toContain("\\int");
+		}
+		await expect(page.locator(".cm-content math-field")).toHaveCount(3);
+	});
+
+	test("Left, Backspace, Down and Up next to a formula go into it", async ({ page }) => {
+		const placeCursor = (find, offset) =>
+			page.evaluate(({ find, offset }) => {
+				const editor = window.app.workspace.activeEditor.editor;
+				editor.focus();
+				editor.setCursor(editor.offsetToPos(editor.getValue().indexOf(find) + offset));
+				return true;
+			}, { find, offset });
+		const leave = async () => {
+			await page.keyboard.press("Escape");
+			await expect(page.locator(".cm-content math-field:focus")).toHaveCount(0);
+		};
+
+		await placeCursor("z^2$", 4);
+		await page.keyboard.press("ArrowLeft");
+		await expect(inlineField(page, 0)).toBeFocused();
+		await leave();
+
+		await placeCursor("z^2$", 4);
+		await page.keyboard.press("Backspace");
+		await expect(inlineField(page, 0)).toBeFocused();
+		expect(await noteText(page)).toContain("$x^2 + y^2 = z^2$ in a sentence.");
+		await leave();
+
+		await placeCursor("in a sentence.", 14);
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("ArrowDown");
+		await expect(blockField(page)).toBeFocused();
+		await leave();
+
+		await placeCursor("Plain paragraph", 3);
+		await page.keyboard.press("ArrowUp");
+		await page.keyboard.press("ArrowUp");
+		await expect(blockField(page)).toBeFocused();
+	});
+
+	test("the note's ⋮ menu shows the raw LaTeX for a while, and switches back", async ({ page }) => {
+		const openNoteMenu = async () => {
+			await page.locator(".workspace-leaf.mod-active .view-header .view-action[aria-label='More options']").click();
+			return page.locator(".menu");
+		};
+		await openNoteMenu();
+		await page.locator(".menu .menu-item", { hasText: "Show raw LaTeX" }).click();
+		await expect(page.locator(".cm-content math-field")).toHaveCount(0);
+		await page.evaluate(() => {
+			const editor = window.app.workspace.activeEditor.editor;
+			editor.focus();
+			editor.setCursor({ line: 2, ch: 14 });
+			return true;
+		});
+		await expect(page.locator(".cm-content")).toContainText("$x^2 + y^2 = z^2$");
+
+		await openNoteMenu();
+		await page.locator(".menu .menu-item", { hasText: "Show formulas as editors" }).click();
+		await expect(page.locator(".cm-content math-field")).toHaveCount(3);
+		await expect(page.locator(".cm-content")).not.toContainText("$");
+	});
+
 	test("arrow key navigation can be turned off", async ({ page }) => {
 		await setSettings(page, { arrowKeyNavigation: false });
 		await page.evaluate(() => {
@@ -120,13 +196,15 @@ test.describe("formulas in the note", () => {
 		const menu = await openWidgetMenu(page, widget);
 		await expect(trigger).toHaveAttribute("aria-expanded", "true");
 		await expect(menu.locator(".menu-item-title")).toHaveText([
+			"Find a formula",
 			"Scan clipboard image",
 			"Scan from screen",
-			"Convert a PDF to notes",
-			"Show math keyboard",
+			"Draw formula",
 			"What MathLive can do",
-			"Connect to scan images",
+			"Connect",
 		]);
+		// Two sections: what ✨ does for this formula, then help and the account.
+		await expect(menu.locator(".menu-separator")).toHaveCount(1);
 
 		await page.keyboard.press("Escape");
 		await expect(menu).toHaveCount(0);
@@ -135,7 +213,7 @@ test.describe("formulas in the note", () => {
 	});
 
 	test("Expand opens the formula in the editor window", async ({ page }) => {
-		await inlineWidget(page, 1).getByRole("button", { name: "Expand" }).click();
+		await clickWidgetButton(inlineWidget(page, 1), "Expand");
 
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit inline math");
 		await expect(modalField(page)).toHaveJSProperty("value", "\\alpha + \\beta");
@@ -148,22 +226,15 @@ test.describe("formulas in the note", () => {
 	});
 
 	test("Expand opens a block formula in the editor window", async ({ page }) => {
-		await blockWidget(page).getByRole("button", { name: "Expand" }).click();
+		await clickWidgetButton(blockWidget(page), "Expand");
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit math block");
 		await expect(modalField(page)).toHaveJSProperty("value", "\n\\int_0^1 f(x)\\,dx\n");
-	});
-
-	test("the ✨ menu shows the math keyboard for that formula", async ({ page }) => {
-		await openWidgetMenu(page, inlineWidget(page, 0));
-		await menuItem(page, "Show math keyboard").click();
-		await expect(page.locator(".ML__keyboard")).toBeVisible();
-		await expect(inlineField(page, 0)).toBeFocused();
 	});
 
 	test("the ✨ menu connects the account", async ({ page }) => {
 		await recordOpenedUrls(page);
 		await openWidgetMenu(page, inlineWidget(page, 0));
-		await menuItem(page, "Connect to scan images").click();
+		await menuItem(page, "Connect").click();
 		await expect.poll(() => openedUrls(page)).toHaveLength(1);
 		const [connect] = await openedUrls(page);
 		expect(connect).toMatch(/^https:\/\/mathlive\.danz\.blog\/connect\?state=[0-9a-f]{64}&device=vault%20on%20/);
@@ -173,27 +244,90 @@ test.describe("formulas in the note", () => {
 		await setSettings(page, { useLocalInference: true });
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await expect(menuItem(page, "Scan clipboard image")).toBeVisible();
-		await expect(menuItem(page, "Connect to scan images")).toHaveCount(0);
+		await expect(menuItem(page, "Connect")).toHaveCount(0);
+		await page.keyboard.press("Escape");
+
+		// Connected, nothing about the account: no Connect and no Upgrade.
+		await setSettings(page, { useLocalInference: false, apiKey: "low-key", apiKeySource: "device" });
+		await openWidgetMenu(page, inlineWidget(page, 0));
+		await expect(menuItem(page, "What MathLive can do")).toBeVisible();
+		await expect(menuItem(page, "Connect")).toHaveCount(0);
+		await expect(page.locator(".menu .menu-item")).toHaveCount(5);
 	});
 
-	test("block formulas show AI fill and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
+	test("block formulas show AI fill, Magic edit and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
 		const widget = blockWidget(page);
+		await blockField(page).hover({ position: { x: 10, y: 10 } });
 		const keyboard = await blockField(page).locator("[part=virtual-keyboard-toggle]").boundingBox();
 		const menu = await blockField(page).locator("[part=menu-toggle]").boundingBox();
 		const field = await blockField(page).boundingBox();
 		const ai = await widget.getByRole("button", { name: "AI fill" }).boundingBox();
+		const magic = await widget.getByRole("button", { name: "Magic edit" }).boundingBox();
 		const expand = await widget.getByRole("button", { name: "Expand" }).boundingBox();
 		// One row, same size, in order, all inside the input's border.
-		for (const button of [menu, ai, expand]) {
+		for (const button of [menu, ai, magic, expand]) {
 			expect(Math.abs(button.y + button.height / 2 - (keyboard.y + keyboard.height / 2))).toBeLessThanOrEqual(2);
 			expect(Math.abs(button.width - keyboard.width)).toBeLessThanOrEqual(1);
 		}
 		expect(keyboard.x).toBeLessThan(menu.x);
 		expect(menu.x + menu.width).toBeLessThanOrEqual(ai.x);
-		expect(ai.x + ai.width).toBeLessThanOrEqual(expand.x);
+		expect(ai.x + ai.width).toBeLessThanOrEqual(magic.x);
+		expect(magic.x + magic.width).toBeLessThanOrEqual(expand.x);
 		expect(expand.x + expand.width).toBeLessThanOrEqual(field.x + field.width);
 		expect(ai.y).toBeGreaterThanOrEqual(field.y);
 		expect(ai.y + ai.height).toBeLessThanOrEqual(field.y + field.height);
+	});
+
+	test("a formula's buttons show only while the mouse is over the formula or them", async ({ page }) => {
+		const opacity = (widget) =>
+			widget.locator(".obsidian-mathlive-widget-buttons").evaluate((element) => Number(getComputedStyle(element).opacity));
+		for (const widget of [inlineWidget(page, 0), blockWidget(page)]) {
+			await page.mouse.move(5, 5);
+			await expect.poll(() => opacity(widget)).toBe(0);
+			await widget.locator("math-field").hover({ position: { x: 10, y: 10 } });
+			await expect.poll(() => opacity(widget)).toBe(1);
+			// Moving straight onto the buttons keeps them, and they work.
+			const expand = widget.getByRole("button", { name: "Expand" });
+			const from = await widget.locator("math-field").boundingBox();
+			const to = await expand.boundingBox();
+			await page.mouse.move(from.x + from.width - 2, to.y + to.height / 2);
+			await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+			await expect.poll(() => opacity(widget)).toBe(1);
+			await page.mouse.down();
+			await page.mouse.up();
+			await expect(page.locator(".mathlive-modal-title")).toBeVisible();
+			await page.keyboard.press("Escape");
+			await expect(page.locator(".mathlive-modal-title")).toHaveCount(0);
+		}
+		// Inline, the hidden buttons leave no gap in the line.
+		await page.mouse.move(5, 5);
+		const field = await inlineField(page, 0).boundingBox();
+		const wrapper = await inlineWidget(page, 0).boundingBox();
+		expect(wrapper.width - field.width).toBeLessThanOrEqual(2);
+	});
+
+	test("a block formula's keyboard and ☰ buttons also show only on hover", async ({ page }) => {
+		const opacity = (part) =>
+			blockField(page).locator(`[part=${part}]`).evaluate((element) => Number(getComputedStyle(element).opacity));
+		await page.mouse.move(5, 5);
+		await expect.poll(() => opacity("virtual-keyboard-toggle")).toBe(0);
+		await expect.poll(() => opacity("menu-toggle")).toBe(0);
+		await blockField(page).hover({ position: { x: 10, y: 10 } });
+		await expect.poll(() => opacity("virtual-keyboard-toggle")).toBe(1);
+		await expect.poll(() => opacity("menu-toggle")).toBe(1);
+		await blockField(page).locator("[part=virtual-keyboard-toggle]").click();
+		await expect(page.locator(".ML__keyboard")).toBeVisible();
+	});
+
+	test("the ✨ menu keeps its button showing while it is open", async ({ page }) => {
+		const widget = inlineWidget(page, 0);
+		await widget.locator("math-field").hover();
+		await openWidgetMenu(page, widget);
+		await page.mouse.move(5, 5);
+		await page.waitForTimeout(400);
+		const opacity = await widget.locator(".obsidian-mathlive-widget-buttons").evaluate((element) => Number(getComputedStyle(element).opacity));
+		expect(opacity).toBe(1);
+		await page.keyboard.press("Escape");
 	});
 
 	test("the ✨ menu opens the guide, which tries features from there", async ({ page }) => {
@@ -205,6 +339,9 @@ test.describe("formulas in the note", () => {
 			"Edit formulas as you see them",
 			"Add a formula",
 			"AI fill: scan a formula instead of typing it",
+			"Find a formula",
+			"Draw a formula",
+			"Magic edit: say what to change",
 			"Expand for a bigger editor",
 			"Math keyboard",
 			"Turn a PDF into notes",

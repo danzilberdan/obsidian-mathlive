@@ -15,6 +15,8 @@ export interface PluginSettings {
 	hideRenderedBlockMath: boolean;
 	immediateInlineUpdate: boolean;
 	arrowKeyNavigation: boolean;
+	// Formulas stay drawn by Obsidian, and only the one with the cursor in it is editable (#27).
+	editOnlyAtCursor: boolean;
 	// Scans from the screen can box anything on it, other apps included, not just Obsidian.
 	scanOtherApps: boolean;
 	// The welcome window shows once, on a fresh install.
@@ -37,6 +39,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	hideRenderedBlockMath: true,
 	immediateInlineUpdate: true,
 	arrowKeyNavigation: true,
+	editOnlyAtCursor: false,
 	scanOtherApps: true,
 	welcomeShown: false,
 	cloudScannerUrl: `${MATHLIVE_ORIGIN}/ocr`,

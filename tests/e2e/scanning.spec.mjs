@@ -117,6 +117,15 @@ test.describe("scanning a formula image", () => {
 		expect(scanner.requests).toHaveLength(1);
 	});
 
+	test("a key over the daily limit sees the server's reason, not a sign-in prompt", async ({ page, scanner }) => {
+		await setSettings(page, { apiKey: "daily-limit" });
+		await runCommand(page, "mathlive:open-modal");
+		await page.locator(".mathlive-modal-root .scan-button").click();
+		await expect(notices(page).filter({ hasText: /daily limit of 150 scans/ })).toBeVisible();
+		await expect(page.locator(".modal").filter({ hasText: /Connect/ })).toHaveCount(0);
+		expect(scanner.requests).toHaveLength(1);
+	});
+
 	test("an image with no math says so", async ({ page, scanner }) => {
 		await setSettings(page, { apiKey: "no-math" });
 		await runCommand(page, "mathlive:open-modal");

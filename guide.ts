@@ -7,7 +7,9 @@ export interface GuideActions {
 	account: CloudAccount;
 	addFormula(): void;
 	scanFromScreen(): void;
+	drawFormula(): void;
 	convertPdf(): void;
+	findFormula(): void;
 }
 
 // Everything MathLive does, one section each, with a button to try it. Opens from the welcome
@@ -68,6 +70,23 @@ export class GuideModal extends Modal {
 			{ text: "Scan from screen", run: () => this.actions.scanFromScreen(), cta: true }
 		);
 		section(
+			"search",
+			"Find a formula",
+			"Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and put one in your note. Free. If it isn't there, ✨ Write it with AI uses one scan.",
+			{ text: "Find a formula", run: () => this.actions.findFormula() }
+		);
+		section(
+			"pencil-line",
+			"Draw a formula",
+			"Write it by hand with your mouse or pen, or scan the QR code and draw it on your phone. You see the formula as you draw, and it goes in your note when you click Insert.",
+			{ text: "Draw a formula", run: () => this.actions.drawFormula() }
+		);
+		section(
+			"wand-sparkles",
+			"Magic edit: say what to change",
+			"Click the wand next to a formula, or in the editor window, and type or say what to change: “square the denominator”, “swap alpha and beta”, “make it a matrix”. An AI rewrites the formula, Undo puts it back, and the box stays open for the next change."
+		);
+		section(
 			"maximize-2",
 			"Expand for a bigger editor",
 			"The ⤢ button next to a formula opens it in the editor window, with room for long formulas, the math keyboard and the scan buttons. Ctrl+Enter puts it back in the note."
@@ -75,12 +94,12 @@ export class GuideModal extends Modal {
 		section(
 			"keyboard",
 			"Math keyboard",
-			"Greek letters, operators and matrices without remembering LaTeX. Open it from the ✨ menu, or with the keyboard icon on full-line formulas."
+			"Greek letters, operators and matrices without remembering LaTeX. Open it with the keyboard icon on full-line formulas, or in the editor window."
 		);
 		section(
 			"file-text",
 			"Turn a PDF into notes",
-			"Lecture slides, papers or handwritten pages become a Markdown note with every formula as editable LaTeX. Open a PDF and click “Convert to notes” at its top right, or use the note icon in the left ribbon.",
+			"Lecture slides, papers or handwritten pages become a Markdown note with every formula as editable LaTeX. Open a PDF and click “Convert to notes” at its top right, or use ✨ in the left ribbon.",
 			{ text: "Convert a PDF", run: () => this.actions.convertPdf() }
 		);
 

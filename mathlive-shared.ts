@@ -106,6 +106,11 @@ export function setScanAccount(account: ScanAccount | null) {
 	scanAccount = account;
 }
 
+// For other AI features that cost a scan, like Magic edit.
+export function scanAccountHooks(): ScanAccount | null {
+	return scanAccount;
+}
+
 export async function ensureMathfieldElementRegistered(doc: Document = activeDocument) {
 	const loaded = await loadMathfieldElement();
 	registerMathliveFonts(doc);
@@ -272,9 +277,95 @@ export function moveVirtualKeyboard(container: HTMLElement) {
 		return;
 	}
 	if (keyboard.visible) {
-		keyboard.hide();
+		try {
+			keyboard.hide();
+		} catch (error) {
+			// Its window has closed. Moving it still has to happen, or the keyboard button stops
+			// working everywhere (#23): the move drops the old keyboard, and the next one is new.
+			console.warn("MathLive: couldn't close the math keyboard", error);
+		}
 	}
 	keyboard.container = container;
+}
+
+// MathLive's keyboard can't be closed once its window is gone, and then stops opening anywhere
+// (#23). So move it back to the main window when a popout window closes.
+export function releaseVirtualKeyboardFrom(doc: Document, mainContainer: HTMLElement) {
+	if (window.mathVirtualKeyboard.container?.doc === doc) {
+		moveVirtualKeyboard(mainContainer);
+	}
+}
+
+type PopoutWindow = Window & { CSSStyleSheet: typeof CSSStyleSheet };
+const cssText = (sheet: CSSStyleSheet) => Array.from(sheet.cssRules, (rule) => rule.cssText).join("\n");
+
+// MathLive styles each formula with stylesheets made in the main window, which a popout window
+// can't use, so formulas there drew without their layout: the ☰ button covered the keyboard
+// button (#23). Formulas in a popout get copies made in that window.
+let mathfieldCss: string[] | undefined;
+const popoutStylesheets = new WeakMap<Window, CSSStyleSheet[]>();
+
+function styleMathfieldInPopout(mfe: MathfieldElement) {
+	const win = mfe.win as PopoutWindow;
+	if (win === window || !mfe.shadowRoot || !mathfieldElementCtor) {
+		return;
+	}
+	// A formula that was never in a popout still has MathLive's own stylesheets.
+	mathfieldCss ??= Array.from(new mathfieldElementCtor().shadowRoot?.adoptedStyleSheets ?? [], cssText);
+	let sheets = popoutStylesheets.get(win);
+	if (!sheets) {
+		sheets = mathfieldCss.map((css) => {
+			const sheet = new win.CSSStyleSheet();
+			sheet.replaceSync(css);
+			return sheet;
+		});
+		popoutStylesheets.set(win, sheets);
+	}
+	mfe.shadowRoot.adoptedStyleSheets = sheets;
+}
+
+// MathLive makes room for its keyboard by adding the keyboard's height to the main window's bottom
+// padding, and puts back what was there when the keyboard closes. When a close is missed, the blank
+// strip stays, and the next keyboard adds its height on top of it. So after every change, make the
+// padding exactly the room the keyboard showing now needs, or none.
+export function fitVirtualKeyboardSpace() {
+	const keyboard = window.mathVirtualKeyboard as typeof window.mathVirtualKeyboard & {
+		originalContainerBottomPadding?: string | null;
+	};
+	const body = window.document.body;
+	keyboard.originalContainerBottomPadding = "";
+	const plate = keyboard.visible && keyboard.container === body ? body.querySelector<HTMLElement>(".ML__keyboard .MLK__plate") : null;
+	const space = plate ? `${Math.max(plate.offsetHeight - 1, 0)}px` : "";
+	if (body.style.paddingBottom !== space) {
+		body.style.paddingBottom = space;
+	}
+}
+
+// The math keyboard's stylesheets go on the main window's document, so a keyboard shown in a
+// popout window gets copies in that window's document.
+export function styleVirtualKeyboardInPopout() {
+	const keyboard = window.mathVirtualKeyboard;
+	const doc = keyboard.container?.doc;
+	const mainDoc = window.document;
+	if (!keyboard.visible || !doc || doc === mainDoc) {
+		return;
+	}
+	const win = doc.win as PopoutWindow;
+	const present = new Set(Array.from(doc.adoptedStyleSheets, cssText));
+	const copies: CSSStyleSheet[] = [];
+	for (const sheet of mainDoc.adoptedStyleSheets) {
+		const css = cssText(sheet);
+		if (present.has(css)) {
+			continue;
+		}
+		const copy = new win.CSSStyleSheet();
+		copy.replaceSync(css);
+		copies.push(copy);
+		present.add(css);
+	}
+	if (copies.length > 0) {
+		doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, ...copies];
+	}
 }
 
 export function createMathfield(config: MathfieldConfig): MathfieldElement {
@@ -290,6 +381,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 	mfe.defaultMode = config.inline ? "inline-math" : "math";
 	mfe.value = config.initialValue;
+	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
 
 	if (!config.inline) {
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {
@@ -332,9 +424,10 @@ const SCAN_TIMEOUT_MS = 25000;
 // so it is worth one more try before bothering the user.
 const QUICK_FAILURE_MS = 5000;
 
-type ScanFailure = "auth" | "no_scans_left" | "no_math" | "bad_image" | "unavailable";
+// "limited": too many scans in a minute or a day; the message is the server's own.
+type ScanFailure = "auth" | "no_scans_left" | "no_math" | "bad_image" | "limited" | "unavailable";
 
-class ScanError extends Error {
+export class ScanError extends Error {
 	constructor(readonly failure: ScanFailure, message: string) {
 		super(message);
 	}
@@ -438,6 +531,16 @@ export function errorCode(res: { json: unknown }): string | null {
 	}
 }
 
+// The server's explanation of an error, if it sent one.
+export function serverDetail(res: { json: unknown }): string | null {
+	try {
+		const body = res.json as { detail?: unknown } | null;
+		return typeof body?.detail === "string" ? body.detail : null;
+	} catch {
+		return null;
+	}
+}
+
 function scanFailure(status: number, code: string | null): ScanFailure {
 	switch (code) {
 		case "missing_api_key":
@@ -451,6 +554,9 @@ function scanFailure(status: number, code: string | null): ScanFailure {
 		case "not_an_image":
 		case "image_too_small":
 			return "bad_image";
+		case "rate_limited":
+		case "daily_limit":
+			return "limited";
 	}
 	return status < 500 ? "auth" : "unavailable";
 }
@@ -480,9 +586,10 @@ async function requestScan(address: string, apiKey: string, image: Blob): Promis
 	}
 
 	if (res.status >= 400) {
+		const failure = scanFailure(res.status, errorCode(res));
 		throw new ScanError(
-			scanFailure(res.status, errorCode(res)),
-			`OCR request failed with status ${res.status}.`
+			failure,
+			(failure === "limited" && serverDetail(res)) || `OCR request failed with status ${res.status}.`
 		);
 	}
 
@@ -600,6 +707,15 @@ export interface ScanTarget {
 	busyEl?: HTMLElement;
 }
 
+// Puts a formula at the cursor of a math field, or replaces it when the field is empty.
+export function insertIntoMathfield(mathfield: MathfieldElement, latex: string) {
+	if (!mathfield.value.trim()) {
+		mathfield.value = latex;
+		return;
+	}
+	mathfield.insert(latex, { insertionMode: "insertAfter", selectionMode: "after", format: "latex" });
+}
+
 export function mathfieldScanTarget(options: {
 	settings: PluginSettings;
 	mathfield: MathfieldElement;
@@ -630,6 +746,23 @@ export async function ensureCanScan(settings: PluginSettings, resume: () => void
 	}
 	new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
 	return false;
+}
+
+// When the cloud scanner refuses the key: asks the user to connect or get more scans, and runs
+// `resume` once they have.
+export function askForAccount(settings: PluginSettings, failure: "auth" | "no_scans_left", resume: () => void) {
+	if (!settings.useLocalInference && scanAccount) {
+		scanAccount.needsAccount(failure, resume);
+	} else {
+		showScanFailure(failure === "auth" ? CLOUD_OCR_AUTH_NOTICE : NO_SCANS_LEFT_NOTICE);
+	}
+}
+
+// After a cloud scan was charged: refreshes the scans left, warning when they run low.
+export function afterCloudScan(settings: PluginSettings) {
+	if (!settings.useLocalInference) {
+		scanAccount?.afterScan();
+	}
 }
 
 async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
@@ -669,6 +802,8 @@ async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
 			showScanFailure(NO_MATH_NOTICE);
 		} else if (failure === "bad_image") {
 			showScanFailure(BAD_IMAGE_NOTICE);
+		} else if (failure === "limited" && error instanceof Error) {
+			showScanFailure(error.message);
 		} else {
 			// The retry keeps the image, so it works even after the clipboard has changed.
 			showScanFailure(SCAN_FAILED_NOTICE, resume);

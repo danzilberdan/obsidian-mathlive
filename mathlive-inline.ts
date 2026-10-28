@@ -20,11 +20,15 @@ import { type App, Menu, setIcon } from "obsidian";
 import {
 	appendLatexFromClipboardImage,
 	mathfieldScanTarget,
+	type ScanTarget,
 	scanScreenAreaInto,
 	createMathfield,
 	moveVirtualKeyboard,
 	showMenuBelow,
+	insertIntoMathfield,
 } from "./mathlive-shared";
+import { openMagicEditPopover } from "./magic-edit";
+import { toMathJaxLatex } from "./mathjax-latex";
 import type { PluginSettings } from "./settings";
 
 interface WidgetConfig {
@@ -50,11 +54,16 @@ export const AUTHOR_URL = "https://danz.blog";
 export interface WidgetHooks {
 	app: App;
 	getSettings: () => PluginSettings;
-	// The account entry in the ⋮ menu: connect, upgrade, or nothing.
-	accountAction: () => Promise<{ title: string; run: () => void } | undefined>;
+	// The account entry in the ✨ menu: Connect, or nothing once connected.
+	accountAction: () => { title: string; run: () => void } | undefined;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 	openGuide: () => void;
-	convertPdf: () => void;
+	// True while the note shows formulas as LaTeX instead of editors.
+	showsRawLatex: () => boolean;
+	// Opens Draw formula for this target.
+	drawFormula: (target: ScanTarget) => void;
+	// Opens Find a formula; `insert` puts the picked one in place and says whether it could.
+	findFormula: (insert: (latex: string) => boolean) => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -162,7 +171,9 @@ class MathLiveWidget extends WidgetType {
 		mfe: MathfieldElement,
 		view: EditorView
 	) {
-		const dispatchChange = (newValue: string) => {
+		// The note gets LaTeX that Obsidian's MathJax can draw.
+		const dispatchChange = (value: string) => {
+			const newValue = toMathJaxLatex(value);
 			const from = Number.parseInt(mfe.dataset.from ?? "", 10);
 			const to = Number.parseInt(mfe.dataset.to ?? "", 10);
 			if (Number.isNaN(from) || Number.isNaN(to)) {
@@ -208,9 +219,21 @@ class MathLiveWidget extends WidgetType {
 		const scanClipboardImage = () => {
 			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
 		};
+		const drawFormula = () => this.hooks.drawFormula(mathfieldScanTarget(scanOptions()));
+		const findFormula = () => {
+			this.hooks.findFormula((latex) => {
+				if (!mfe.isConnected) {
+					return false;
+				}
+				insertIntoMathfield(mfe, latex);
+				dispatchChange(mfe.value);
+				refocusMathfield();
+				return true;
+			});
+		};
 
-		// Two buttons after each formula: ✨ fills it in with AI and holds the other actions, and
-		// Expand opens the editor window.
+		// Three buttons after each formula: ✨ fills it in with AI and holds the other actions, Magic
+		// edit changes it from a typed or spoken instruction, and Expand opens the editor window.
 		// On full-line formulas they sit inside the input, beside MathLive's keyboard and ☰ buttons.
 		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
 		const addButton = (cls: string, icon: string, label: string, attr: Record<string, string> = {}) => {
@@ -229,7 +252,22 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			void this.showMenu(aiButton, mfe, scanClipboardImage, scanScreenArea);
+			this.showMenu(aiButton, scanClipboardImage, scanScreenArea, drawFormula, findFormula);
+		});
+		const magicButton = addButton("obsidian-mathlive-widget-magic-button", "wand-sparkles", "Magic edit");
+		magicButton.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			openMagicEditPopover(wrapper, {
+				settings: this.hooks.getSettings(),
+				getLatex: () => mfe.value,
+				setLatex: (latex) => {
+					mfe.value = latex;
+					dispatchChange(mfe.value);
+				},
+				isOpen: () => mfe.isConnected,
+				busyEl: mfe,
+			});
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -241,7 +279,7 @@ class MathLiveWidget extends WidgetType {
 
 		if (this.hooks.getSettings().immediateInlineUpdate) {
 			mfe.addEventListener("input", () => {
-				if (this.equation !== mfe.value) {
+				if (this.equation !== toMathJaxLatex(mfe.value)) {
 					dispatchChange(mfe.value);
 				}
 			});
@@ -255,9 +293,8 @@ class MathLiveWidget extends WidgetType {
 					return;
 				}
 
-				const newValue = mfe.value;
-				if (newValue !== this.equation) {
-					dispatchChange(newValue);
+				if (toMathJaxLatex(mfe.value) !== this.equation) {
+					dispatchChange(mfe.value);
 				}
 				mfe.dataset.hasUnsavedChanges = "false";
 			});
@@ -278,7 +315,11 @@ class MathLiveWidget extends WidgetType {
 		mfe.addEventListener("focus", () => {
 			// The keyboard opens in the window this formula is in.
 			moveVirtualKeyboard(mfe.doc.body);
-			updateEditingBodyClass(mfe.doc, this.isInline, true);
+			// Hides Obsidian's drawing of formulas while one is edited, which only the formulas that
+			// are editable all the time need.
+			if (!this.hooks.getSettings().editOnlyAtCursor) {
+				updateEditingBodyClass(mfe.doc, this.isInline, true);
+			}
 		});
 
 		mfe.addEventListener("blur", () => {
@@ -314,8 +355,11 @@ class MathLiveWidget extends WidgetType {
 
 				const from = Number.parseInt(mfe.dataset.from ?? `${this.config.from}`, 10);
 				const to = Number.parseInt(mfe.dataset.to ?? `${this.config.to}`, 10);
-				const posBefore = this.isInline ? from - 1 : to;
-				const posAfter = this.isInline ? from : to + 3;
+				// Just outside the formula's hidden LaTeX; for a block, the end of the line above or
+				// the start of the line below.
+				const docLength = view.state.doc.length;
+				const posBefore = this.isInline ? from - 1 : Math.max(0, from - 3);
+				const posAfter = this.isInline ? to + 1 : Math.min(docLength, to + 3);
 				const atStart = mfe.position === 0;
 				const atEnd = mfe.position === mfe.lastOffset;
 
@@ -353,47 +397,33 @@ class MathLiveWidget extends WidgetType {
 		);
 	}
 
-	private async showMenu(
+	// What ✨ can do for this formula, then help and the account.
+	private showMenu(
 		button: HTMLElement,
-		mfe: MathfieldElement,
 		scanClipboardImage: () => void,
-		scanScreenArea: () => void
+		scanScreenArea: () => void,
+		drawFormula: () => void,
+		findFormula: () => void
 	) {
-		const accountItem = await this.getAccountItem();
+		const accountItem = this.hooks.accountAction();
 		const menu = new Menu();
+		menu.addItem((item) => item.setTitle("Find a formula").setIcon("search").onClick(findFormula));
 		menu.addItem((item) =>
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
 		);
 		menu.addItem((item) =>
 			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
 		);
-		menu.addItem((item) =>
-			item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.hooks.convertPdf())
-		);
+		menu.addItem((item) => item.setTitle("Draw formula").setIcon("pencil-line").onClick(drawFormula));
 		menu.addSeparator();
-		menu.addItem((item) =>
-			item
-				.setTitle("Show math keyboard")
-				.setIcon("keyboard")
-				.onClick(() => {
-					moveVirtualKeyboard(mfe.doc.body);
-					mfe.focus();
-					mfe.executeCommand("showVirtualKeyboard");
-				})
-		);
 		menu.addItem((item) =>
 			item.setTitle("What MathLive can do").setIcon("compass").onClick(() => this.hooks.openGuide())
 		);
 		if (accountItem) {
-			menu.addSeparator();
-			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("gem").onClick(accountItem.run));
+			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("log-in").onClick(accountItem.run));
 		}
 
 		showMenuBelow(menu, button);
-	}
-
-	private getAccountItem() {
-		return this.hooks.accountAction();
 	}
 }
 
@@ -502,109 +532,43 @@ function arrowEnterBinding(
 	};
 }
 
+// Where the cursor sits just before and just after a formula, outside its hidden LaTeX.
+function edgesOf(entry: MathFieldEntry) {
+	return entry.isInline
+		? { before: entry.from - 1, after: entry.to + 1 }
+		: { before: entry.from - 2, after: entry.to + 2 };
+}
+
+// Arrow keys, Backspace and Delete next to a formula go into it instead of over it.
 function enterMathLiveOnArrow(getSettings: () => PluginSettings): Extension {
+	const enterAtEdge = (key: string, edge: "before" | "after"): KeyBinding =>
+		arrowEnterBinding(key, (entry, head) => head === edgesOf(entry)[edge], edge === "before", getSettings);
+	// A full-line formula right below or above the cursor's line.
+	const enterBlockNextTo = (key: string, below: boolean): KeyBinding =>
+		arrowEnterBinding(
+			key,
+			(entry, head, doc) => {
+				if (entry.isInline) {
+					return false;
+				}
+				const line = doc.lineAt(head).number;
+				const edges = edgesOf(entry);
+				return below
+					? doc.lineAt(Math.max(0, edges.before)).number === line + 1
+					: doc.lineAt(Math.min(doc.length, edges.after)).number === line - 1;
+			},
+			below,
+			getSettings
+		);
+
 	return Prec.highest(
 		keymap.of([
-			arrowEnterBinding(
-				"ArrowRight",
-				(entry, head) => head === (entry.isInline ? entry.from - 1 : entry.to + 2),
-				true,
-				getSettings
-			),
-			arrowEnterBinding(
-				"ArrowLeft",
-				(entry, head) => head === (entry.isInline ? entry.from : entry.to + 3),
-				false,
-				getSettings
-			),
-			{
-				key: "ArrowDown",
-				run: (view) => {
-					const settings = getSettings();
-					if (!settings.arrowKeyNavigation || isFocusInMathField(view.dom.doc)) {
-						return false;
-					}
-
-					const doc = view.state.doc;
-					const blockEntries = () => getMathFieldEntries(view).filter((entry) => !entry.isInline);
-					const owningLine = (entry: MathFieldEntry) =>
-						doc.lineAt(Math.min(entry.to + 2, doc.length)).number;
-					const entryForOwningLine = (lineNo: number) =>
-						blockEntries().find((entry) => owningLine(entry) === lineNo) ?? null;
-					const nextOwningLineAfter = (lineNo: number) => {
-						let best: number | null = null;
-						for (const entry of blockEntries()) {
-							const line = owningLine(entry);
-							if (line <= lineNo) {
-								continue;
-							}
-							if (best === null || line < best) {
-								best = line;
-							}
-						}
-						return best;
-					};
-					const enterMathLiveForOwningLine = (lineNo: number) => {
-						const entry = entryForOwningLine(lineNo);
-						if (!entry) {
-							return false;
-						}
-
-						focusMathfield(entry, true);
-						return true;
-					};
-
-					const before = view.state.selection.main;
-					const next = view.moveVertically(before, true);
-					const moved = next.head !== before.head || next.anchor !== before.anchor;
-
-					if (moved) {
-						const beforeLine = doc.lineAt(before.head).number;
-						const afterLine = doc.lineAt(next.head).number;
-
-						if (afterLine !== beforeLine) {
-							const skippedLine = nextOwningLineAfter(beforeLine);
-							if (skippedLine !== null && skippedLine < afterLine) {
-								const pos = doc.line(skippedLine).from;
-								view.dispatch({
-									selection: view.state.selection.replaceRange(
-										EditorSelection.cursor(pos)
-									),
-									scrollIntoView: true,
-								});
-								return true;
-							}
-
-							if (enterMathLiveForOwningLine(beforeLine)) {
-								return true;
-							}
-						}
-
-						view.dispatch({
-							selection: view.state.selection.replaceRange(next),
-							scrollIntoView: true,
-						});
-						return true;
-					}
-
-					return enterMathLiveForOwningLine(doc.lineAt(before.head).number);
-				},
-			},
-			arrowEnterBinding(
-				"ArrowUp",
-				(entry, head, doc) => {
-					if (entry.isInline) {
-						return false;
-					}
-
-					return (
-						doc.lineAt(head).number ===
-						doc.lineAt(Math.min(entry.to + 3, doc.length)).number
-					);
-				},
-				false,
-				getSettings
-			),
+			enterAtEdge("ArrowRight", "before"),
+			enterAtEdge("Delete", "before"),
+			enterAtEdge("ArrowLeft", "after"),
+			enterAtEdge("Backspace", "after"),
+			enterBlockNextTo("ArrowDown", true),
+			enterBlockNextTo("ArrowUp", false),
 		])
 	);
 }
@@ -727,16 +691,45 @@ function collectMathRangesFromDoc(source: string): MathRange[] {
 	return ranges;
 }
 
+// The text a formula's editor stands in for, delimiters included, so the LaTeX never shows next
+// to it. A $$ block that shares its lines with other text can't be hidden that way and keeps its
+// editor under the source.
+function sourceRange(range: MathRange, doc: Text): { from: number; to: number } | null {
+	if (range.isInline) {
+		return { from: range.from - 1, to: range.to + 1 };
+	}
+	const from = range.from - 2;
+	const to = range.to + 2;
+	if (doc.lineAt(from).from !== from || doc.lineAt(to).to !== to) {
+		return null;
+	}
+	return { from, to };
+}
+
+// Whether the cursor is in a formula or right next to it, on its $ or $$.
+function hasCursorIn(state: Transaction["state"], range: MathRange): boolean {
+	const delimiter = range.isInline ? 1 : 2;
+	return state.selection.ranges.some(
+		(selection) => selection.head >= range.from - delimiter && selection.head <= range.to + delimiter
+	);
+}
+
 function buildDecorations(state: Transaction["state"], hooks: WidgetHooks): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>();
 	const settings = hooks.getSettings();
-	if (!settings.enableInlineEditorMode) {
+	if (!settings.enableInlineEditorMode || hooks.showsRawLatex()) {
 		return builder.finish();
 	}
 
 	// Obsidian's CM math node names vary across versions, so scanning the buffer
 	// is more reliable here than matching syntax-tree node names.
 	for (const range of collectMathRangesFromDoc(state.doc.toString())) {
+		if (!(range.isInline ? settings.enableInlineMathWidgets : settings.enableBlockMathWidgets)) {
+			continue;
+		}
+		if (settings.editOnlyAtCursor && !hasCursorIn(state, range)) {
+			continue;
+		}
 		const equation = state.sliceDoc(range.from, range.to);
 		const widget = new MathLiveWidget(
 			{ from: range.from, to: range.to },
@@ -745,38 +738,15 @@ function buildDecorations(state: Transaction["state"], hooks: WidgetHooks): Deco
 			hooks
 		);
 
-		if (!range.isInline) {
-			if (!settings.enableBlockMathWidgets) {
-				continue;
-			}
-			// Put widget at the end of the math block so it appears below the formula
-			// and safely outside Obsidian's folding Decoration.replace region.
-			const anchor = Math.min(state.doc.length, range.to + 2);
-			builder.add(
-				anchor,
-				anchor,
-				Decoration.widget({
-					widget,
-					block: true,
-					side: 1,
-				})
-			);
+		const source = sourceRange(range, state.doc);
+		if (source) {
+			builder.add(source.from, source.to, Decoration.replace({ widget, block: !range.isInline }));
 			continue;
 		}
 
-		if (settings.enableInlineMathWidgets) {
-			// Put widget at the end of the inline math so it appears after the formula
-			// and safely outside Obsidian's folding Decoration.replace region.
-			const anchor = Math.min(state.doc.length, range.to + 1);
-			builder.add(
-				anchor,
-				anchor,
-				Decoration.widget({
-					widget,
-					side: 1,
-				})
-			);
-		}
+		// Put the widget after the block, outside Obsidian's own math decoration.
+		const anchor = Math.min(state.doc.length, range.to + 2);
+		builder.add(anchor, anchor, Decoration.widget({ widget, block: true, side: 1 }));
 	}
 
 	return builder.finish();
@@ -791,7 +761,13 @@ export function createInlineMathEditorExtension(hooks: WidgetHooks): Extension {
 			return buildDecorations(transaction.state, hooks);
 		},
 		provide(field) {
-			return [EditorView.decorations.from(field), enterMathLiveOnArrow(hooks.getSettings)];
+			return [
+				// Above Obsidian's own math rendering, which would show the LaTeX around the cursor.
+				Prec.highest(EditorView.decorations.from(field)),
+				// The cursor steps over a formula as one piece and never lands in its hidden LaTeX.
+				EditorView.atomicRanges.of((view) => view.state.field(field)),
+				enterMathLiveOnArrow(hooks.getSettings),
+			];
 		},
 	});
 }

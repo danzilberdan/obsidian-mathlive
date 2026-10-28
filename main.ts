@@ -4,6 +4,7 @@ import {
 	type EditorPosition,
 	Modal,
 	Platform,
+	Scope,
 	Plugin,
 	PluginSettingTab,
 	Setting,
@@ -13,8 +14,9 @@ import {
 	type TextComponent,
 	type KeymapEventHandler,
 	MarkdownView,
+	Menu,
 	type ItemView,
-	type TFile,
+	TFile,
 	type View,
 	Notice,
 } from "obsidian";
@@ -24,6 +26,7 @@ import { CloudAccount } from "./account";
 import { createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
+	insertIntoMathfield,
 	ensureMathfieldElementRegistered,
 	registerMathliveFonts,
 	appendLatexFromClipboardImage,
@@ -32,9 +35,16 @@ import {
 	scanScreenAreaInto,
 	setScanAccount,
 	type ScanTarget,
+	releaseVirtualKeyboardFrom,
+	styleVirtualKeyboardInPopout,
+	fitVirtualKeyboardSpace,
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
+import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
+import { toMathJaxLatex } from "./mathjax-latex";
+import { endDrawSessions, openDrawWindow } from "./draw";
+import { FormulaSearchModal } from "./formula-search";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -53,10 +63,20 @@ export default class MathLivePlugin extends Plugin {
 	account: CloudAccount;
 	// Where a scan from the screen goes when the hotkey is pressed outside a note, like in a PDF.
 	private lastNoteView: MarkdownView | null = null;
+	// Switched from a note's ⋮ menu, and not saved.
+	private showRawLatex = false;
 	private pdfViewsWithButton = new WeakSet<View>();
 
 	async onload() {
 		await ensureMathfieldElementRegistered();
+		window.mathVirtualKeyboard.addEventListener("virtual-keyboard-toggle", styleVirtualKeyboardInPopout);
+		this.register(() => window.mathVirtualKeyboard.removeEventListener("virtual-keyboard-toggle", styleVirtualKeyboardInPopout));
+		window.mathVirtualKeyboard.addEventListener("virtual-keyboard-toggle", fitVirtualKeyboardSpace);
+		window.mathVirtualKeyboard.addEventListener("geometrychange", fitVirtualKeyboardSpace);
+		this.register(() => {
+			window.mathVirtualKeyboard.removeEventListener("virtual-keyboard-toggle", fitVirtualKeyboardSpace);
+			window.mathVirtualKeyboard.removeEventListener("geometrychange", fitVirtualKeyboardSpace);
+		});
 		await this.loadSettings();
 		this.account = new CloudAccount(this);
 		setScanAccount(this.account);
@@ -91,15 +111,47 @@ export default class MathLivePlugin extends Plugin {
 			},
 		});
 		this.addCommand({
+			id: "draw-formula",
+			name: "Draw formula",
+			callback: () => {
+				void this.drawFormulaIntoNote();
+			},
+		});
+		this.addCommand({
 			id: "open-guide",
 			name: "Open the guide",
 			callback: () => this.openGuide(),
+		});
+		this.addCommand({
+			id: "toggle-raw-latex",
+			name: "Show raw LaTeX in notes, or editors again",
+			callback: () => this.toggleRawLatex(),
+		});
+		this.addCommand({
+			id: "find-formula",
+			name: "Find a formula",
+			callback: () => this.findFormula(),
 		});
 		this.addCommand({
 			id: "convert-pdf-to-notes",
 			name: "Convert PDF to notes",
 			callback: () => this.convertPdf(),
 		});
+		// The note's ⋮ menu switches its formulas to LaTeX for a while, and back.
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, file, source) => {
+				if (source !== "more-options" || !(file instanceof TFile) || file.extension !== "md" || !this.settings.enableInlineEditorMode) {
+					return;
+				}
+				menu.addItem((item) =>
+					item
+						.setTitle(this.showRawLatex ? "Show formulas as editors" : "Show raw LaTeX")
+						.setIcon(this.showRawLatex ? "sigma" : "code")
+						.setSection("view")
+						.onClick(() => this.toggleRawLatex())
+				);
+			})
+		);
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
 				if (!isPdf(file)) {
@@ -113,10 +165,35 @@ export default class MathLivePlugin extends Plugin {
 				);
 			})
 		);
-		this.addRibbonIcon("scan", "Scan formula from screen", () => {
-			void this.scanScreenAreaIntoNote();
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor) => {
+				menu.addItem((item) =>
+					item
+						.setTitle("Find a formula")
+						.setIcon("search")
+						.setSection("insert")
+						.onClick(() => this.findFormula(editor))
+				);
+			})
+		);
+		// One ✨ in the ribbon for what MathLive does anywhere in Obsidian. A formula's own ✨ has what
+		// it can do for that formula.
+		this.addRibbonIcon("sparkles", "MathLive", (event) => {
+			const menu = new Menu();
+			menu.addItem((item) =>
+				item.setTitle("Find a formula").setIcon("search").onClick(() => this.findFormula())
+			);
+			menu.addItem((item) =>
+				item.setTitle("Scan formula from screen").setIcon("scan").onClick(() => void this.scanScreenAreaIntoNote())
+			);
+			menu.addItem((item) =>
+				item.setTitle("Draw formula").setIcon("pencil-line").onClick(() => void this.drawFormulaIntoNote())
+			);
+			menu.addItem((item) =>
+				item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.convertPdf())
+			);
+			menu.showAtMouseEvent(event);
 		});
-		this.addRibbonIcon("file-text", "Convert PDF to notes", () => this.convertPdf());
 		// Every open PDF gets a button in its header, where people look when they have a PDF open.
 		this.registerEvent(this.app.workspace.on("layout-change", () => this.addPdfButtons()));
 		this.registerEvent(this.app.workspace.on("file-open", () => this.addPdfButtons()));
@@ -135,7 +212,9 @@ export default class MathLivePlugin extends Plugin {
 				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
-				convertPdf: () => this.convertPdf(),
+				showsRawLatex: () => this.showRawLatex,
+				drawFormula: (target) => void openDrawWindow(this.app, { settings: this.settings, target, fallback: () => this.noteScanTarget() }),
+				findFormula: (insert) => this.openFormulaSearch(insert),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -143,6 +222,11 @@ export default class MathLivePlugin extends Plugin {
 			this.app.workspace.on("window-open", (workspaceWindow) => {
 				registerMathliveFonts(workspaceWindow.doc);
 				this.updateMathJaxVisibility();
+			})
+		);
+		this.registerEvent(
+			this.app.workspace.on("window-close", (workspaceWindow) => {
+				releaseVirtualKeyboardFrom(workspaceWindow.doc, this.app.workspace.containerEl.doc.body);
 			})
 		);
 		this.updateMathJaxVisibility();
@@ -164,8 +248,31 @@ export default class MathLivePlugin extends Plugin {
 			account: this.account,
 			addFormula: () => this.openEditorFromWelcome(),
 			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
+			drawFormula: () => void this.drawFormulaIntoNote(),
 			convertPdf: () => this.convertPdf(),
+			findFormula: () => this.findFormula(),
 		}).open();
+	}
+
+	// Find a formula in the library and put it at the cursor of the open note, or of `editor`.
+	findFormula(editor?: Editor) {
+		const target = editor ?? (this.app.workspace.getActiveViewOfType(MarkdownView) ?? this.lastNoteView)?.editor;
+		if (!target) {
+			new Notice("Open a note first, then find a formula to put in it.");
+			return;
+		}
+		const selection = target.getSelection().trim();
+		this.openFormulaSearch(
+			(latex) => {
+				insertScannedMath(target, latex);
+				return true;
+			},
+			selection.length <= 80 && !selection.includes("$") ? selection : ""
+		);
+	}
+
+	openFormulaSearch(insert: (latex: string) => boolean, initialQuery = "") {
+		new FormulaSearchModal(this.app, this.settings, this.account, insert, initialQuery).open();
 	}
 
 	// Converts the open PDF, or asks which one.
@@ -203,6 +310,7 @@ export default class MathLivePlugin extends Plugin {
 	}
 
 	onunload() {
+		endDrawSessions();
 		setScanAccount(null);
 		this.account.cancelConnect();
 		for (const doc of this.getOpenDocuments()) {
@@ -274,26 +382,56 @@ export default class MathLivePlugin extends Plugin {
 		return leaf?.view instanceof MarkdownView ? leaf.view : null;
 	}
 
-	async scanScreenAreaIntoNote() {
+	// The cursor of the note a scan or drawing goes into, or null when no note is open.
+	noteScanTarget(): ScanTarget | null {
 		const view = this.findNoteForScan();
 		if (!view?.file) {
-			new Notice("Open a note first, so the scanned formula has somewhere to go.");
-			return;
+			return null;
 		}
-
 		const file = view.file;
-		const target: ScanTarget = {
+		return {
 			settings: this.settings,
 			isOpen: () => view.file === file && view.containerEl.isConnected,
 			insert: (latex) => insertScannedMath(view.editor, latex),
 			addedMessage: "Scanned formula added to the note",
 			closedMessage: "The note was closed before the scan finished. Open it and scan again.",
 		};
+	}
+
+	async scanScreenAreaIntoNote() {
+		const target = this.noteScanTarget();
+		if (!target) {
+			new Notice("Open a note first, so the scanned formula has somewhere to go.");
+			return;
+		}
 		await scanScreenAreaInto(this.app, target, activeDocument);
 	}
 
+	// Until switched back or Obsidian restarts, notes show formulas as LaTeX the Obsidian way.
+	toggleRawLatex() {
+		this.showRawLatex = !this.showRawLatex;
+		this.updateMathJaxVisibility();
+		this.app.workspace.updateOptions();
+	}
+
+	async drawFormulaIntoNote() {
+		const target = this.noteScanTarget();
+		if (!target) {
+			new Notice("Open a note first, so the drawn formula has somewhere to go.");
+			return;
+		}
+		await openDrawWindow(this.app, {
+			settings: this.settings,
+			target: { ...target, closedMessage: "The note was closed. Open it and draw the formula again." },
+			fallback: () => this.noteScanTarget(),
+		});
+	}
+
 	updateMathJaxVisibility() {
-		const editorOn = this.settings.enableInlineEditorMode;
+		// With formulas editable only at the cursor, Obsidian's drawing of the others stays, and a
+		// click on one puts the cursor in it.
+		const editorOn =
+			this.settings.enableInlineEditorMode && !this.showRawLatex && !this.settings.editOnlyAtCursor;
 		// While MathLive inline widgets are on, Obsidian's inline MathJax must not sit above them in
 		// the hit-testing stack — the first click would hit mjx, exit math-edit state, and remove the widget.
 		const hideInlineInEditor =
@@ -457,7 +595,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 				},
 				{
 					name: "Scan other apps",
-					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
+					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from ✨ in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
 					addControl: toggle("scanOtherApps"),
 				},
 			],
@@ -499,6 +637,11 @@ export class MathliveSettingTab extends PluginSettingTab {
 					name: "Arrow key navigation between editor and widgets",
 					desc: "Use arrow keys at math boundaries to enter or exit MathLive widgets.",
 					addControl: toggle("arrowKeyNavigation"),
+				},
+				{
+					name: "Edit only the formula at the cursor",
+					desc: "Formulas look like the rest of your note until the cursor is in one. Then that formula gets a MathLive editor next to it. Click a formula or move the cursor into it to edit it.",
+					addControl: toggle("editOnlyAtCursor"),
 				},
 			],
 		},
@@ -621,6 +764,7 @@ class MathLiveModal extends Modal {
 	resultRenderTemplate: (res: string) => string
 	private insertHotkey?: KeymapEventHandler
 	private stopListening?: () => void
+	private magicEdit?: MagicEditBox
 	private replaceFrom?: EditorPosition
 	private replaceTo?: EditorPosition
 	
@@ -670,7 +814,7 @@ class MathLiveModal extends Modal {
 			inline: this.inline,
 			id: "mathlive-modal-field",
 			onInput: (value) => {
-				this.renderedResult = resultRenderTemplate(value);
+				this.renderedResult = resultRenderTemplate(toMathJaxLatex(value));
 			},
 		});
 		// Inline-math mode doesn't scroll long formulas in the modal (#21). The note still gets
@@ -762,7 +906,15 @@ class MathLiveModal extends Modal {
 					next.run();
 				});
 			}
-			const guide = footer.createEl("a", { cls: "mathlive-modal-guide-link", href: "#" });
+			const links = footer.createDiv({ cls: "mathlive-modal-links" });
+			const find = links.createEl("a", { cls: "mathlive-modal-link find-formula-link", href: "#" });
+			setIcon(find.createSpan({ cls: "mathlive-btn-icon" }), "search");
+			find.createSpan({ text: "Find a formula" });
+			find.addEventListener("click", (event) => {
+				event.preventDefault();
+				this.onFindFormulaRequest();
+			});
+			const guide = links.createEl("a", { cls: "mathlive-modal-link mathlive-modal-guide-link", href: "#" });
 			setIcon(guide.createSpan({ cls: "mathlive-btn-icon" }), "compass");
 			guide.createSpan({ text: "Learn what MathLive can do" });
 			guide.addEventListener("click", (event) => {
@@ -780,7 +932,7 @@ class MathLiveModal extends Modal {
 			cls: "submit mathlive-action-btn mod-cta",
 			attr: { type: "button" },
 		});
-		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert into note" });
+		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert" });
 		submitButton.createEl("kbd", {
 			cls: "mathlive-btn-hint",
 			text: Platform.isMacOS ? "⌘ Enter" : "Ctrl+Enter",
@@ -790,17 +942,15 @@ class MathLiveModal extends Modal {
 
 	initImageScanner(actions: HTMLElement) {
 		const group = actions.createDiv({ cls: "mathlive-scan-actions" });
-		const label = group.createSpan({ cls: "mathlive-ai-label" });
-		setIcon(label.createSpan({ cls: "mathlive-btn-icon" }), "sparkles");
-		label.createSpan({ text: "AI fill" });
+		// Small icons, named by their tooltips.
 		const addButton = (cls: string, icon: string, title: string, onClick: () => void) => {
 			const button = group.createEl("button", {
 				cls: `${cls} mathlive-action-btn mathlive-ai-btn`,
-				attr: { type: "button" },
+				attr: { type: "button", "aria-label": title },
 			});
 			setIcon(button.createSpan({ cls: "mathlive-btn-icon" }), icon);
-			button.createSpan({ cls: "mathlive-btn-title", text: title });
 			button.addEventListener("click", onClick);
+			return button;
 		};
 		addButton("scan-button", "image-plus", "Scan clipboard image", () => {
 			void this.onImageScanRequest();
@@ -808,6 +958,63 @@ class MathLiveModal extends Modal {
 		addButton("scan-screen-button", "scan", "Scan from screen", () => {
 			void this.onScreenScanRequest();
 		});
+		const magic = addButton("magic-edit-button", "wand-sparkles", "Magic edit", () => this.toggleMagicEdit(magic));
+		addButton("draw-button", "pencil-line", "Draw formula", () => {
+			void this.onDrawRequest();
+		});
+	}
+
+	// The drawn formula is added to the one in this window.
+	async onDrawRequest() {
+		if (!this.mfe) {
+			return;
+		}
+		const target = mathfieldScanTarget(this.scanTarget(this.mfe));
+		await openDrawWindow(this.app, {
+			settings: this.plugin.settings,
+			target: { ...target, closedMessage: "The editor window was closed. Open it and draw the formula again." },
+		});
+	}
+
+	// Magic edit floats over the window, under the formula, like it does in a note, so the window
+	// keeps its size. The button opens and closes it.
+	private toggleMagicEdit(button: HTMLElement) {
+		if (this.magicEdit) {
+			this.magicEdit.dismiss();
+			return;
+		}
+		const mathfield = this.mfe;
+		if (!mathfield) {
+			return;
+		}
+		this.magicEdit = openMagicEditPopover(
+			mathfield,
+			{
+				settings: this.plugin.settings,
+				getLatex: () => mathfield.value,
+				setLatex: (latex) => {
+					mathfield.value = latex;
+					this.renderedResult = this.resultRenderTemplate(toMathJaxLatex(latex));
+				},
+				isOpen: () => mathfield.isConnected,
+				busyEl: mathfield,
+			},
+			{
+				host: this.modalEl,
+				trigger: button,
+				onClose: () => {
+					this.magicEdit = undefined;
+					this.app.keymap.popScope(escape);
+				},
+			}
+		);
+		// Escape closes the box first, then the window.
+		const escape = new Scope(this.scope);
+		escape.register([], "Escape", () => {
+			this.magicEdit?.dismiss();
+			return false;
+		});
+		this.app.keymap.pushScope(escape);
 	}
 
 	private scanTarget(mathfield: MathfieldElement) {
@@ -815,7 +1022,7 @@ class MathLiveModal extends Modal {
 			settings: this.plugin.settings,
 			mathfield,
 			onValueChange: (value: string) => {
-				this.renderedResult = this.resultRenderTemplate(value);
+				this.renderedResult = this.resultRenderTemplate(toMathJaxLatex(value));
 			},
 		};
 	}
@@ -827,6 +1034,23 @@ class MathLiveModal extends Modal {
 
 		await appendLatexFromClipboardImage(this.scanTarget(this.mfe), () => {
 			void this.onScreenScanRequest();
+		});
+	}
+
+	// Puts a formula from the library at the cursor in this window's formula.
+	onFindFormulaRequest() {
+		const mathfield = this.mfe;
+		if (!mathfield) {
+			return;
+		}
+		this.plugin.openFormulaSearch((latex) => {
+			if (!mathfield.isConnected) {
+				return false;
+			}
+			insertIntoMathfield(mathfield, latex);
+			this.renderedResult = this.resultRenderTemplate(mathfield.value);
+			this.focusFormulaWhenShown();
+			return true;
 		});
 	}
 
@@ -847,6 +1071,7 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
+		this.magicEdit?.dismiss();
 		this.stopListening?.();
 		this.stopListening = undefined;
 		// Give the keyboard back to the note, or formulas there would open it inside this closed window.
@@ -868,7 +1093,8 @@ class MathLiveModal extends Modal {
 
 // Puts scanned LaTeX at the cursor: as a math block on an empty line, as inline math in text,
 // and as it is inside a formula that's already there.
-function insertScannedMath(editor: Editor, latex: string) {
+function insertScannedMath(editor: Editor, scanned: string) {
+	const latex = toMathJaxLatex(scanned);
 	const cursor = editor.getCursor();
 	const offset = editor.posToOffset(cursor);
 	let text: string;
