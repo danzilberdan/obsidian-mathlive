@@ -36,6 +36,7 @@ import {
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
+import { endDrawSessions, openDrawWindow } from "./draw";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -94,6 +95,13 @@ export default class MathLivePlugin extends Plugin {
 			},
 		});
 		this.addCommand({
+			id: "draw-formula",
+			name: "Draw formula",
+			callback: () => {
+				void this.drawFormulaIntoNote();
+			},
+		});
+		this.addCommand({
 			id: "open-guide",
 			name: "Open the guide",
 			callback: () => this.openGuide(),
@@ -144,6 +152,9 @@ export default class MathLivePlugin extends Plugin {
 				item.setTitle("Scan formula from screen").setIcon("scan").onClick(() => void this.scanScreenAreaIntoNote())
 			);
 			menu.addItem((item) =>
+				item.setTitle("Draw formula").setIcon("pencil-line").onClick(() => void this.drawFormulaIntoNote())
+			);
+			menu.addItem((item) =>
 				item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.convertPdf())
 			);
 			menu.showAtMouseEvent(event);
@@ -167,6 +178,7 @@ export default class MathLivePlugin extends Plugin {
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
 				showsRawLatex: () => this.showRawLatex,
+				drawFormula: (target) => void openDrawWindow(this.app, { settings: this.settings, target, fallback: () => this.noteScanTarget() }),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -195,6 +207,7 @@ export default class MathLivePlugin extends Plugin {
 			account: this.account,
 			addFormula: () => this.openEditorFromWelcome(),
 			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
+			drawFormula: () => void this.drawFormulaIntoNote(),
 			convertPdf: () => this.convertPdf(),
 		}).open();
 	}
@@ -234,6 +247,7 @@ export default class MathLivePlugin extends Plugin {
 	}
 
 	onunload() {
+		endDrawSessions();
 		setScanAccount(null);
 		this.account.cancelConnect();
 		for (const doc of this.getOpenDocuments()) {
@@ -305,21 +319,28 @@ export default class MathLivePlugin extends Plugin {
 		return leaf?.view instanceof MarkdownView ? leaf.view : null;
 	}
 
-	async scanScreenAreaIntoNote() {
+	// The cursor of the note a scan or drawing goes into, or null when no note is open.
+	noteScanTarget(): ScanTarget | null {
 		const view = this.findNoteForScan();
 		if (!view?.file) {
-			new Notice("Open a note first, so the scanned formula has somewhere to go.");
-			return;
+			return null;
 		}
-
 		const file = view.file;
-		const target: ScanTarget = {
+		return {
 			settings: this.settings,
 			isOpen: () => view.file === file && view.containerEl.isConnected,
 			insert: (latex) => insertScannedMath(view.editor, latex),
 			addedMessage: "Scanned formula added to the note",
 			closedMessage: "The note was closed before the scan finished. Open it and scan again.",
 		};
+	}
+
+	async scanScreenAreaIntoNote() {
+		const target = this.noteScanTarget();
+		if (!target) {
+			new Notice("Open a note first, so the scanned formula has somewhere to go.");
+			return;
+		}
 		await scanScreenAreaInto(this.app, target, activeDocument);
 	}
 
@@ -328,6 +349,19 @@ export default class MathLivePlugin extends Plugin {
 		this.showRawLatex = !this.showRawLatex;
 		this.updateMathJaxVisibility();
 		this.app.workspace.updateOptions();
+	}
+
+	async drawFormulaIntoNote() {
+		const target = this.noteScanTarget();
+		if (!target) {
+			new Notice("Open a note first, so the drawn formula has somewhere to go.");
+			return;
+		}
+		await openDrawWindow(this.app, {
+			settings: this.settings,
+			target: { ...target, closedMessage: "The note was closed. Open it and draw the formula again." },
+			fallback: () => this.noteScanTarget(),
+		});
 	}
 
 	updateMathJaxVisibility() {
@@ -842,6 +876,21 @@ class MathLiveModal extends Modal {
 		});
 		addButton("scan-screen-button", "scan", "Scan from screen", () => {
 			void this.onScreenScanRequest();
+		});
+		addButton("draw-button", "pencil-line", "Draw formula", () => {
+			void this.onDrawRequest();
+		});
+	}
+
+	// The drawn formula is added to the one in this window.
+	async onDrawRequest() {
+		if (!this.mfe) {
+			return;
+		}
+		const target = mathfieldScanTarget(this.scanTarget(this.mfe));
+		await openDrawWindow(this.app, {
+			settings: this.plugin.settings,
+			target: { ...target, closedMessage: "The editor window was closed. Open it and draw the formula again." },
 		});
 	}
 

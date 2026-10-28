@@ -31,6 +31,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Editor window.** A focused editor for longer expressions, with `Ctrl/Cmd + Enter` to insert into the note.
 - **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
 - **Scan formulas into LaTeX.** Draw a box around a formula anywhere in Obsidian, such as a PDF you have open, or scan a screenshot from your clipboard. Uses the MathLive cloud scanner or your own self-hosted one.
+- **Draw a formula.** Write it by hand on a drawing pad, or scan the QR code and draw it on your phone or tablet. You see the formula as you draw, and it goes into your note when you click Insert. Uses the MathLive cloud scanner.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Stays out of the way.** Each formula has two small buttons: ✨ AI fill and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
 
@@ -71,6 +72,12 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 Check the result and fix anything the scanner got wrong.
 
+## Drawing a formula
+
+Put the cursor where the formula should go, click ✨ in the left ribbon and pick **Draw formula** (or run **MathLive: Draw formula**). The editor window and a formula's ✨ menu have **Draw formula** too, which adds the drawing to that formula. Write the formula on the pad with your mouse, pen or finger; a moment after you lift the pen, the formula appears under the pad, where you can still fix it. **Insert** puts it in the note and uses one scan. Reading the drawing while you draw is free.
+
+To draw on a phone or tablet instead, scan the QR code beside the pad with its camera. A drawing page opens in its browser, with nothing to install and no sign-in. The formula shows on both screens as you draw, and **Insert** on the phone puts it in your note on the computer. The phone can then draw the next formula, until you tap **Done** or stop drawing for 10 minutes. Only the first browser to open a code can use it. With **Self-hosted scanner** on, the pad is read by your scanner and there is no QR code.
+
 ## Converting a PDF to notes
 
 Open a PDF and click **Convert to notes** at its top right. You can also click ✨ in the left ribbon and pick **Convert a PDF to notes**, or right-click a PDF in the file list. Pick the pages you want and click **Convert**. MathLive reads the pages one by one into a new note next to the PDF: text as Markdown, formulas as `$...$` and `$$...$$` you can edit, and a link back to each page of the PDF. The note fills in as pages finish. You can close the window; MathLive tells you when it's done.
@@ -110,12 +117,13 @@ Obsidian asks plugins to state the following up front.
   - `https://mathlive.danz.blog/ocr/trial` gives a trial key on your first cloud scan when you have none.
   - `https://mathlive.danz.blog/ocr/predict/` receives the image you chose to scan, with your key, and returns LaTeX.
   - `https://mathlive.danz.blog/ocr/pages/` receives a picture of each PDF page you chose to convert, with your key, and returns the page as Markdown.
+  - Draw formula opens a drawing session at `https://mathlive.danz.blog/ocr/draw/sessions` with your key, sends each drawing there to be read, and while the window is open (or a phone you connected is still drawing) waits there for the phone's drawings. The QR code is made on your computer and links the phone to `https://mathlive.danz.blog/draw/...`.
   - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, scans left, and pages left before converting a PDF.
   - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
-- **Data.** The scan server turns the image into LaTeX (or a PDF page into Markdown) and does not keep the image. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.
+- **Data.** The scan server turns the image (or drawing) into LaTeX (or a PDF page into Markdown) and does not keep the image. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.
 - **No telemetry or ads.** The plugin does not track how you use it and shows no ads. A welcome window shows once after installing.
 
 ## Contributing
@@ -128,6 +136,7 @@ If MathLive saves you time, a ⭐ on this repository helps other people find it,
 
 - [MathLive](https://github.com/arnog/mathlive) by Arno Gourdol, the math editor this plugin is built on
 - [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) by Lukas Blecher, for self-hosted scanning
+- [QR Code Generator](https://github.com/kazuhikoarase/qrcode-generator) by Kazuhiko Arase (MIT), for Draw formula's QR code
 
 ## License
 

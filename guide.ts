@@ -7,6 +7,7 @@ export interface GuideActions {
 	account: CloudAccount;
 	addFormula(): void;
 	scanFromScreen(): void;
+	drawFormula(): void;
 	convertPdf(): void;
 }
 
@@ -66,6 +67,12 @@ export class GuideModal extends Modal {
 			"AI fill: scan a formula instead of typing it",
 			"Click ✨ next to any formula, or in the editor window. Scan a screenshot from your clipboard, or draw a box around a formula anywhere on your screen: a PDF, a website, a video, another app. The LaTeX lands in your formula, ready to edit.",
 			{ text: "Scan from screen", run: () => this.actions.scanFromScreen(), cta: true }
+		);
+		section(
+			"pencil-line",
+			"Draw a formula",
+			"Write it by hand with your mouse or pen, or scan the QR code and draw it on your phone. You see the formula as you draw, and it goes in your note when you click Insert.",
+			{ text: "Draw a formula", run: () => this.actions.drawFormula() }
 		);
 		section(
 			"maximize-2",

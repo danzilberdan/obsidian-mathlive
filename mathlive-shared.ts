@@ -334,7 +334,7 @@ const QUICK_FAILURE_MS = 5000;
 
 type ScanFailure = "auth" | "no_scans_left" | "no_math" | "bad_image" | "unavailable";
 
-class ScanError extends Error {
+export class ScanError extends Error {
 	constructor(readonly failure: ScanFailure, message: string) {
 		super(message);
 	}
@@ -630,6 +630,23 @@ export async function ensureCanScan(settings: PluginSettings, resume: () => void
 	}
 	new Notice(CLOUD_OCR_AUTH_NOTICE, 10000);
 	return false;
+}
+
+// When the cloud scanner refuses the key: asks the user to connect or get more scans, and runs
+// `resume` once they have.
+export function askForAccount(settings: PluginSettings, failure: "auth" | "no_scans_left", resume: () => void) {
+	if (!settings.useLocalInference && scanAccount) {
+		scanAccount.needsAccount(failure, resume);
+	} else {
+		showScanFailure(failure === "auth" ? CLOUD_OCR_AUTH_NOTICE : NO_SCANS_LEFT_NOTICE);
+	}
+}
+
+// After a cloud scan was charged: refreshes the scans left, warning when they run low.
+export function afterCloudScan(settings: PluginSettings) {
+	if (!settings.useLocalInference) {
+		scanAccount?.afterScan();
+	}
 }
 
 async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {

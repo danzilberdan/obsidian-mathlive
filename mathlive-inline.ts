@@ -20,6 +20,7 @@ import { type App, Menu, setIcon } from "obsidian";
 import {
 	appendLatexFromClipboardImage,
 	mathfieldScanTarget,
+	type ScanTarget,
 	scanScreenAreaInto,
 	createMathfield,
 	moveVirtualKeyboard,
@@ -56,6 +57,8 @@ export interface WidgetHooks {
 	openGuide: () => void;
 	// True while the note shows formulas as LaTeX instead of editors.
 	showsRawLatex: () => boolean;
+	// Opens Draw formula for this target.
+	drawFormula: (target: ScanTarget) => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -209,6 +212,7 @@ class MathLiveWidget extends WidgetType {
 		const scanClipboardImage = () => {
 			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
 		};
+		const drawFormula = () => this.hooks.drawFormula(mathfieldScanTarget(scanOptions()));
 
 		// Two buttons after each formula: ✨ fills it in with AI and holds the other actions, and
 		// Expand opens the editor window.
@@ -230,7 +234,7 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			this.showMenu(aiButton, scanClipboardImage, scanScreenArea);
+			this.showMenu(aiButton, scanClipboardImage, scanScreenArea, drawFormula);
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -358,7 +362,12 @@ class MathLiveWidget extends WidgetType {
 	}
 
 	// What ✨ can do for this formula, then help and the account.
-	private showMenu(button: HTMLElement, scanClipboardImage: () => void, scanScreenArea: () => void) {
+	private showMenu(
+		button: HTMLElement,
+		scanClipboardImage: () => void,
+		scanScreenArea: () => void,
+		drawFormula: () => void
+	) {
 		const accountItem = this.hooks.accountAction();
 		const menu = new Menu();
 		menu.addItem((item) =>
@@ -367,6 +376,7 @@ class MathLiveWidget extends WidgetType {
 		menu.addItem((item) =>
 			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
 		);
+		menu.addItem((item) => item.setTitle("Draw formula").setIcon("pencil-line").onClick(drawFormula));
 		menu.addSeparator();
 		menu.addItem((item) =>
 			item.setTitle("What MathLive can do").setIcon("compass").onClick(() => this.hooks.openGuide())
