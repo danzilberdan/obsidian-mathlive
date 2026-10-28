@@ -33,7 +33,7 @@ test.describe("formulas in the note", () => {
 			bodyClasses: [...document.body.classList].filter((name) => name.startsWith("mathlive-")),
 			fonts: [...document.fonts].filter((font) => font.family.startsWith("KaTeX")).length,
 		}));
-		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area"]);
+		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
 		expect(state.bodyClasses).toEqual(
 			expect.arrayContaining(["mathlive-inline-widgets-active", "mathlive-block-widgets-active"])
 		);
@@ -86,6 +86,81 @@ test.describe("formulas in the note", () => {
 		});
 		await page.keyboard.press("ArrowRight");
 		await expect(inlineField(page, 0)).toBeFocused();
+	});
+
+	test("the LaTeX never shows next to a formula, wherever the cursor is", async ({ page }) => {
+		const visibleText = () => page.locator(".cm-content").innerText();
+		for (const [line, ch] of [[2, 12], [2, 29], [3, 0], [4, 0], [6, 2], [7, 0], [10, 10]]) {
+			await page.evaluate(({ line, ch }) => {
+				const editor = window.app.workspace.activeEditor.editor;
+				editor.focus();
+				editor.setCursor({ line, ch });
+				return true;
+			}, { line, ch });
+			await page.waitForTimeout(100);
+			const text = await visibleText();
+			expect(text, `cursor at ${line}:${ch}`).not.toContain("$");
+			expect(text, `cursor at ${line}:${ch}`).not.toContain("\\int");
+		}
+		await expect(page.locator(".cm-content math-field")).toHaveCount(3);
+	});
+
+	test("Left, Backspace, Down and Up next to a formula go into it", async ({ page }) => {
+		const placeCursor = (find, offset) =>
+			page.evaluate(({ find, offset }) => {
+				const editor = window.app.workspace.activeEditor.editor;
+				editor.focus();
+				editor.setCursor(editor.offsetToPos(editor.getValue().indexOf(find) + offset));
+				return true;
+			}, { find, offset });
+		const leave = async () => {
+			await page.keyboard.press("Escape");
+			await expect(page.locator(".cm-content math-field:focus")).toHaveCount(0);
+		};
+
+		await placeCursor("z^2$", 4);
+		await page.keyboard.press("ArrowLeft");
+		await expect(inlineField(page, 0)).toBeFocused();
+		await leave();
+
+		await placeCursor("z^2$", 4);
+		await page.keyboard.press("Backspace");
+		await expect(inlineField(page, 0)).toBeFocused();
+		expect(await noteText(page)).toContain("$x^2 + y^2 = z^2$ in a sentence.");
+		await leave();
+
+		await placeCursor("in a sentence.", 14);
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("ArrowDown");
+		await expect(blockField(page)).toBeFocused();
+		await leave();
+
+		await placeCursor("Plain paragraph", 3);
+		await page.keyboard.press("ArrowUp");
+		await page.keyboard.press("ArrowUp");
+		await expect(blockField(page)).toBeFocused();
+	});
+
+	test("the note's ⋮ menu shows the raw LaTeX for a while, and switches back", async ({ page }) => {
+		const openNoteMenu = async () => {
+			await page.locator(".workspace-leaf.mod-active .view-header .view-action[aria-label='More options']").click();
+			return page.locator(".menu");
+		};
+		await openNoteMenu();
+		await page.locator(".menu .menu-item", { hasText: "Show raw LaTeX" }).click();
+		await expect(page.locator(".cm-content math-field")).toHaveCount(0);
+		await page.evaluate(() => {
+			const editor = window.app.workspace.activeEditor.editor;
+			editor.focus();
+			editor.setCursor({ line: 2, ch: 14 });
+			return true;
+		});
+		await expect(page.locator(".cm-content")).toContainText("$x^2 + y^2 = z^2$");
+
+		await openNoteMenu();
+		await page.locator(".menu .menu-item", { hasText: "Show formulas as editors" }).click();
+		await expect(page.locator(".cm-content math-field")).toHaveCount(3);
+		await expect(page.locator(".cm-content")).not.toContainText("$");
 	});
 
 	test("arrow key navigation can be turned off", async ({ page }) => {

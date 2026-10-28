@@ -85,6 +85,9 @@ async function resetApp(page, defaults) {
 
 			const plugin = app.plugins.plugins.mathlive;
 			plugin.account.cancelConnect();
+			if (plugin.showRawLatex) {
+				plugin.toggleRawLatex();
+			}
 			plugin.settings = { ...defaults };
 			await plugin.saveSettings();
 

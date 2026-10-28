@@ -15,7 +15,7 @@ import {
 	MarkdownView,
 	Menu,
 	type ItemView,
-	type TFile,
+	TFile,
 	type View,
 	Notice,
 } from "obsidian";
@@ -54,6 +54,8 @@ export default class MathLivePlugin extends Plugin {
 	account: CloudAccount;
 	// Where a scan from the screen goes when the hotkey is pressed outside a note, like in a PDF.
 	private lastNoteView: MarkdownView | null = null;
+	// Switched from a note's ⋮ menu, and not saved.
+	private showRawLatex = false;
 	private pdfViewsWithButton = new WeakSet<View>();
 
 	async onload() {
@@ -97,10 +99,30 @@ export default class MathLivePlugin extends Plugin {
 			callback: () => this.openGuide(),
 		});
 		this.addCommand({
+			id: "toggle-raw-latex",
+			name: "Show raw LaTeX in notes, or editors again",
+			callback: () => this.toggleRawLatex(),
+		});
+		this.addCommand({
 			id: "convert-pdf-to-notes",
 			name: "Convert PDF to notes",
 			callback: () => this.convertPdf(),
 		});
+		// The note's ⋮ menu switches its formulas to LaTeX for a while, and back.
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, file, source) => {
+				if (source !== "more-options" || !(file instanceof TFile) || file.extension !== "md" || !this.settings.enableInlineEditorMode) {
+					return;
+				}
+				menu.addItem((item) =>
+					item
+						.setTitle(this.showRawLatex ? "Show formulas as editors" : "Show raw LaTeX")
+						.setIcon(this.showRawLatex ? "sigma" : "code")
+						.setSection("view")
+						.onClick(() => this.toggleRawLatex())
+				);
+			})
+		);
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
 				if (!isPdf(file)) {
@@ -144,6 +166,7 @@ export default class MathLivePlugin extends Plugin {
 				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
+				showsRawLatex: () => this.showRawLatex,
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -300,8 +323,15 @@ export default class MathLivePlugin extends Plugin {
 		await scanScreenAreaInto(this.app, target, activeDocument);
 	}
 
+	// Until switched back or Obsidian restarts, notes show formulas as LaTeX the Obsidian way.
+	toggleRawLatex() {
+		this.showRawLatex = !this.showRawLatex;
+		this.updateMathJaxVisibility();
+		this.app.workspace.updateOptions();
+	}
+
 	updateMathJaxVisibility() {
-		const editorOn = this.settings.enableInlineEditorMode;
+		const editorOn = this.settings.enableInlineEditorMode && !this.showRawLatex;
 		// While MathLive inline widgets are on, Obsidian's inline MathJax must not sit above them in
 		// the hit-testing stack — the first click would hit mjx, exit math-edit state, and remove the widget.
 		const hideInlineInEditor =
