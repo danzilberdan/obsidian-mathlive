@@ -64,6 +64,30 @@ test.describe("math keyboard in the note", () => {
 		expect(await reservedSpace(page)).toBe("");
 	});
 
+	test("a blank strip left by a missed close goes away, and the next keyboard doesn't stack on it", async ({ page }) => {
+		await showKeyboard(page, 0);
+		const once = await reservedSpace(page);
+		await leaveFormula(page);
+		// What a close that MathLive missed leaves behind: the room the keyboard took, still reserved.
+		await page.evaluate((space) => {
+			document.body.style.paddingBottom = space;
+			window.mathVirtualKeyboard.originalContainerBottomPadding = space;
+			return true;
+		}, once);
+
+		await showKeyboard(page, 0);
+		expect(await reservedSpace(page)).toBe(once);
+		await leaveFormula(page);
+		expect(await reservedSpace(page)).toBe("");
+
+		for (let i = 0; i < 3; i++) {
+			await showKeyboard(page, i % 2);
+			expect(await reservedSpace(page)).toBe(once);
+			await leaveFormula(page);
+			expect(await reservedSpace(page)).toBe("");
+		}
+	});
+
 	test("opening the editor window while the keyboard is open leaves no empty space in the note", async ({ page }) => {
 		await showKeyboard(page, 0);
 		await clickWidgetButton(inlineWidget(page, 1), "Expand");

@@ -37,6 +37,7 @@ import {
 	type ScanTarget,
 	releaseVirtualKeyboardFrom,
 	styleVirtualKeyboardInPopout,
+	fitVirtualKeyboardSpace,
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
@@ -70,6 +71,12 @@ export default class MathLivePlugin extends Plugin {
 		await ensureMathfieldElementRegistered();
 		window.mathVirtualKeyboard.addEventListener("virtual-keyboard-toggle", styleVirtualKeyboardInPopout);
 		this.register(() => window.mathVirtualKeyboard.removeEventListener("virtual-keyboard-toggle", styleVirtualKeyboardInPopout));
+		window.mathVirtualKeyboard.addEventListener("virtual-keyboard-toggle", fitVirtualKeyboardSpace);
+		window.mathVirtualKeyboard.addEventListener("geometrychange", fitVirtualKeyboardSpace);
+		this.register(() => {
+			window.mathVirtualKeyboard.removeEventListener("virtual-keyboard-toggle", fitVirtualKeyboardSpace);
+			window.mathVirtualKeyboard.removeEventListener("geometrychange", fitVirtualKeyboardSpace);
+		});
 		await this.loadSettings();
 		this.account = new CloudAccount(this);
 		setScanAccount(this.account);

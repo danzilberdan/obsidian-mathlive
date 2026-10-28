@@ -324,6 +324,23 @@ function styleMathfieldInPopout(mfe: MathfieldElement) {
 	mfe.shadowRoot.adoptedStyleSheets = sheets;
 }
 
+// MathLive makes room for its keyboard by adding the keyboard's height to the main window's bottom
+// padding, and puts back what was there when the keyboard closes. When a close is missed, the blank
+// strip stays, and the next keyboard adds its height on top of it. So after every change, make the
+// padding exactly the room the keyboard showing now needs, or none.
+export function fitVirtualKeyboardSpace() {
+	const keyboard = window.mathVirtualKeyboard as typeof window.mathVirtualKeyboard & {
+		originalContainerBottomPadding?: string | null;
+	};
+	const body = window.document.body;
+	keyboard.originalContainerBottomPadding = "";
+	const plate = keyboard.visible && keyboard.container === body ? body.querySelector<HTMLElement>(".ML__keyboard .MLK__plate") : null;
+	const space = plate ? `${Math.max(plate.offsetHeight - 1, 0)}px` : "";
+	if (body.style.paddingBottom !== space) {
+		body.style.paddingBottom = space;
+	}
+}
+
 // The math keyboard's stylesheets go on the main window's document, so a keyboard shown in a
 // popout window gets copies in that window's document.
 export function styleVirtualKeyboardInPopout() {
