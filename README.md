@@ -99,6 +99,7 @@ The self-hosted scanner uses `http://localhost:8502` unless you set another addr
 | Hide rendered inline / block math | Show only the editor, without Obsidian's rendered math next to it |
 | Update inline widgets immediately | Write changes into the note as you type, or when the formula loses focus |
 | Arrow key navigation between editor and widgets | Move the cursor into and out of formulas with the arrow keys |
+| Edit only the formula at the cursor | Keep formulas drawn like the rest of the note, and show the editor only for the formula with the cursor in it |
 
 ## Disclosures
 

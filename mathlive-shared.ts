@@ -272,9 +272,78 @@ export function moveVirtualKeyboard(container: HTMLElement) {
 		return;
 	}
 	if (keyboard.visible) {
-		keyboard.hide();
+		try {
+			keyboard.hide();
+		} catch (error) {
+			// Its window has closed. Moving it still has to happen, or the keyboard button stops
+			// working everywhere (#23): the move drops the old keyboard, and the next one is new.
+			console.warn("MathLive: couldn't close the math keyboard", error);
+		}
 	}
 	keyboard.container = container;
+}
+
+// MathLive's keyboard can't be closed once its window is gone, and then stops opening anywhere
+// (#23). So move it back to the main window when a popout window closes.
+export function releaseVirtualKeyboardFrom(doc: Document, mainContainer: HTMLElement) {
+	if (window.mathVirtualKeyboard.container?.doc === doc) {
+		moveVirtualKeyboard(mainContainer);
+	}
+}
+
+type PopoutWindow = Window & { CSSStyleSheet: typeof CSSStyleSheet };
+const cssText = (sheet: CSSStyleSheet) => Array.from(sheet.cssRules, (rule) => rule.cssText).join("\n");
+
+// MathLive styles each formula with stylesheets made in the main window, which a popout window
+// can't use, so formulas there drew without their layout: the ☰ button covered the keyboard
+// button (#23). Formulas in a popout get copies made in that window.
+let mathfieldCss: string[] | undefined;
+const popoutStylesheets = new WeakMap<Window, CSSStyleSheet[]>();
+
+function styleMathfieldInPopout(mfe: MathfieldElement) {
+	const win = mfe.win as PopoutWindow;
+	if (win === window || !mfe.shadowRoot || !mathfieldElementCtor) {
+		return;
+	}
+	// A formula that was never in a popout still has MathLive's own stylesheets.
+	mathfieldCss ??= Array.from(new mathfieldElementCtor().shadowRoot?.adoptedStyleSheets ?? [], cssText);
+	let sheets = popoutStylesheets.get(win);
+	if (!sheets) {
+		sheets = mathfieldCss.map((css) => {
+			const sheet = new win.CSSStyleSheet();
+			sheet.replaceSync(css);
+			return sheet;
+		});
+		popoutStylesheets.set(win, sheets);
+	}
+	mfe.shadowRoot.adoptedStyleSheets = sheets;
+}
+
+// The math keyboard's stylesheets go on the main window's document, so a keyboard shown in a
+// popout window gets copies in that window's document.
+export function styleVirtualKeyboardInPopout() {
+	const keyboard = window.mathVirtualKeyboard;
+	const doc = keyboard.container?.doc;
+	const mainDoc = window.document;
+	if (!keyboard.visible || !doc || doc === mainDoc) {
+		return;
+	}
+	const win = doc.win as PopoutWindow;
+	const present = new Set(Array.from(doc.adoptedStyleSheets, cssText));
+	const copies: CSSStyleSheet[] = [];
+	for (const sheet of mainDoc.adoptedStyleSheets) {
+		const css = cssText(sheet);
+		if (present.has(css)) {
+			continue;
+		}
+		const copy = new win.CSSStyleSheet();
+		copy.replaceSync(css);
+		copies.push(copy);
+		present.add(css);
+	}
+	if (copies.length > 0) {
+		doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, ...copies];
+	}
 }
 
 export function createMathfield(config: MathfieldConfig): MathfieldElement {
@@ -290,6 +359,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 	mfe.defaultMode = config.inline ? "inline-math" : "math";
 	mfe.value = config.initialValue;
+	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
 
 	if (!config.inline) {
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {
