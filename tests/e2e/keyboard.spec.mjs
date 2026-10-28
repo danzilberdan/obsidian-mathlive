@@ -5,9 +5,7 @@ import {
 	focusField,
 	inlineField,
 	inlineWidget,
-	menuItem,
 	modalField,
-	openWidgetMenu,
 	runCommand,
 	test,
 	waitForModalField,
@@ -18,9 +16,9 @@ const keyboard = (page) => page.locator("body > .ML__keyboard");
 // The space MathLive reserves at the bottom of the window for its keyboard.
 const reservedSpace = (page) => page.evaluate(() => document.body.style.paddingBottom);
 
-const showFromMenu = async (page, index) => {
-	await openWidgetMenu(page, inlineWidget(page, index));
-	await menuItem(page, "Show math keyboard").click();
+const showKeyboard = async (page, index) => {
+	await focusField(inlineField(page, index));
+	await inlineField(page, index).evaluate((field) => field.executeCommand("showVirtualKeyboard"));
 	await expect(keyboard(page)).toBeVisible();
 };
 
@@ -51,30 +49,30 @@ test.describe("math keyboard in the note", () => {
 	});
 
 	test("closing the keyboard leaves no empty space behind", async ({ page }) => {
-		await showFromMenu(page, 0);
+		await showKeyboard(page, 0);
 		expect(await reservedSpace(page)).not.toBe("");
 		await leaveFormula(page);
 		expect(await reservedSpace(page)).toBe("");
 	});
 
 	test("opening the keyboard again doesn't stack empty space under it", async ({ page }) => {
-		await showFromMenu(page, 0);
+		await showKeyboard(page, 0);
 		const once = await reservedSpace(page);
-		await showFromMenu(page, 1);
+		await showKeyboard(page, 1);
 		expect(await reservedSpace(page)).toBe(once);
 		await leaveFormula(page);
 		expect(await reservedSpace(page)).toBe("");
 	});
 
 	test("opening the editor window while the keyboard is open leaves no empty space in the note", async ({ page }) => {
-		await showFromMenu(page, 0);
+		await showKeyboard(page, 0);
 		await clickWidgetButton(inlineWidget(page, 1), "Expand");
 		await waitForModalField(page);
 		await page.keyboard.press("Escape");
 		await expect(modalField(page)).toHaveCount(0);
 		expect(await reservedSpace(page)).toBe("");
 
-		await showFromMenu(page, 0);
+		await showKeyboard(page, 0);
 		await expect(inlineField(page, 0)).toBeFocused();
 		await leaveFormula(page);
 		expect(await reservedSpace(page)).toBe("");

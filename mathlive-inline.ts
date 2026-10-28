@@ -50,11 +50,10 @@ export const AUTHOR_URL = "https://danz.blog";
 export interface WidgetHooks {
 	app: App;
 	getSettings: () => PluginSettings;
-	// The account entry in the ⋮ menu: connect, upgrade, or nothing.
-	accountAction: () => Promise<{ title: string; run: () => void } | undefined>;
+	// The account entry in the ✨ menu: Connect, or nothing once connected.
+	accountAction: () => { title: string; run: () => void } | undefined;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 	openGuide: () => void;
-	convertPdf: () => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -229,7 +228,7 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			void this.showMenu(aiButton, mfe, scanClipboardImage, scanScreenArea);
+			this.showMenu(aiButton, scanClipboardImage, scanScreenArea);
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -353,13 +352,9 @@ class MathLiveWidget extends WidgetType {
 		);
 	}
 
-	private async showMenu(
-		button: HTMLElement,
-		mfe: MathfieldElement,
-		scanClipboardImage: () => void,
-		scanScreenArea: () => void
-	) {
-		const accountItem = await this.getAccountItem();
+	// What ✨ can do for this formula, then help and the account.
+	private showMenu(button: HTMLElement, scanClipboardImage: () => void, scanScreenArea: () => void) {
+		const accountItem = this.hooks.accountAction();
 		const menu = new Menu();
 		menu.addItem((item) =>
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
@@ -367,33 +362,15 @@ class MathLiveWidget extends WidgetType {
 		menu.addItem((item) =>
 			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
 		);
-		menu.addItem((item) =>
-			item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.hooks.convertPdf())
-		);
 		menu.addSeparator();
-		menu.addItem((item) =>
-			item
-				.setTitle("Show math keyboard")
-				.setIcon("keyboard")
-				.onClick(() => {
-					moveVirtualKeyboard(mfe.doc.body);
-					mfe.focus();
-					mfe.executeCommand("showVirtualKeyboard");
-				})
-		);
 		menu.addItem((item) =>
 			item.setTitle("What MathLive can do").setIcon("compass").onClick(() => this.hooks.openGuide())
 		);
 		if (accountItem) {
-			menu.addSeparator();
-			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("gem").onClick(accountItem.run));
+			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("log-in").onClick(accountItem.run));
 		}
 
 		showMenuBelow(menu, button);
-	}
-
-	private getAccountItem() {
-		return this.hooks.accountAction();
 	}
 }
 

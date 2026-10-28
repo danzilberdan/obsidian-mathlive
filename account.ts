@@ -429,19 +429,12 @@ export class CloudAccount {
 		return this.statusRequest;
 	}
 
-	// The account entry in formula menus: connect, upgrade, or nothing.
-	async menuAction(): Promise<{ title: string; run: () => void } | undefined> {
-		if (!this.usesCloud()) {
+	// The account entry in formula menus: Connect until the account is connected.
+	menuAction(): { title: string; run: () => void } | undefined {
+		if (!this.usesCloud() || this.isConnected()) {
 			return undefined;
 		}
-		if (!this.isConnected()) {
-			return { title: "Connect to scan images", run: () => void this.connect() };
-		}
-		const status = await this.getStatus();
-		if (status && !status.hasUnlimitedAccess) {
-			return { title: "Upgrade for more scans", run: () => window.open(this.siteUrl("/pricing")) };
-		}
-		return undefined;
+		return { title: "Connect", run: () => void this.connect() };
 	}
 
 	// A few words on the scans left, for the editor window: "7 free scans left".

@@ -64,8 +64,10 @@ test.describe("converting a PDF to notes", () => {
 		await expect(modal(page)).toHaveCount(0);
 	});
 
-	test("the ribbon has a PDF to notes button", async ({ page }) => {
-		await page.locator('.side-dock-ribbon-action[aria-label="Convert PDF to notes"]').click();
+	test("the ribbon's ✨ menu converts a PDF to notes", async ({ page }) => {
+		await page.locator('.side-dock-ribbon-action[aria-label="MathLive"]').click();
+		await expect(page.locator(".menu .menu-item-title")).toHaveText(["Scan formula from screen", "Convert a PDF to notes"]);
+		await page.locator(".menu .menu-item", { hasText: "Convert a PDF to notes" }).click();
 		// No PDF is open, so it asks for one first.
 		await expect(page.locator(".prompt")).toBeVisible();
 		await page.keyboard.press("Escape");

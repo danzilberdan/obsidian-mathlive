@@ -13,6 +13,7 @@ import {
 	type TextComponent,
 	type KeymapEventHandler,
 	MarkdownView,
+	Menu,
 	type ItemView,
 	type TFile,
 	type View,
@@ -113,10 +114,18 @@ export default class MathLivePlugin extends Plugin {
 				);
 			})
 		);
-		this.addRibbonIcon("scan", "Scan formula from screen", () => {
-			void this.scanScreenAreaIntoNote();
+		// One ✨ in the ribbon for what MathLive does anywhere in Obsidian. A formula's own ✨ has what
+		// it can do for that formula.
+		this.addRibbonIcon("sparkles", "MathLive", (event) => {
+			const menu = new Menu();
+			menu.addItem((item) =>
+				item.setTitle("Scan formula from screen").setIcon("scan").onClick(() => void this.scanScreenAreaIntoNote())
+			);
+			menu.addItem((item) =>
+				item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.convertPdf())
+			);
+			menu.showAtMouseEvent(event);
 		});
-		this.addRibbonIcon("file-text", "Convert PDF to notes", () => this.convertPdf());
 		// Every open PDF gets a button in its header, where people look when they have a PDF open.
 		this.registerEvent(this.app.workspace.on("layout-change", () => this.addPdfButtons()));
 		this.registerEvent(this.app.workspace.on("file-open", () => this.addPdfButtons()));
@@ -135,7 +144,6 @@ export default class MathLivePlugin extends Plugin {
 				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
-				convertPdf: () => this.convertPdf(),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -457,7 +465,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 				},
 				{
 					name: "Scan other apps",
-					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from the scan icon in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
+					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from ✨ in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
 					addControl: toggle("scanOtherApps"),
 				},
 			],

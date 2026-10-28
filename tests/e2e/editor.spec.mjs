@@ -123,11 +123,11 @@ test.describe("formulas in the note", () => {
 		await expect(menu.locator(".menu-item-title")).toHaveText([
 			"Scan clipboard image",
 			"Scan from screen",
-			"Convert a PDF to notes",
-			"Show math keyboard",
 			"What MathLive can do",
-			"Connect to scan images",
+			"Connect",
 		]);
+		// Two sections: what ✨ does for this formula, then help and the account.
+		await expect(menu.locator(".menu-separator")).toHaveCount(1);
 
 		await page.keyboard.press("Escape");
 		await expect(menu).toHaveCount(0);
@@ -154,17 +154,10 @@ test.describe("formulas in the note", () => {
 		await expect(modalField(page)).toHaveJSProperty("value", "\n\\int_0^1 f(x)\\,dx\n");
 	});
 
-	test("the ✨ menu shows the math keyboard for that formula", async ({ page }) => {
-		await openWidgetMenu(page, inlineWidget(page, 0));
-		await menuItem(page, "Show math keyboard").click();
-		await expect(page.locator(".ML__keyboard")).toBeVisible();
-		await expect(inlineField(page, 0)).toBeFocused();
-	});
-
 	test("the ✨ menu connects the account", async ({ page }) => {
 		await recordOpenedUrls(page);
 		await openWidgetMenu(page, inlineWidget(page, 0));
-		await menuItem(page, "Connect to scan images").click();
+		await menuItem(page, "Connect").click();
 		await expect.poll(() => openedUrls(page)).toHaveLength(1);
 		const [connect] = await openedUrls(page);
 		expect(connect).toMatch(/^https:\/\/mathlive\.danz\.blog\/connect\?state=[0-9a-f]{64}&device=vault%20on%20/);
@@ -174,7 +167,15 @@ test.describe("formulas in the note", () => {
 		await setSettings(page, { useLocalInference: true });
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await expect(menuItem(page, "Scan clipboard image")).toBeVisible();
-		await expect(menuItem(page, "Connect to scan images")).toHaveCount(0);
+		await expect(menuItem(page, "Connect")).toHaveCount(0);
+		await page.keyboard.press("Escape");
+
+		// Connected, nothing about the account: no Connect and no Upgrade.
+		await setSettings(page, { useLocalInference: false, apiKey: "low-key", apiKeySource: "device" });
+		await openWidgetMenu(page, inlineWidget(page, 0));
+		await expect(menuItem(page, "What MathLive can do")).toBeVisible();
+		await expect(menuItem(page, "Connect")).toHaveCount(0);
+		await expect(page.locator(".menu .menu-item")).toHaveCount(3);
 	});
 
 	test("block formulas show AI fill and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
