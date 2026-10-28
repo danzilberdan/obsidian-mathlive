@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-mathlive",
-	"version": "1.5.0",
+	"version": "1.5.1",
 	"description": "Visual math editor and formula image scanner for Obsidian",
 	"main": "main.js",
 	"scripts": {
