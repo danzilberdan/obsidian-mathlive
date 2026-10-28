@@ -1,4 +1,4 @@
-import { App, Notice, SuggestModal, finishRenderMath, renderMath, requestUrl } from "obsidian";
+import { App, Notice, SuggestModal, finishRenderMath, loadMathJax, renderMath, requestUrl } from "obsidian";
 import type { CloudAccount } from "./account";
 import { errorCode, startScanProgress } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
@@ -84,6 +84,13 @@ export class FormulaSearchModal extends SuggestModal<Suggestion> {
 
 	onOpen() {
 		void super.onOpen();
+		// Obsidian only loads MathJax once something needs it, and with every formula in the note
+		// shown as a MathLive editor nothing may have yet, so previews would show raw LaTeX.
+		void loadMathJax().then(() => {
+			if (this.last.length > 0) {
+				this.inputEl.dispatchEvent(new Event("input"));
+			}
+		});
 		if (this.inputEl.value) {
 			this.inputEl.dispatchEvent(new Event("input"));
 		}
