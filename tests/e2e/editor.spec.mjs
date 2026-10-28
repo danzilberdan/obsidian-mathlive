@@ -252,7 +252,7 @@ test.describe("formulas in the note", () => {
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await expect(menuItem(page, "What MathLive can do")).toBeVisible();
 		await expect(menuItem(page, "Connect")).toHaveCount(0);
-		await expect(page.locator(".menu .menu-item")).toHaveCount(4);
+		await expect(page.locator(".menu .menu-item")).toHaveCount(5);
 	});
 
 	test("block formulas show AI fill, Magic edit and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
