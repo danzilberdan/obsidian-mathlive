@@ -253,22 +253,24 @@ test.describe("formulas in the note", () => {
 		await expect(page.locator(".menu .menu-item")).toHaveCount(3);
 	});
 
-	test("block formulas show AI fill and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
+	test("block formulas show AI fill, Magic edit and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
 		const widget = blockWidget(page);
 		await blockField(page).hover({ position: { x: 10, y: 10 } });
 		const keyboard = await blockField(page).locator("[part=virtual-keyboard-toggle]").boundingBox();
 		const menu = await blockField(page).locator("[part=menu-toggle]").boundingBox();
 		const field = await blockField(page).boundingBox();
 		const ai = await widget.getByRole("button", { name: "AI fill" }).boundingBox();
+		const magic = await widget.getByRole("button", { name: "Magic edit" }).boundingBox();
 		const expand = await widget.getByRole("button", { name: "Expand" }).boundingBox();
 		// One row, same size, in order, all inside the input's border.
-		for (const button of [menu, ai, expand]) {
+		for (const button of [menu, ai, magic, expand]) {
 			expect(Math.abs(button.y + button.height / 2 - (keyboard.y + keyboard.height / 2))).toBeLessThanOrEqual(2);
 			expect(Math.abs(button.width - keyboard.width)).toBeLessThanOrEqual(1);
 		}
 		expect(keyboard.x).toBeLessThan(menu.x);
 		expect(menu.x + menu.width).toBeLessThanOrEqual(ai.x);
-		expect(ai.x + ai.width).toBeLessThanOrEqual(expand.x);
+		expect(ai.x + ai.width).toBeLessThanOrEqual(magic.x);
+		expect(magic.x + magic.width).toBeLessThanOrEqual(expand.x);
 		expect(expand.x + expand.width).toBeLessThanOrEqual(field.x + field.width);
 		expect(ai.y).toBeGreaterThanOrEqual(field.y);
 		expect(ai.y + ai.height).toBeLessThanOrEqual(field.y + field.height);

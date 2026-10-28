@@ -7,6 +7,7 @@
 // /pages/ answers a page as Markdown, and a blank page (a tiny PNG) as blank. "old-scanner" gets
 // 404 there, like a scanner from before pages, and "pages-down" always gets 503. "two-pages-left"
 // has a monthly plan with 2 pages left in /access-status, and "page-limit" is told 402 page_limit.
+// /edit stands in for Magic edit; "edit-down" gets 503 there.
 import crypto from "node:crypto";
 import http from "node:http";
 import zlib from "node:zlib";
@@ -119,6 +120,25 @@ export function startStubScanner(port = 8502) {
 					reply(200, { markdown: "", blank: true });
 				} else {
 					reply(200, { markdown: PAGE_MARKDOWN });
+				}
+			} else if (req.method === "POST" && req.url === "/edit") {
+				// Magic edit: "square" squares the formula, "unclear" can't be done, a recording
+				// is heard as "square it". The request is kept for the tests to look at.
+				const edit = JSON.parse(body.toString() || "{}");
+				requests[requests.length - 1].edit = { ...edit, audio: edit.audio ? edit.audio.length : 0 };
+				const instruction = edit.audio ? "square it" : String(edit.instruction ?? "");
+				if (apiKey === "old-scanner") {
+					reply(404, { detail: "Not found" });
+				} else if (apiKey === "no-scans-left") {
+					reply(400, { detail: "No scans left.", code: "no_scans_left" });
+				} else if (apiKey === "edit-down") {
+					reply(503, { detail: "Couldn't edit the formula right now. Try again. Nothing was charged.", code: "edit_failed" });
+				} else if (instruction.includes("unclear")) {
+					reply(200, { latex: edit.latex, done: false, note: "I couldn't tell which term to change." });
+				} else if (instruction.includes("square")) {
+					reply(200, { latex: `\\left(${edit.latex}\\right)^2`, done: true, note: "", ...(edit.audio ? { heard: instruction } : {}) });
+				} else {
+					reply(200, { latex: "E=mc^2", done: true, note: "" });
 				}
 			} else if (req.url === "/trial" && req.method === "POST") {
 				if (account.trialAvailable) {

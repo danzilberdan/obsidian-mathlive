@@ -36,6 +36,7 @@ import {
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
+import { MagicEditBox } from "./magic-edit";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -659,6 +660,7 @@ class MathLiveModal extends Modal {
 	resultRenderTemplate: (res: string) => string
 	private insertHotkey?: KeymapEventHandler
 	private stopListening?: () => void
+	private magicEdit?: MagicEditBox
 	private replaceFrom?: EditorPosition
 	private replaceTo?: EditorPosition
 	
@@ -843,6 +845,35 @@ class MathLiveModal extends Modal {
 		addButton("scan-screen-button", "scan", "Scan from screen", () => {
 			void this.onScreenScanRequest();
 		});
+		addButton("magic-edit-button", "wand-sparkles", "Magic edit", () => this.toggleMagicEdit());
+	}
+
+	// Magic edit opens between the formula and the buttons.
+	private toggleMagicEdit() {
+		if (this.magicEdit) {
+			this.magicEdit.close();
+			this.magicEdit.el.remove();
+			this.magicEdit = undefined;
+			return;
+		}
+		const mathfield = this.mfe;
+		const actions = this.contentEl.querySelector(".mathlive-modal-actions");
+		if (!mathfield || !(actions instanceof HTMLElement)) {
+			return;
+		}
+		const box = new MagicEditBox(this.contentEl, {
+			settings: this.plugin.settings,
+			getLatex: () => mathfield.value,
+			setLatex: (latex) => {
+				mathfield.value = latex;
+				this.renderedResult = this.resultRenderTemplate(latex);
+			},
+			isOpen: () => mathfield.isConnected,
+			busyEl: mathfield,
+		});
+		actions.before(box.el);
+		this.magicEdit = box;
+		box.focus();
 	}
 
 	private scanTarget(mathfield: MathfieldElement) {
@@ -882,6 +913,7 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
+		this.magicEdit?.close();
 		this.stopListening?.();
 		this.stopListening = undefined;
 		// Give the keyboard back to the note, or formulas there would open it inside this closed window.

@@ -25,6 +25,7 @@ import {
 	moveVirtualKeyboard,
 	showMenuBelow,
 } from "./mathlive-shared";
+import { openMagicEditPopover } from "./magic-edit";
 import type { PluginSettings } from "./settings";
 
 interface WidgetConfig {
@@ -210,8 +211,8 @@ class MathLiveWidget extends WidgetType {
 			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
 		};
 
-		// Two buttons after each formula: ✨ fills it in with AI and holds the other actions, and
-		// Expand opens the editor window.
+		// Three buttons after each formula: ✨ fills it in with AI and holds the other actions, Magic
+		// edit changes it from a typed or spoken instruction, and Expand opens the editor window.
 		// On full-line formulas they sit inside the input, beside MathLive's keyboard and ☰ buttons.
 		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
 		const addButton = (cls: string, icon: string, label: string, attr: Record<string, string> = {}) => {
@@ -231,6 +232,21 @@ class MathLiveWidget extends WidgetType {
 			event.preventDefault();
 			event.stopPropagation();
 			this.showMenu(aiButton, scanClipboardImage, scanScreenArea);
+		});
+		const magicButton = addButton("obsidian-mathlive-widget-magic-button", "wand-sparkles", "Magic edit");
+		magicButton.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			openMagicEditPopover(wrapper, {
+				settings: this.hooks.getSettings(),
+				getLatex: () => mfe.value,
+				setLatex: (latex) => {
+					mfe.value = latex;
+					dispatchChange(mfe.value);
+				},
+				isOpen: () => mfe.isConnected,
+				busyEl: mfe,
+			});
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {

@@ -106,6 +106,11 @@ export function setScanAccount(account: ScanAccount | null) {
 	scanAccount = account;
 }
 
+// For other AI features that cost a scan, like Magic edit.
+export function scanAccountHooks(): ScanAccount | null {
+	return scanAccount;
+}
+
 export async function ensureMathfieldElementRegistered(doc: Document = activeDocument) {
 	const loaded = await loadMathfieldElement();
 	registerMathliveFonts(doc);
