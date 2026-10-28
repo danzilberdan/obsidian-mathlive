@@ -26,6 +26,7 @@ import { CloudAccount } from "./account";
 import { createInlineMathEditorExtension } from "./mathlive-inline";
 import {
 	createMathfield,
+	insertIntoMathfield,
 	ensureMathfieldElementRegistered,
 	registerMathliveFonts,
 	appendLatexFromClipboardImage,
@@ -42,6 +43,7 @@ import {
 import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
 import { toMathJaxLatex } from "./mathjax-latex";
 import { endDrawSessions, openDrawWindow } from "./draw";
+import { FormulaSearchModal } from "./formula-search";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -119,6 +121,11 @@ export default class MathLivePlugin extends Plugin {
 			callback: () => this.toggleRawLatex(),
 		});
 		this.addCommand({
+			id: "find-formula",
+			name: "Find a formula",
+			callback: () => this.findFormula(),
+		});
+		this.addCommand({
 			id: "convert-pdf-to-notes",
 			name: "Convert PDF to notes",
 			callback: () => this.convertPdf(),
@@ -151,10 +158,24 @@ export default class MathLivePlugin extends Plugin {
 				);
 			})
 		);
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor) => {
+				menu.addItem((item) =>
+					item
+						.setTitle("Find a formula")
+						.setIcon("search")
+						.setSection("insert")
+						.onClick(() => this.findFormula(editor))
+				);
+			})
+		);
 		// One ✨ in the ribbon for what MathLive does anywhere in Obsidian. A formula's own ✨ has what
 		// it can do for that formula.
 		this.addRibbonIcon("sparkles", "MathLive", (event) => {
 			const menu = new Menu();
+			menu.addItem((item) =>
+				item.setTitle("Find a formula").setIcon("search").onClick(() => this.findFormula())
+			);
 			menu.addItem((item) =>
 				item.setTitle("Scan formula from screen").setIcon("scan").onClick(() => void this.scanScreenAreaIntoNote())
 			);
@@ -186,6 +207,7 @@ export default class MathLivePlugin extends Plugin {
 				openGuide: () => this.openGuide(),
 				showsRawLatex: () => this.showRawLatex,
 				drawFormula: (target) => void openDrawWindow(this.app, { settings: this.settings, target, fallback: () => this.noteScanTarget() }),
+				findFormula: (insert) => this.openFormulaSearch(insert),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -221,7 +243,29 @@ export default class MathLivePlugin extends Plugin {
 			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
 			drawFormula: () => void this.drawFormulaIntoNote(),
 			convertPdf: () => this.convertPdf(),
+			findFormula: () => this.findFormula(),
 		}).open();
+	}
+
+	// Find a formula in the library and put it at the cursor of the open note, or of `editor`.
+	findFormula(editor?: Editor) {
+		const target = editor ?? (this.app.workspace.getActiveViewOfType(MarkdownView) ?? this.lastNoteView)?.editor;
+		if (!target) {
+			new Notice("Open a note first, then find a formula to put in it.");
+			return;
+		}
+		const selection = target.getSelection().trim();
+		this.openFormulaSearch(
+			(latex) => {
+				insertScannedMath(target, latex);
+				return true;
+			},
+			selection.length <= 80 && !selection.includes("$") ? selection : ""
+		);
+	}
+
+	openFormulaSearch(insert: (latex: string) => boolean, initialQuery = "") {
+		new FormulaSearchModal(this.app, this.settings, this.account, insert, initialQuery).open();
 	}
 
 	// Converts the open PDF, or asks which one.
@@ -855,7 +899,15 @@ class MathLiveModal extends Modal {
 					next.run();
 				});
 			}
-			const guide = footer.createEl("a", { cls: "mathlive-modal-guide-link", href: "#" });
+			const links = footer.createDiv({ cls: "mathlive-modal-links" });
+			const find = links.createEl("a", { cls: "mathlive-modal-link find-formula-link", href: "#" });
+			setIcon(find.createSpan({ cls: "mathlive-btn-icon" }), "search");
+			find.createSpan({ text: "Find a formula" });
+			find.addEventListener("click", (event) => {
+				event.preventDefault();
+				this.onFindFormulaRequest();
+			});
+			const guide = links.createEl("a", { cls: "mathlive-modal-link mathlive-modal-guide-link", href: "#" });
 			setIcon(guide.createSpan({ cls: "mathlive-btn-icon" }), "compass");
 			guide.createSpan({ text: "Learn what MathLive can do" });
 			guide.addEventListener("click", (event) => {
@@ -975,6 +1027,23 @@ class MathLiveModal extends Modal {
 
 		await appendLatexFromClipboardImage(this.scanTarget(this.mfe), () => {
 			void this.onScreenScanRequest();
+		});
+	}
+
+	// Puts a formula from the library at the cursor in this window's formula.
+	onFindFormulaRequest() {
+		const mathfield = this.mfe;
+		if (!mathfield) {
+			return;
+		}
+		this.plugin.openFormulaSearch((latex) => {
+			if (!mathfield.isConnected) {
+				return false;
+			}
+			insertIntoMathfield(mathfield, latex);
+			this.renderedResult = this.resultRenderTemplate(mathfield.value);
+			this.focusFormulaWhenShown();
+			return true;
 		});
 	}
 

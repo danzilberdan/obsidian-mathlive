@@ -25,6 +25,7 @@ import {
 	createMathfield,
 	moveVirtualKeyboard,
 	showMenuBelow,
+	insertIntoMathfield,
 } from "./mathlive-shared";
 import { openMagicEditPopover } from "./magic-edit";
 import { toMathJaxLatex } from "./mathjax-latex";
@@ -61,6 +62,8 @@ export interface WidgetHooks {
 	showsRawLatex: () => boolean;
 	// Opens Draw formula for this target.
 	drawFormula: (target: ScanTarget) => void;
+	// Opens Find a formula; `insert` puts the picked one in place and says whether it could.
+	findFormula: (insert: (latex: string) => boolean) => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -217,6 +220,17 @@ class MathLiveWidget extends WidgetType {
 			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
 		};
 		const drawFormula = () => this.hooks.drawFormula(mathfieldScanTarget(scanOptions()));
+		const findFormula = () => {
+			this.hooks.findFormula((latex) => {
+				if (!mfe.isConnected) {
+					return false;
+				}
+				insertIntoMathfield(mfe, latex);
+				dispatchChange(mfe.value);
+				refocusMathfield();
+				return true;
+			});
+		};
 
 		// Three buttons after each formula: ✨ fills it in with AI and holds the other actions, Magic
 		// edit changes it from a typed or spoken instruction, and Expand opens the editor window.
@@ -238,7 +252,7 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			this.showMenu(aiButton, scanClipboardImage, scanScreenArea, drawFormula);
+			this.showMenu(aiButton, scanClipboardImage, scanScreenArea, drawFormula, findFormula);
 		});
 		const magicButton = addButton("obsidian-mathlive-widget-magic-button", "wand-sparkles", "Magic edit");
 		magicButton.addEventListener("click", (event) => {
@@ -388,10 +402,12 @@ class MathLiveWidget extends WidgetType {
 		button: HTMLElement,
 		scanClipboardImage: () => void,
 		scanScreenArea: () => void,
-		drawFormula: () => void
+		drawFormula: () => void,
+		findFormula: () => void
 	) {
 		const accountItem = this.hooks.accountAction();
 		const menu = new Menu();
+		menu.addItem((item) => item.setTitle("Find a formula").setIcon("search").onClick(findFormula));
 		menu.addItem((item) =>
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
 		);

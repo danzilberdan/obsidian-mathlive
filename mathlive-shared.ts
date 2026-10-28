@@ -675,6 +675,15 @@ export interface ScanTarget {
 	busyEl?: HTMLElement;
 }
 
+// Puts a formula at the cursor of a math field, or replaces it when the field is empty.
+export function insertIntoMathfield(mathfield: MathfieldElement, latex: string) {
+	if (!mathfield.value.trim()) {
+		mathfield.value = latex;
+		return;
+	}
+	mathfield.insert(latex, { insertionMode: "insertAfter", selectionMode: "after", format: "latex" });
+}
+
 export function mathfieldScanTarget(options: {
 	settings: PluginSettings;
 	mathfield: MathfieldElement;

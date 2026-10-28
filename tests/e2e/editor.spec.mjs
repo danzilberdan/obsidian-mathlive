@@ -33,7 +33,7 @@ test.describe("formulas in the note", () => {
 			bodyClasses: [...document.body.classList].filter((name) => name.startsWith("mathlive-")),
 			fonts: [...document.fonts].filter((font) => font.family.startsWith("KaTeX")).length,
 		}));
-		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:draw-formula", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
+		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:draw-formula", "mathlive:find-formula", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
 		expect(state.bodyClasses).toEqual(
 			expect.arrayContaining(["mathlive-inline-widgets-active", "mathlive-block-widgets-active"])
 		);
@@ -196,6 +196,7 @@ test.describe("formulas in the note", () => {
 		const menu = await openWidgetMenu(page, widget);
 		await expect(trigger).toHaveAttribute("aria-expanded", "true");
 		await expect(menu.locator(".menu-item-title")).toHaveText([
+			"Find a formula",
 			"Scan clipboard image",
 			"Scan from screen",
 			"Draw formula",
@@ -338,6 +339,7 @@ test.describe("formulas in the note", () => {
 			"Edit formulas as you see them",
 			"Add a formula",
 			"AI fill: scan a formula instead of typing it",
+			"Find a formula",
 			"Draw a formula",
 			"Magic edit: say what to change",
 			"Expand for a bigger editor",

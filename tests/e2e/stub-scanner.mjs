@@ -2,6 +2,9 @@
 // "unauthorized" gets 401, "server-error" gets 500, "flaky" gets 503 on its first request only,
 // "no-scans-left" and "no-math" get the cloud scanner's coded errors, "slow" gets LaTeX after 3 s,
 // anything else gets LaTeX at once.
+// The formula library: a search with "gas" in it finds the ideal gas law, "down" gets 503, and
+// anything else finds nothing; writing with AI answers WRITTEN, or no_formula for "banana", or
+// no_scans_left for that key.
 // It also stands in for the cloud scanner's account endpoints: trials, connecting a device
 // (approve a challenge with `approve`), disconnecting and the account status.
 // /pages/ answers a page as Markdown, and a blank page (a tiny PNG) as blank. "old-scanner" gets
@@ -16,6 +19,8 @@ import zlib from "node:zlib";
 
 export const SCANNED_LATEX = "\\sqrt[3]{x}";
 export const DRAWN_LATEX = "\\frac{1}{2}";
+export const IDEAL_GAS = { id: "Q190175", name: "Ideal gas law", latex: "PV = nRT", description: "Relates the pressure, volume and temperature of an ideal gas.", topic: "Gas laws" };
+export const WRITTEN = { name: "Black–Scholes equation", latex: "\\frac{\\partial V}{\\partial t} + r S \\frac{\\partial V}{\\partial S} = r V" };
 export const PAGE_MARKDOWN = "## Circles\n\nThe area is $A = \\pi r^2$.";
 
 // The width and height of the first PNG in a request body.
@@ -98,8 +103,27 @@ export function startStubScanner(port = 8502) {
 				res.writeHead(status, { "Content-Type": "application/json" });
 				res.end(JSON.stringify(payload));
 			};
+			const url = new URL(req.url, "http://stub");
 			if (req.url.startsWith("/draw/sessions")) {
 				draw.handle(req, body, apiKey, reply);
+			} else if (req.method === "GET" && url.pathname === "/formulas/search") {
+				const q = url.searchParams.get("q") ?? "";
+				if (q.includes("down")) {
+					reply(503, { detail: "The formula library isn't available right now.", code: "formulas_unavailable" });
+				} else {
+					reply(200, { results: q.toLowerCase().includes("gas") ? [IDEAL_GAS] : [] });
+				}
+			} else if (req.method === "POST" && url.pathname === "/formulas/write") {
+				const { query } = JSON.parse(body.toString() || "{}");
+				if (!apiKey) {
+					reply(401, { detail: "No API key found", code: "missing_api_key" });
+				} else if (apiKey === "no-scans-left") {
+					reply(400, { detail: "No scans left.", code: "no_scans_left" });
+				} else if (String(query).includes("banana")) {
+					reply(422, { detail: "That doesn't look like a formula MathLive can write. Try its name, like \"ideal gas law\". Nothing was charged.", code: "no_formula" });
+				} else {
+					reply(200, WRITTEN);
+				}
 			} else if (req.method === "GET" && req.url === "/access-status" && apiKey === "two-pages-left") {
 				reply(200, {
 					hasUnlimitedAccess: true,
