@@ -38,6 +38,7 @@
 		"@codemirror/language": "^6.13.1",
 		"@codemirror/state": "^6.6.0",
 		"@codemirror/view": "^6.41.0",
+		"@cortex-js/compute-engine": "0.30.2",
 		"mathlive": "^0.111.1"
 	}
 }

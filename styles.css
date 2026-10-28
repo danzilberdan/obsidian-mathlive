@@ -635,3 +635,118 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 .mathlive-pdf-cost {
 	color: var(--text-muted);
 }
+
+/* Check my steps panel */
+.mathlive-check-hint,
+.mathlive-check-file {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.mathlive-check-summary {
+	margin: var(--size-4-2, 8px) 0;
+	font-weight: var(--font-semibold, 600);
+}
+
+.mathlive-check-summary.is-wrong {
+	color: var(--text-error);
+}
+
+.mathlive-check-summary.is-ok {
+	color: var(--text-success);
+}
+
+.mathlive-check-summary.is-unsure {
+	color: var(--text-warning);
+}
+
+.mathlive-check-busy {
+	color: var(--text-muted);
+}
+
+.mathlive-check-stale {
+	margin-bottom: var(--size-4-2, 8px);
+	color: var(--text-warning);
+	font-size: var(--font-ui-small);
+}
+
+.mathlive-check-steps {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mathlive-check-step {
+	display: flex;
+	gap: var(--size-4-2, 8px);
+	align-items: flex-start;
+	padding: var(--size-4-2, 8px) 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mathlive-check-step.is-after-error {
+	opacity: 0.6;
+}
+
+.mathlive-check-mark {
+	display: flex;
+	flex: none;
+	color: var(--text-faint);
+}
+
+.mathlive-check-step.is-ok .mathlive-check-mark {
+	color: var(--text-success);
+}
+
+.mathlive-check-step.is-wrong .mathlive-check-mark {
+	color: var(--text-error);
+}
+
+.mathlive-check-step.is-unsure .mathlive-check-mark {
+	color: var(--text-warning);
+}
+
+.mathlive-check-body {
+	flex: 1;
+	min-width: 0;
+	overflow-x: auto;
+}
+
+.mathlive-check-math {
+	cursor: pointer;
+}
+
+.mathlive-check-math p,
+.mathlive-check-fix p {
+	margin: 0;
+}
+
+.mathlive-check-reason {
+	margin-top: var(--size-4-1, 4px);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.mathlive-check-ai {
+	margin-left: var(--size-4-1, 4px);
+	padding: 0 var(--size-4-1, 4px);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s, 4px);
+	font-size: var(--font-ui-smaller);
+}
+
+.mathlive-check-fix {
+	display: flex;
+	gap: var(--size-4-1, 4px);
+	align-items: baseline;
+	margin-top: var(--size-4-1, 4px);
+	font-size: var(--font-ui-small);
+}
+
+.mathlive-check-fix-label {
+	color: var(--text-muted);
+}
+
+.mathlive-check-insert {
+	margin-top: var(--size-4-2, 8px);
+}

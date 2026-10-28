@@ -55,6 +55,8 @@ export interface WidgetHooks {
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 	openGuide: () => void;
 	convertPdf: () => void;
+	// Checks the steps of the $$ block that starts at the position.
+	checkSteps: (view: EditorView, position: number) => void;
 }
 
 class MathLiveWidget extends WidgetType {
@@ -229,7 +231,8 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			void this.showMenu(aiButton, mfe, scanClipboardImage, scanScreenArea);
+			const from = Number.parseInt(mfe.dataset.from ?? `${this.config.from}`, 10);
+			void this.showMenu(aiButton, mfe, scanClipboardImage, scanScreenArea, () => this.hooks.checkSteps(view, from));
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -357,7 +360,8 @@ class MathLiveWidget extends WidgetType {
 		button: HTMLElement,
 		mfe: MathfieldElement,
 		scanClipboardImage: () => void,
-		scanScreenArea: () => void
+		scanScreenArea: () => void,
+		checkSteps: () => void
 	) {
 		const accountItem = await this.getAccountItem();
 		const menu = new Menu();
@@ -370,6 +374,10 @@ class MathLiveWidget extends WidgetType {
 		menu.addItem((item) =>
 			item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.hooks.convertPdf())
 		);
+		// A block formula with several lines is a derivation to check.
+		if (!this.isInline && /\\\\/.test(mfe.value)) {
+			menu.addItem((item) => item.setTitle("Check my steps").setIcon("list-checks").onClick(checkSteps));
+		}
 		menu.addSeparator();
 		menu.addItem((item) =>
 			item

@@ -29,6 +29,10 @@ module.exports = {
           exclude: /node_modules/,
         },
         {
+            test: /compute-engine\.esm\.js$/,
+            loader: __dirname + "/scripts/no-dynamic-code-loader.js",
+        },
+        {
             test: /\.css$/,
             loader: "css-loader",
         },
@@ -40,6 +44,10 @@ module.exports = {
     },
     resolve: {
         extensions: [".js", ".jsx", ".json", ".ts"],
+        alias: {
+          // Its "browser" build is UMD, which webpack can't import by name.
+          "@cortex-js/compute-engine$": __dirname + "/node_modules/@cortex-js/compute-engine/dist/compute-engine.esm.js",
+        },
     },
     externals: {
       obsidian: "commonjs obsidian",

@@ -35,6 +35,7 @@ import {
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
+import { canCheck, checkSteps, CHECK_VIEW_TYPE, CheckStepsView } from "./check-panel";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -100,6 +101,33 @@ export default class MathLivePlugin extends Plugin {
 			name: "Convert PDF to notes",
 			callback: () => this.convertPdf(),
 		});
+		this.registerView(CHECK_VIEW_TYPE, (leaf) => new CheckStepsView(leaf));
+		this.addCommand({
+			id: "check-steps",
+			name: "Check my steps",
+			editorCheckCallback: (checking, editor, view) => {
+				if (!(view instanceof MarkdownView)) {
+					return false;
+				}
+				if (!checking) {
+					void this.checkSteps(view);
+				}
+				return true;
+			},
+		});
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor, view) => {
+				if (!(view instanceof MarkdownView) || !canCheck(editor)) {
+					return;
+				}
+				menu.addItem((item) =>
+					item
+						.setTitle("Check my steps")
+						.setIcon("list-checks")
+						.onClick(() => void this.checkSteps(view))
+				);
+			})
+		);
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
 				if (!isPdf(file)) {
@@ -136,6 +164,7 @@ export default class MathLivePlugin extends Plugin {
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
 				convertPdf: () => this.convertPdf(),
+				checkSteps: (view, position) => this.checkStepsAt(view, position),
 			})
 		);
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
@@ -166,6 +195,22 @@ export default class MathLivePlugin extends Plugin {
 			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
 			convertPdf: () => this.convertPdf(),
 		}).open();
+	}
+
+	// Marks the first step of a derivation that doesn't follow, in a side panel.
+	checkSteps(view: MarkdownView) {
+		return checkSteps({ app: this.app, settings: this.settings, account: this.account }, view);
+	}
+
+	// From a formula's ✨ menu: checks the $$ block the formula is in.
+	private checkStepsAt(view: EditorView, position: number) {
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			if (leaf.view instanceof MarkdownView && leaf.view.containerEl.contains(view.dom)) {
+				const note = leaf.view;
+				note.editor.setCursor(note.editor.offsetToPos(position + 2));
+				void this.checkSteps(note);
+			}
+		});
 	}
 
 	// Converts the open PDF, or asks which one.

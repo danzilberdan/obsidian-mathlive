@@ -1,6 +1,7 @@
 // A stand-in for the scanner's /predict/ endpoint. It records each request and answers by API key:
 // "unauthorized" gets 401, "server-error" gets 500, "flaky" gets 503 on its first request only,
-// "no-scans-left" and "no-math" get the cloud scanner's coded errors, "slow" gets LaTeX after 3 s,
+// "no-scans-left" and "no-math" get the cloud scanner's coded errors (also on /check, where
+// "check-down" gets 503), "slow" gets LaTeX after 3 s,
 // anything else gets LaTeX at once.
 // It also stands in for the cloud scanner's account endpoints: trials, connecting a device
 // (approve a challenge with `approve`), disconnecting and the account status.
@@ -13,6 +14,18 @@ import zlib from "node:zlib";
 
 export const SCANNED_LATEX = "\\sqrt[3]{x}";
 export const PAGE_MARKDOWN = "## Circles\n\nThe area is $A = \\pi r^2$.";
+
+// /check calls a step wrong when it has "+ 8" (the fix is "+ 10") or ends in "= 2x + 2", which is
+// right, so the plugin's Compute Engine double check should overrule the AI there.
+function checkStep({ latex }) {
+	if (latex.includes("+ 8")) {
+		return { verdict: "wrong", reason: "The constant should be 9 + 1 = 10.", fix: latex.replace("+ 8", "+ 10") };
+	}
+	if (/= 2x \+ 2$/.test(latex)) {
+		return { verdict: "wrong", reason: "Stub says wrong.", fix: "= 2x" };
+	}
+	return { verdict: "ok", reason: "", fix: "" };
+}
 
 // The width and height of the first PNG in a request body.
 function pngSize(body) {
@@ -87,6 +100,7 @@ export function startStubScanner(port = 8502) {
 				hasPng: body.includes(Buffer.from([0x89, 0x50, 0x4e, 0x47])),
 				pngSize: pngSize(body),
 				bytes: body.length,
+				json: req.headers["content-type"]?.includes("json") ? JSON.parse(body.toString() || "null") : null,
 			});
 
 			const reply = (status, payload) => {
@@ -119,6 +133,14 @@ export function startStubScanner(port = 8502) {
 					reply(200, { markdown: "", blank: true });
 				} else {
 					reply(200, { markdown: PAGE_MARKDOWN });
+				}
+			} else if (req.method === "POST" && req.url === "/check") {
+				if (apiKey === "no-scans-left") {
+					reply(402, { detail: "No scans left.", code: "no_scans_left" });
+				} else if (apiKey === "check-down") {
+					reply(503, { detail: "Couldn't check these steps right now.", code: "check_failed" });
+				} else {
+					reply(200, { steps: (JSON.parse(body.toString()).steps ?? []).map(checkStep) });
 				}
 			} else if (req.url === "/trial" && req.method === "POST") {
 				if (account.trialAvailable) {
