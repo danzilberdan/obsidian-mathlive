@@ -109,7 +109,7 @@ test.describe("Magic edit", () => {
 		expect(await noteLine(page, "Inline math")).toBe("Inline math $x^2 + y^2 = z^2$ in a sentence.");
 	});
 
-	test("works in the editor window", async ({ page }) => {
+	test("works in the editor window, floating over it", async ({ page }) => {
 		await page.evaluate(() => {
 			const editor = window.app.workspace.activeEditor.editor;
 			const line = editor.getValue().split("\n").findIndex((text) => text.startsWith("Last line"));
@@ -118,14 +118,29 @@ test.describe("Magic edit", () => {
 		});
 		await runCommand(page, "mathlive:open-modal-inline");
 		await waitForModalField(page);
-		await page.locator(".modal").getByRole("button", { name: "Magic edit" }).click();
-		const box = page.locator(".modal .mathlive-magic-edit");
+		const modal = page.locator(".modal");
+		const size = await modal.boundingBox();
+		await modal.getByRole("button", { name: "Magic edit" }).click();
+		const box = modal.locator(".mathlive-magic-edit-popover");
 		await expect(box.locator("input")).toBeFocused();
+		// It floats: the window keeps its size.
+		expect(await modal.boundingBox()).toEqual(size);
+		const field = await modalField(page).boundingBox();
+		expect((await box.boundingBox()).y).toBeGreaterThanOrEqual(field.y + field.height);
 		await box.locator("input").fill("square it");
 		await box.locator("input").press("Enter");
 		await expect(box.locator(".mathlive-magic-edit-status")).toContainText("Done.");
 		await expect(modalField(page)).toHaveJSProperty("value", "\\left(\\alpha + \\beta\\right)^2");
 
+		// A click elsewhere in the window closes it, and so does Escape, which leaves the window open.
+		await modal.locator(".mathlive-modal-title").click();
+		await expect(box).toHaveCount(0);
+		await modal.getByRole("button", { name: "Magic edit" }).click();
+		await box.locator("input").press("Escape");
+		await expect(box).toHaveCount(0);
+		await expect(modalField(page)).toHaveCount(1);
+
+		await modalField(page).focus();
 		await page.keyboard.press("Control+Enter");
 		await expect(modalField(page)).toHaveCount(0);
 		await expect.poll(() => noteLine(page, "Last line")).toBe("Last line $\\left(\\alpha + \\beta\\right)^2$ done.");

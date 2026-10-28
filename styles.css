@@ -678,16 +678,17 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
   background: var(--background-primary);
 }
 
-.mathlive-modal-content .mathlive-magic-edit {
-  margin-top: 0.75rem;
-}
-
 .mathlive-magic-edit-popover {
   position: fixed;
   top: var(--mathlive-magic-top, 40px);
   left: var(--mathlive-magic-left, 8px);
   z-index: var(--layer-popover, 30);
   width: var(--mathlive-magic-width, 420px);
+}
+
+/* In the editor window it floats inside the window, over the buttons, and leaves its size alone. */
+.mathlive-magic-edit-popover.is-inside {
+  position: absolute;
 }
 
 .mathlive-magic-edit-popover .mathlive-magic-edit {

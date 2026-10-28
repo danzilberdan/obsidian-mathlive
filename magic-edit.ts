@@ -241,7 +241,6 @@ export class MagicEditBox {
 			attr: {
 				type: "text",
 				placeholder: PLACEHOLDER,
-				"aria-label": "What to change",
 				enterkeyhint: "go",
 			},
 		});
@@ -292,6 +291,15 @@ export class MagicEditBox {
 
 	focus() {
 		this.input.focus();
+	}
+
+	// Closes the box the way Escape does.
+	dismiss() {
+		if (this.onClose) {
+			this.onClose();
+		} else {
+			this.close();
+		}
 	}
 
 	// Stops listening. The box can be thrown away afterwards.
@@ -476,22 +484,34 @@ export class MagicEditBox {
 	}
 }
 
-// Opens Magic edit in a box under `anchor`, such as a formula in a note. Closes on Escape or a
-// click outside it, and when the formula goes away.
-export function openMagicEditPopover(anchor: HTMLElement, target: MagicEditTarget): MagicEditBox {
+// Opens Magic edit in a box floating under `anchor`, such as a formula in a note. Closes on Escape
+// or a click outside it (or on `trigger`, the button that opened it), and when the formula goes
+// away. With `host`, such as the editor window, the box floats inside it so it belongs to that
+// window and never changes its size.
+export function openMagicEditPopover(
+	anchor: HTMLElement,
+	target: MagicEditTarget,
+	options: { host?: HTMLElement; trigger?: HTMLElement; onClose?: () => void } = {}
+): MagicEditBox {
 	const doc = anchor.doc;
+	const { host, trigger } = options;
 	doc.querySelectorAll(".mathlive-magic-edit-popover").forEach((open) => open.dispatchEvent(new CustomEvent("mathlive-close")));
-	const popover = doc.body.createDiv({ cls: "mathlive-magic-edit-popover" });
+	const popover = (host ?? doc.body).createDiv({ cls: "mathlive-magic-edit-popover" });
+	popover.toggleClass("is-inside", Boolean(host));
 	let box: MagicEditBox | null = null;
 	const close = () => {
+		if (!popover.isConnected) {
+			return;
+		}
 		box?.close();
 		popover.remove();
 		doc.removeEventListener("mousedown", onOutside, true);
 		doc.win.removeEventListener("resize", close);
+		options.onClose?.();
 	};
 	const onOutside = (event: MouseEvent) => {
 		const clicked = event.target;
-		if (clicked instanceof Node && (popover.contains(clicked) || anchor.contains(clicked))) {
+		if (clicked instanceof Node && (popover.contains(clicked) || anchor.contains(clicked) || trigger?.contains(clicked))) {
 			return;
 		}
 		close();
@@ -500,10 +520,16 @@ export function openMagicEditPopover(anchor: HTMLElement, target: MagicEditTarge
 	popover.addEventListener("mathlive-close", close);
 
 	const rect = anchor.getBoundingClientRect();
-	const width = Math.min(420, doc.documentElement.clientWidth - 16);
-	const left = Math.max(8, Math.min(rect.left, doc.documentElement.clientWidth - width - 8));
-	const below = rect.bottom + 6;
-	const top = below + 90 > doc.documentElement.clientHeight ? Math.max(8, rect.top - 96) : below;
+	const frame = host?.getBoundingClientRect() ?? {
+		left: 0,
+		top: 0,
+		width: doc.documentElement.clientWidth,
+		height: doc.documentElement.clientHeight,
+	};
+	const width = Math.min(420, frame.width - 16);
+	const left = Math.max(8, Math.min(rect.left - frame.left, frame.width - width - 8));
+	const below = rect.bottom - frame.top + 6;
+	const top = below + 90 > frame.height ? Math.max(8, rect.top - frame.top - 96) : below;
 	popover.setCssProps({
 		"--mathlive-magic-left": `${left}px`,
 		"--mathlive-magic-top": `${top}px`,

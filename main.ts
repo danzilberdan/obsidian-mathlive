@@ -4,6 +4,7 @@ import {
 	type EditorPosition,
 	Modal,
 	Platform,
+	Scope,
 	Plugin,
 	PluginSettingTab,
 	Setting,
@@ -36,7 +37,7 @@ import {
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
-import { MagicEditBox } from "./magic-edit";
+import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -838,6 +839,7 @@ class MathLiveModal extends Modal {
 			});
 			setIcon(button.createSpan({ cls: "mathlive-btn-icon" }), icon);
 			button.addEventListener("click", onClick);
+			return button;
 		};
 		addButton("scan-button", "image-plus", "Scan clipboard image", () => {
 			void this.onImageScanRequest();
@@ -845,35 +847,48 @@ class MathLiveModal extends Modal {
 		addButton("scan-screen-button", "scan", "Scan from screen", () => {
 			void this.onScreenScanRequest();
 		});
-		addButton("magic-edit-button", "wand-sparkles", "Magic edit", () => this.toggleMagicEdit());
+		const magic = addButton("magic-edit-button", "wand-sparkles", "Magic edit", () => this.toggleMagicEdit(magic));
 	}
 
-	// Magic edit opens between the formula and the buttons.
-	private toggleMagicEdit() {
+	// Magic edit floats over the window, under the formula, like it does in a note, so the window
+	// keeps its size. The button opens and closes it.
+	private toggleMagicEdit(button: HTMLElement) {
 		if (this.magicEdit) {
-			this.magicEdit.close();
-			this.magicEdit.el.remove();
-			this.magicEdit = undefined;
+			this.magicEdit.dismiss();
 			return;
 		}
 		const mathfield = this.mfe;
-		const actions = this.contentEl.querySelector(".mathlive-modal-actions");
-		if (!mathfield || !(actions instanceof HTMLElement)) {
+		if (!mathfield) {
 			return;
 		}
-		const box = new MagicEditBox(this.contentEl, {
-			settings: this.plugin.settings,
-			getLatex: () => mathfield.value,
-			setLatex: (latex) => {
-				mathfield.value = latex;
-				this.renderedResult = this.resultRenderTemplate(latex);
+		this.magicEdit = openMagicEditPopover(
+			mathfield,
+			{
+				settings: this.plugin.settings,
+				getLatex: () => mathfield.value,
+				setLatex: (latex) => {
+					mathfield.value = latex;
+					this.renderedResult = this.resultRenderTemplate(latex);
+				},
+				isOpen: () => mathfield.isConnected,
+				busyEl: mathfield,
 			},
-			isOpen: () => mathfield.isConnected,
-			busyEl: mathfield,
+			{
+				host: this.modalEl,
+				trigger: button,
+				onClose: () => {
+					this.magicEdit = undefined;
+					this.app.keymap.popScope(escape);
+				},
+			}
+		);
+		// Escape closes the box first, then the window.
+		const escape = new Scope(this.scope);
+		escape.register([], "Escape", () => {
+			this.magicEdit?.dismiss();
+			return false;
 		});
-		actions.before(box.el);
-		this.magicEdit = box;
-		box.focus();
+		this.app.keymap.pushScope(escape);
 	}
 
 	private scanTarget(mathfield: MathfieldElement) {
@@ -913,7 +928,7 @@ class MathLiveModal extends Modal {
 	}
 
 	onClose() {
-		this.magicEdit?.close();
+		this.magicEdit?.dismiss();
 		this.stopListening?.();
 		this.stopListening = undefined;
 		// Give the keyboard back to the note, or formulas there would open it inside this closed window.
