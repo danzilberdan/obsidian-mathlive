@@ -3,7 +3,7 @@ import obsidianmd from "eslint-plugin-obsidianmd";
 
 export default defineConfig([
 	{
-		ignores: ["main.js", "node_modules/", "dist/", "*.config.js", "*.mjs", "scripts/", "tests/", "video/", "build-banner.js"],
+		ignores: ["main.js", "node_modules/", "dist/", "*.config.js", "*.mjs", "scripts/", "tests/", "build-banner.js"],
 	},
 	...obsidianmd.configs.recommended,
 	{
