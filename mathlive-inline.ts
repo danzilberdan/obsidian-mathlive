@@ -26,6 +26,7 @@ import {
 	showMenuBelow,
 } from "./mathlive-shared";
 import { openMagicEditPopover } from "./magic-edit";
+import { toMathJaxLatex } from "./mathjax-latex";
 import type { PluginSettings } from "./settings";
 
 interface WidgetConfig {
@@ -164,7 +165,9 @@ class MathLiveWidget extends WidgetType {
 		mfe: MathfieldElement,
 		view: EditorView
 	) {
-		const dispatchChange = (newValue: string) => {
+		// The note gets LaTeX that Obsidian's MathJax can draw.
+		const dispatchChange = (value: string) => {
+			const newValue = toMathJaxLatex(value);
 			const from = Number.parseInt(mfe.dataset.from ?? "", 10);
 			const to = Number.parseInt(mfe.dataset.to ?? "", 10);
 			if (Number.isNaN(from) || Number.isNaN(to)) {
@@ -258,7 +261,7 @@ class MathLiveWidget extends WidgetType {
 
 		if (this.hooks.getSettings().immediateInlineUpdate) {
 			mfe.addEventListener("input", () => {
-				if (this.equation !== mfe.value) {
+				if (this.equation !== toMathJaxLatex(mfe.value)) {
 					dispatchChange(mfe.value);
 				}
 			});
@@ -272,9 +275,8 @@ class MathLiveWidget extends WidgetType {
 					return;
 				}
 
-				const newValue = mfe.value;
-				if (newValue !== this.equation) {
-					dispatchChange(newValue);
+				if (toMathJaxLatex(mfe.value) !== this.equation) {
+					dispatchChange(mfe.value);
 				}
 				mfe.dataset.hasUnsavedChanges = "false";
 			});
@@ -295,7 +297,11 @@ class MathLiveWidget extends WidgetType {
 		mfe.addEventListener("focus", () => {
 			// The keyboard opens in the window this formula is in.
 			moveVirtualKeyboard(mfe.doc.body);
-			updateEditingBodyClass(mfe.doc, this.isInline, true);
+			// Hides Obsidian's drawing of formulas while one is edited, which only the formulas that
+			// are editable all the time need.
+			if (!this.hooks.getSettings().editOnlyAtCursor) {
+				updateEditingBodyClass(mfe.doc, this.isInline, true);
+			}
 		});
 
 		mfe.addEventListener("blur", () => {
@@ -674,6 +680,14 @@ function sourceRange(range: MathRange, doc: Text): { from: number; to: number } 
 	return { from, to };
 }
 
+// Whether the cursor is in a formula or right next to it, on its $ or $$.
+function hasCursorIn(state: Transaction["state"], range: MathRange): boolean {
+	const delimiter = range.isInline ? 1 : 2;
+	return state.selection.ranges.some(
+		(selection) => selection.head >= range.from - delimiter && selection.head <= range.to + delimiter
+	);
+}
+
 function buildDecorations(state: Transaction["state"], hooks: WidgetHooks): DecorationSet {
 	const builder = new RangeSetBuilder<Decoration>();
 	const settings = hooks.getSettings();
@@ -685,6 +699,9 @@ function buildDecorations(state: Transaction["state"], hooks: WidgetHooks): Deco
 	// is more reliable here than matching syntax-tree node names.
 	for (const range of collectMathRangesFromDoc(state.doc.toString())) {
 		if (!(range.isInline ? settings.enableInlineMathWidgets : settings.enableBlockMathWidgets)) {
+			continue;
+		}
+		if (settings.editOnlyAtCursor && !hasCursorIn(state, range)) {
 			continue;
 		}
 		const equation = state.sliceDoc(range.from, range.to);

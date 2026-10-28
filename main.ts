@@ -34,10 +34,13 @@ import {
 	scanScreenAreaInto,
 	setScanAccount,
 	type ScanTarget,
+	releaseVirtualKeyboardFrom,
+	styleVirtualKeyboardInPopout,
 	moveVirtualKeyboard,
 	parseMathSelection,
 } from "./mathlive-shared";
 import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
+import { toMathJaxLatex } from "./mathjax-latex";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
@@ -62,6 +65,8 @@ export default class MathLivePlugin extends Plugin {
 
 	async onload() {
 		await ensureMathfieldElementRegistered();
+		window.mathVirtualKeyboard.addEventListener("virtual-keyboard-toggle", styleVirtualKeyboardInPopout);
+		this.register(() => window.mathVirtualKeyboard.removeEventListener("virtual-keyboard-toggle", styleVirtualKeyboardInPopout));
 		await this.loadSettings();
 		this.account = new CloudAccount(this);
 		setScanAccount(this.account);
@@ -176,6 +181,11 @@ export default class MathLivePlugin extends Plugin {
 			this.app.workspace.on("window-open", (workspaceWindow) => {
 				registerMathliveFonts(workspaceWindow.doc);
 				this.updateMathJaxVisibility();
+			})
+		);
+		this.registerEvent(
+			this.app.workspace.on("window-close", (workspaceWindow) => {
+				releaseVirtualKeyboardFrom(workspaceWindow.doc, this.app.workspace.containerEl.doc.body);
 			})
 		);
 		this.updateMathJaxVisibility();
@@ -333,7 +343,10 @@ export default class MathLivePlugin extends Plugin {
 	}
 
 	updateMathJaxVisibility() {
-		const editorOn = this.settings.enableInlineEditorMode && !this.showRawLatex;
+		// With formulas editable only at the cursor, Obsidian's drawing of the others stays, and a
+		// click on one puts the cursor in it.
+		const editorOn =
+			this.settings.enableInlineEditorMode && !this.showRawLatex && !this.settings.editOnlyAtCursor;
 		// While MathLive inline widgets are on, Obsidian's inline MathJax must not sit above them in
 		// the hit-testing stack — the first click would hit mjx, exit math-edit state, and remove the widget.
 		const hideInlineInEditor =
@@ -540,6 +553,11 @@ export class MathliveSettingTab extends PluginSettingTab {
 					desc: "Use arrow keys at math boundaries to enter or exit MathLive widgets.",
 					addControl: toggle("arrowKeyNavigation"),
 				},
+				{
+					name: "Edit only the formula at the cursor",
+					desc: "Formulas look like the rest of your note until the cursor is in one. Then that formula gets a MathLive editor next to it. Click a formula or move the cursor into it to edit it.",
+					addControl: toggle("editOnlyAtCursor"),
+				},
 			],
 		},
 		{
@@ -711,7 +729,7 @@ class MathLiveModal extends Modal {
 			inline: this.inline,
 			id: "mathlive-modal-field",
 			onInput: (value) => {
-				this.renderedResult = resultRenderTemplate(value);
+				this.renderedResult = resultRenderTemplate(toMathJaxLatex(value));
 			},
 		});
 		// Inline-math mode doesn't scroll long formulas in the modal (#21). The note still gets
@@ -868,7 +886,7 @@ class MathLiveModal extends Modal {
 				getLatex: () => mathfield.value,
 				setLatex: (latex) => {
 					mathfield.value = latex;
-					this.renderedResult = this.resultRenderTemplate(latex);
+					this.renderedResult = this.resultRenderTemplate(toMathJaxLatex(latex));
 				},
 				isOpen: () => mathfield.isConnected,
 				busyEl: mathfield,
@@ -896,7 +914,7 @@ class MathLiveModal extends Modal {
 			settings: this.plugin.settings,
 			mathfield,
 			onValueChange: (value: string) => {
-				this.renderedResult = this.resultRenderTemplate(value);
+				this.renderedResult = this.resultRenderTemplate(toMathJaxLatex(value));
 			},
 		};
 	}
@@ -950,7 +968,8 @@ class MathLiveModal extends Modal {
 
 // Puts scanned LaTeX at the cursor: as a math block on an empty line, as inline math in text,
 // and as it is inside a formula that's already there.
-function insertScannedMath(editor: Editor, latex: string) {
+function insertScannedMath(editor: Editor, scanned: string) {
+	const latex = toMathJaxLatex(scanned);
 	const cursor = editor.getCursor();
 	const offset = editor.posToOffset(cursor);
 	let text: string;
