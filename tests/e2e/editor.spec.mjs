@@ -33,7 +33,7 @@ test.describe("formulas in the note", () => {
 			bodyClasses: [...document.body.classList].filter((name) => name.startsWith("mathlive-")),
 			fonts: [...document.fonts].filter((font) => font.family.startsWith("KaTeX")).length,
 		}));
-		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
+		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:draw-formula", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
 		expect(state.bodyClasses).toEqual(
 			expect.arrayContaining(["mathlive-inline-widgets-active", "mathlive-block-widgets-active"])
 		);
@@ -198,6 +198,7 @@ test.describe("formulas in the note", () => {
 		await expect(menu.locator(".menu-item-title")).toHaveText([
 			"Scan clipboard image",
 			"Scan from screen",
+			"Draw formula",
 			"What MathLive can do",
 			"Connect",
 		]);
@@ -250,7 +251,7 @@ test.describe("formulas in the note", () => {
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await expect(menuItem(page, "What MathLive can do")).toBeVisible();
 		await expect(menuItem(page, "Connect")).toHaveCount(0);
-		await expect(page.locator(".menu .menu-item")).toHaveCount(3);
+		await expect(page.locator(".menu .menu-item")).toHaveCount(4);
 	});
 
 	test("block formulas show AI fill, Magic edit and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
@@ -337,6 +338,7 @@ test.describe("formulas in the note", () => {
 			"Edit formulas as you see them",
 			"Add a formula",
 			"AI fill: scan a formula instead of typing it",
+			"Draw a formula",
 			"Magic edit: say what to change",
 			"Expand for a bigger editor",
 			"Math keyboard",

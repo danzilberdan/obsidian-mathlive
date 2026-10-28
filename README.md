@@ -31,6 +31,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Editor window.** A focused editor for longer expressions, with `Ctrl/Cmd + Enter` to insert into the note.
 - **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
 - **Scan formulas into LaTeX.** Draw a box around a formula anywhere in Obsidian, such as a PDF you have open, or scan a screenshot from your clipboard. Uses the MathLive cloud scanner or your own self-hosted one.
+- **Draw a formula.** Write it by hand on a drawing pad, or scan the QR code and draw it on your phone or tablet. You see the formula as you draw, and it goes into your note when you click Insert. Uses the MathLive cloud scanner.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Magic edit.** Click the wand next to a formula and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
 - **Stays out of the way.** Each formula has three small buttons: ✨ AI fill, Magic edit and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
@@ -71,6 +72,12 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 **From the clipboard.** Copy a screenshot of a formula, for example from another app or handwritten notes, then click **Scan clipboard image** in the editor window or choose it from a formula's ✨ menu.
 
 Check the result and fix anything the scanner got wrong.
+
+## Drawing a formula
+
+Put the cursor where the formula should go, click ✨ in the left ribbon and pick **Draw formula** (or run **MathLive: Draw formula**). The editor window and a formula's ✨ menu have **Draw formula** too, which adds the drawing to that formula. Write the formula on the pad with your mouse, pen or finger; a moment after you lift the pen, the formula appears under the pad, where you can still fix it. **Insert** puts it in the note and uses one scan. Reading the drawing while you draw is free.
+
+To draw on a phone or tablet instead, scan the QR code beside the pad with its camera. A drawing page opens in its browser, with nothing to install and no sign-in. The formula shows on both screens as you draw, and **Insert** on the phone puts it in your note on the computer. The phone can then draw the next formula, until you tap **Done** or stop drawing for 10 minutes. Only the first browser to open a code can use it. With **Self-hosted scanner** on, the pad is read by your scanner and there is no QR code.
 
 ## Converting a PDF to notes
 
@@ -113,13 +120,14 @@ Obsidian asks plugins to state the following up front.
   - `https://mathlive.danz.blog/ocr/predict/` receives the image you chose to scan, with your key, and returns LaTeX.
   - `https://mathlive.danz.blog/ocr/edit` receives a formula you chose to Magic edit with your typed instruction or your voice recording, with your key, and returns the new formula.
   - `https://mathlive.danz.blog/ocr/pages/` receives a picture of each PDF page you chose to convert, with your key, and returns the page as Markdown.
+  - Draw formula opens a drawing session at `https://mathlive.danz.blog/ocr/draw/sessions` with your key, sends each drawing there to be read, and while the window is open (or a phone you connected is still drawing) waits there for the phone's drawings. The QR code is made on your computer and links the phone to `https://mathlive.danz.blog/draw/...`.
   - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, scans left, and pages left before converting a PDF.
   - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
 - **Microphone.** The plugin uses the microphone only while you record a Magic edit, from clicking the mic until you click it again (at most a minute). A recording that stays silent is not sent. The server turns the recording into text, then forgets it.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
-- **Data.** The scan server turns the image into LaTeX (or a PDF page into Markdown) and does not keep the image; Magic edit's formula, instruction and recording aren't kept either. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.
+- **Data.** The scan server turns the image (or drawing) into LaTeX (or a PDF page into Markdown) and does not keep the image; Magic edit's formula, instruction and recording aren't kept either. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.
 - **No telemetry or ads.** The plugin does not track how you use it and shows no ads. A welcome window shows once after installing.
 
 ## Contributing
@@ -132,6 +140,7 @@ If MathLive saves you time, a ⭐ on this repository helps other people find it,
 
 - [MathLive](https://github.com/arnog/mathlive) by Arno Gourdol, the math editor this plugin is built on
 - [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) by Lukas Blecher, for self-hosted scanning
+- [QR Code Generator](https://github.com/kazuhikoarase/qrcode-generator) by Kazuhiko Arase (MIT), for Draw formula's QR code
 
 ## License
 
