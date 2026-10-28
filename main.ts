@@ -803,7 +803,15 @@ class MathLiveModal extends Modal {
 					next.run();
 				});
 			}
-			const guide = footer.createEl("a", { cls: "mathlive-modal-guide-link", href: "#" });
+			const links = footer.createDiv({ cls: "mathlive-modal-links" });
+			const find = links.createEl("a", { cls: "mathlive-modal-link find-formula-link", href: "#" });
+			setIcon(find.createSpan({ cls: "mathlive-btn-icon" }), "search");
+			find.createSpan({ text: "Find a formula" });
+			find.addEventListener("click", (event) => {
+				event.preventDefault();
+				this.onFindFormulaRequest();
+			});
+			const guide = links.createEl("a", { cls: "mathlive-modal-link mathlive-modal-guide-link", href: "#" });
 			setIcon(guide.createSpan({ cls: "mathlive-btn-icon" }), "compass");
 			guide.createSpan({ text: "Learn what MathLive can do" });
 			guide.addEventListener("click", (event) => {
@@ -849,13 +857,6 @@ class MathLiveModal extends Modal {
 		addButton("scan-screen-button", "scan", "Scan from screen", () => {
 			void this.onScreenScanRequest();
 		});
-		// Icon only, so the row still fits beside Insert into note. Obsidian shows the label on hover.
-		const find = group.createEl("button", {
-			cls: "find-formula-button mathlive-action-btn mathlive-ai-btn mathlive-icon-btn",
-			attr: { type: "button", "aria-label": "Find a formula" },
-		});
-		setIcon(find.createSpan({ cls: "mathlive-btn-icon" }), "search");
-		find.addEventListener("click", () => this.onFindFormulaRequest());
 	}
 
 	private scanTarget(mathfield: MathfieldElement) {

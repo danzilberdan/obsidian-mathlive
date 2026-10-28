@@ -80,7 +80,7 @@ test.describe("find a formula", () => {
 
 	test("the editor window's Find a formula button fills its formula", async ({ page }) => {
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .find-formula-button").click();
+		await page.locator(".mathlive-modal-root .find-formula-link").click();
 		await searchInput(page).fill("gas");
 		await suggestion(page, IDEAL_GAS.name).click();
 		await expect(modalField(page)).toHaveJSProperty("value", IDEAL_GAS.latex);
