@@ -790,16 +790,15 @@ class MathLiveModal extends Modal {
 
 	initImageScanner(actions: HTMLElement) {
 		const group = actions.createDiv({ cls: "mathlive-scan-actions" });
-		const label = group.createSpan({ cls: "mathlive-ai-label" });
+		// ✨ marks the AI buttons. They are small icons, named by their tooltips.
+		const label = group.createSpan({ cls: "mathlive-ai-label", attr: { "aria-label": "AI fill" } });
 		setIcon(label.createSpan({ cls: "mathlive-btn-icon" }), "sparkles");
-		label.createSpan({ text: "AI fill" });
 		const addButton = (cls: string, icon: string, title: string, onClick: () => void) => {
 			const button = group.createEl("button", {
 				cls: `${cls} mathlive-action-btn mathlive-ai-btn`,
-				attr: { type: "button" },
+				attr: { type: "button", "aria-label": title },
 			});
 			setIcon(button.createSpan({ cls: "mathlive-btn-icon" }), icon);
-			button.createSpan({ cls: "mathlive-btn-title", text: title });
 			button.addEventListener("click", onClick);
 		};
 		addButton("scan-button", "image-plus", "Scan clipboard image", () => {

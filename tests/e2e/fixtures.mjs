@@ -145,9 +145,15 @@ export const inlineWidget = (page, index = 0) => page.locator(".cm-content .obsi
 export const blockWidget = (page) => page.locator(".cm-content .obsidian-mathlive-codemirror-wrapper:not(.inline)").first();
 export const menuItem = (page, title) => page.locator(".menu .menu-item", { hasText: title });
 
+// A formula's buttons show while the mouse is over it, so point at the formula first.
+export async function clickWidgetButton(widget, name) {
+	await widget.locator("math-field").hover({ position: { x: 5, y: 5 } });
+	await widget.getByRole("button", { name }).click();
+}
+
 // Opens a formula's ✨ menu and returns Obsidian's menu.
 export async function openWidgetMenu(page, widget) {
-	await widget.getByRole("button", { name: "AI fill" }).click();
+	await clickWidgetButton(widget, "AI fill");
 	const menu = page.locator(".menu");
 	await expect(menu).toBeVisible();
 	return menu;

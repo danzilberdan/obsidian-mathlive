@@ -1,5 +1,6 @@
 import {
 	blockField,
+	clickWidgetButton,
 	expect,
 	focusField,
 	inlineField,
@@ -66,7 +67,7 @@ test.describe("math keyboard in the note", () => {
 
 	test("opening the editor window while the keyboard is open leaves no empty space in the note", async ({ page }) => {
 		await showFromMenu(page, 0);
-		await inlineWidget(page, 1).getByRole("button", { name: "Expand" }).click();
+		await clickWidgetButton(inlineWidget(page, 1), "Expand");
 		await waitForModalField(page);
 		await page.keyboard.press("Escape");
 		await expect(modalField(page)).toHaveCount(0);

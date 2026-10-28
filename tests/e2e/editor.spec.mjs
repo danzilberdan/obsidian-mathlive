@@ -1,6 +1,7 @@
 import {
 	blockField,
 	blockWidget,
+	clickWidgetButton,
 	expect,
 	focusField,
 	inlineField,
@@ -135,7 +136,7 @@ test.describe("formulas in the note", () => {
 	});
 
 	test("Expand opens the formula in the editor window", async ({ page }) => {
-		await inlineWidget(page, 1).getByRole("button", { name: "Expand" }).click();
+		await clickWidgetButton(inlineWidget(page, 1), "Expand");
 
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit inline math");
 		await expect(modalField(page)).toHaveJSProperty("value", "\\alpha + \\beta");
@@ -148,7 +149,7 @@ test.describe("formulas in the note", () => {
 	});
 
 	test("Expand opens a block formula in the editor window", async ({ page }) => {
-		await blockWidget(page).getByRole("button", { name: "Expand" }).click();
+		await clickWidgetButton(blockWidget(page), "Expand");
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit math block");
 		await expect(modalField(page)).toHaveJSProperty("value", "\n\\int_0^1 f(x)\\,dx\n");
 	});
@@ -194,6 +195,45 @@ test.describe("formulas in the note", () => {
 		expect(expand.x + expand.width).toBeLessThanOrEqual(field.x + field.width);
 		expect(ai.y).toBeGreaterThanOrEqual(field.y);
 		expect(ai.y + ai.height).toBeLessThanOrEqual(field.y + field.height);
+	});
+
+	test("a formula's buttons show only while the mouse is over the formula or them", async ({ page }) => {
+		const opacity = (widget) =>
+			widget.locator(".obsidian-mathlive-widget-buttons").evaluate((element) => Number(getComputedStyle(element).opacity));
+		for (const widget of [inlineWidget(page, 0), blockWidget(page)]) {
+			await page.mouse.move(5, 5);
+			await expect.poll(() => opacity(widget)).toBe(0);
+			await widget.locator("math-field").hover({ position: { x: 10, y: 10 } });
+			await expect.poll(() => opacity(widget)).toBe(1);
+			// Moving straight onto the buttons keeps them, and they work.
+			const expand = widget.getByRole("button", { name: "Expand" });
+			const from = await widget.locator("math-field").boundingBox();
+			const to = await expand.boundingBox();
+			await page.mouse.move(from.x + from.width - 2, to.y + to.height / 2);
+			await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 8 });
+			await expect.poll(() => opacity(widget)).toBe(1);
+			await page.mouse.down();
+			await page.mouse.up();
+			await expect(page.locator(".mathlive-modal-title")).toBeVisible();
+			await page.keyboard.press("Escape");
+			await expect(page.locator(".mathlive-modal-title")).toHaveCount(0);
+		}
+		// Inline, the hidden buttons leave no gap in the line.
+		await page.mouse.move(5, 5);
+		const field = await inlineField(page, 0).boundingBox();
+		const wrapper = await inlineWidget(page, 0).boundingBox();
+		expect(wrapper.width - field.width).toBeLessThanOrEqual(2);
+	});
+
+	test("the ✨ menu keeps its button showing while it is open", async ({ page }) => {
+		const widget = inlineWidget(page, 0);
+		await widget.locator("math-field").hover();
+		await openWidgetMenu(page, widget);
+		await page.mouse.move(5, 5);
+		await page.waitForTimeout(400);
+		const opacity = await widget.locator(".obsidian-mathlive-widget-buttons").evaluate((element) => Number(getComputedStyle(element).opacity));
+		expect(opacity).toBe(1);
+		await page.keyboard.press("Escape");
 	});
 
 	test("the ✨ menu opens the guide, which tries features from there", async ({ page }) => {
