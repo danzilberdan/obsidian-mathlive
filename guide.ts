@@ -68,6 +68,11 @@ export class GuideModal extends Modal {
 			{ text: "Scan from screen", run: () => this.actions.scanFromScreen(), cta: true }
 		);
 		section(
+			"wand-sparkles",
+			"Magic edit: say what to change",
+			"Click the wand next to a formula, or in the editor window, and type or say what to change: “square the denominator”, “swap alpha and beta”, “make it a matrix”. An AI rewrites the formula, Undo puts it back, and the box stays open for the next change."
+		);
+		section(
 			"maximize-2",
 			"Expand for a bigger editor",
 			"The ⤢ button next to a formula opens it in the editor window, with room for long formulas, the math keyboard and the scan buttons. Ctrl+Enter puts it back in the note."

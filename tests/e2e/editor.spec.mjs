@@ -337,6 +337,7 @@ test.describe("formulas in the note", () => {
 			"Edit formulas as you see them",
 			"Add a formula",
 			"AI fill: scan a formula instead of typing it",
+			"Magic edit: say what to change",
 			"Expand for a bigger editor",
 			"Math keyboard",
 			"Turn a PDF into notes",

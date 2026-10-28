@@ -32,7 +32,8 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
 - **Scan formulas into LaTeX.** Draw a box around a formula anywhere in Obsidian, such as a PDF you have open, or scan a screenshot from your clipboard. Uses the MathLive cloud scanner or your own self-hosted one.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
-- **Stays out of the way.** Each formula has two small buttons: ✨ AI fill and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
+- **Magic edit.** Click the wand next to a formula and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
+- **Stays out of the way.** Each formula has three small buttons: ✨ AI fill, Magic edit and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
 
 <p align="center">
   <picture>
@@ -104,18 +105,20 @@ The self-hosted scanner uses `http://localhost:8502` unless you set another addr
 
 Obsidian asks plugins to state the following up front.
 
-- **Payment.** The visual editor is free. Cloud scanning includes 3 trial scans, then 10 free scans per account and 5 more each month; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
+- **Payment.** The visual editor is free. Cloud scanning includes 3 trial scans, then 10 free scans per account and 5 more each month; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). A Magic edit counts as one scan, only when it changes the formula. Self-hosted scanning is free.
 - **Account.** After 3 trial scans, cloud scanning requires a MathLive account (sign-in with Google). The editor and self-hosted scanning need no account.
 - **Network use.** The plugin only connects to the internet for cloud scanning, and only after you start a scan or click Connect:
   - `https://mathlive.danz.blog/ocr/trial` gives a trial key on your first cloud scan when you have none.
   - `https://mathlive.danz.blog/ocr/predict/` receives the image you chose to scan, with your key, and returns LaTeX.
+  - `https://mathlive.danz.blog/ocr/edit` receives a formula you chose to Magic edit with your typed instruction or your voice recording, with your key, and returns the new formula.
   - `https://mathlive.danz.blog/ocr/pages/` receives a picture of each PDF page you chose to convert, with your key, and returns the page as Markdown.
   - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, scans left, and pages left before converting a PDF.
   - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
+- **Microphone.** The plugin uses the microphone only while you record a Magic edit, from clicking the mic until you click it again (at most a minute). A recording that stays silent is not sent. The server turns the recording into text, then forgets it.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
-- **Data.** The scan server turns the image into LaTeX (or a PDF page into Markdown) and does not keep the image. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.
+- **Data.** The scan server turns the image into LaTeX (or a PDF page into Markdown) and does not keep the image; Magic edit's formula, instruction and recording aren't kept either. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.
 - **No telemetry or ads.** The plugin does not track how you use it and shows no ads. A welcome window shows once after installing.
 
 ## Contributing
