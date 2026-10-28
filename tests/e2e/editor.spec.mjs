@@ -179,6 +179,7 @@ test.describe("formulas in the note", () => {
 
 	test("block formulas show AI fill and Expand inside the input, after its keyboard and menu buttons", async ({ page }) => {
 		const widget = blockWidget(page);
+		await blockField(page).hover({ position: { x: 10, y: 10 } });
 		const keyboard = await blockField(page).locator("[part=virtual-keyboard-toggle]").boundingBox();
 		const menu = await blockField(page).locator("[part=menu-toggle]").boundingBox();
 		const field = await blockField(page).boundingBox();
@@ -223,6 +224,19 @@ test.describe("formulas in the note", () => {
 		const field = await inlineField(page, 0).boundingBox();
 		const wrapper = await inlineWidget(page, 0).boundingBox();
 		expect(wrapper.width - field.width).toBeLessThanOrEqual(2);
+	});
+
+	test("a block formula's keyboard and ☰ buttons also show only on hover", async ({ page }) => {
+		const opacity = (part) =>
+			blockField(page).locator(`[part=${part}]`).evaluate((element) => Number(getComputedStyle(element).opacity));
+		await page.mouse.move(5, 5);
+		await expect.poll(() => opacity("virtual-keyboard-toggle")).toBe(0);
+		await expect.poll(() => opacity("menu-toggle")).toBe(0);
+		await blockField(page).hover({ position: { x: 10, y: 10 } });
+		await expect.poll(() => opacity("virtual-keyboard-toggle")).toBe(1);
+		await expect.poll(() => opacity("menu-toggle")).toBe(1);
+		await blockField(page).locator("[part=virtual-keyboard-toggle]").click();
+		await expect(page.locator(".ML__keyboard")).toBeVisible();
 	});
 
 	test("the ✨ menu keeps its button showing while it is open", async ({ page }) => {

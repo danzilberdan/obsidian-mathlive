@@ -251,16 +251,21 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   height: 20px;
 }
 
-/* With a mouse, the buttons show only while it is over the formula or the buttons, or while the
-   ✨ menu is open. The buttons are part of the formula, so moving onto them keeps them. */
+/* With a mouse, a formula's buttons, MathLive's keyboard and ☰ included, show only while it is
+   over the formula or the buttons, or while the ✨ menu is open. The buttons are part of the
+   formula, so moving onto them keeps them. */
 @media (hover: hover) {
-  .obsidian-mathlive-codemirror-wrapper .obsidian-mathlive-widget-buttons {
+  .obsidian-mathlive-codemirror-wrapper .obsidian-mathlive-widget-buttons,
+  .obsidian-mathlive-codemirror-wrapper .mathlive-field::part(virtual-keyboard-toggle),
+  .obsidian-mathlive-codemirror-wrapper .mathlive-field::part(menu-toggle) {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.12s ease 0.1s;
   }
 
   .obsidian-mathlive-codemirror-wrapper:hover .obsidian-mathlive-widget-buttons,
+  .obsidian-mathlive-codemirror-wrapper:hover .mathlive-field::part(virtual-keyboard-toggle),
+  .obsidian-mathlive-codemirror-wrapper:hover .mathlive-field::part(menu-toggle),
   .obsidian-mathlive-widget-buttons:has([aria-expanded="true"], :focus-visible) {
     opacity: 1;
     pointer-events: auto;
@@ -469,15 +474,6 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.375rem;
-}
-
-.mathlive-ai-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--text-accent);
-  font-size: var(--font-ui-small);
-  font-weight: var(--font-semibold, 600);
 }
 
 /* Icon only, named by a tooltip. */

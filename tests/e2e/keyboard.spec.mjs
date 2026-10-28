@@ -45,6 +45,7 @@ test.describe("math keyboard in the note", () => {
 		await expect(modalField(page)).toHaveCount(0);
 
 		await focusField(blockField(page));
+		await blockField(page).hover({ position: { x: 10, y: 10 } });
 		await blockField(page).locator("[part=virtual-keyboard-toggle]").click();
 		await expect(keyboard(page)).toBeVisible();
 	});

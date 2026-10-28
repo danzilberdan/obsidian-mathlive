@@ -98,7 +98,6 @@ test.describe("formula editor window", () => {
 		await waitForModalField(page);
 		const footer = page.locator(".mathlive-modal-root .mathlive-modal-footer");
 		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("First scans free, no account neededGet 10 free scans");
-		await expect(page.locator(".mathlive-modal-root .mathlive-ai-label")).toHaveAttribute("aria-label", "AI fill");
 
 		await setSettings(page, { apiKey: "low-key", apiKeySource: "device" });
 		await page.keyboard.press("Escape");
@@ -124,7 +123,7 @@ test.describe("formula editor window", () => {
 		const field = await modalField(page).boundingBox();
 		expect(Math.abs(scan.y - insert.y)).toBeLessThanOrEqual(2);
 		expect(scan.y).toBeGreaterThan(field.y + field.height);
-		await expect(page.locator(".mathlive-modal-root button.submit")).toContainText("Insert into note");
+		await expect(page.locator(".mathlive-modal-root button.submit")).toHaveText(/^Insert(Ctrl\+Enter|⌘ Enter)$/);
 	});
 
 	test("the scan buttons are small icons named by their tooltips", async ({ page }) => {

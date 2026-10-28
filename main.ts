@@ -780,7 +780,7 @@ class MathLiveModal extends Modal {
 			cls: "submit mathlive-action-btn mod-cta",
 			attr: { type: "button" },
 		});
-		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert into note" });
+		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert" });
 		submitButton.createEl("kbd", {
 			cls: "mathlive-btn-hint",
 			text: Platform.isMacOS ? "⌘ Enter" : "Ctrl+Enter",
@@ -790,9 +790,7 @@ class MathLiveModal extends Modal {
 
 	initImageScanner(actions: HTMLElement) {
 		const group = actions.createDiv({ cls: "mathlive-scan-actions" });
-		// ✨ marks the AI buttons. They are small icons, named by their tooltips.
-		const label = group.createSpan({ cls: "mathlive-ai-label", attr: { "aria-label": "AI fill" } });
-		setIcon(label.createSpan({ cls: "mathlive-btn-icon" }), "sparkles");
+		// Small icons, named by their tooltips.
 		const addButton = (cls: string, icon: string, title: string, onClick: () => void) => {
 			const button = group.createEl("button", {
 				cls: `${cls} mathlive-action-btn mathlive-ai-btn`,
