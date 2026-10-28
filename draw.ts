@@ -8,6 +8,7 @@ import {
 	createMathfield,
 	ensureCanScan,
 	errorCode,
+	serverDetail,
 	scanImageToLatex,
 	scannerAddress,
 	ScanError,
@@ -723,6 +724,8 @@ function drawFailure(res: { status: number; json: unknown }): Error {
 			return new DrawError("That's a lot of tries for one formula. Insert it, or clear the pad and start again.");
 		case "rate_limited":
 			return new DrawError("Drawing a bit fast for the scanner. Wait a moment.");
+		case "daily_limit":
+			return new DrawError(serverDetail(res) ?? "That's today's limit for drawing. It starts over at midnight UTC.");
 	}
 	return new DrawError("Couldn't read the drawing. Try again.");
 }

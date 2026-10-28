@@ -209,6 +209,8 @@ export function startStubScanner(port = 8502) {
 				reply(400, { detail: "No scans left.", code: "no_scans_left" });
 			} else if (apiKey === "no-math") {
 				reply(502, { detail: "No math found in this image.", code: "no_math" });
+			} else if (apiKey === "daily-limit") {
+				reply(429, { detail: "That's MathLive's daily limit of 150 scans. It starts over at midnight UTC. Nothing was charged.", code: "daily_limit" });
 			} else if (apiKey === "slow") {
 				setTimeout(() => reply(200, SCANNED_LATEX), 3000);
 			} else {

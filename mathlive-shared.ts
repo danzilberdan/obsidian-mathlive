@@ -407,7 +407,8 @@ const SCAN_TIMEOUT_MS = 25000;
 // so it is worth one more try before bothering the user.
 const QUICK_FAILURE_MS = 5000;
 
-type ScanFailure = "auth" | "no_scans_left" | "no_math" | "bad_image" | "unavailable";
+// "limited": too many scans in a minute or a day; the message is the server's own.
+type ScanFailure = "auth" | "no_scans_left" | "no_math" | "bad_image" | "limited" | "unavailable";
 
 export class ScanError extends Error {
 	constructor(readonly failure: ScanFailure, message: string) {
@@ -513,6 +514,16 @@ export function errorCode(res: { json: unknown }): string | null {
 	}
 }
 
+// The server's explanation of an error, if it sent one.
+export function serverDetail(res: { json: unknown }): string | null {
+	try {
+		const body = res.json as { detail?: unknown } | null;
+		return typeof body?.detail === "string" ? body.detail : null;
+	} catch {
+		return null;
+	}
+}
+
 function scanFailure(status: number, code: string | null): ScanFailure {
 	switch (code) {
 		case "missing_api_key":
@@ -526,6 +537,9 @@ function scanFailure(status: number, code: string | null): ScanFailure {
 		case "not_an_image":
 		case "image_too_small":
 			return "bad_image";
+		case "rate_limited":
+		case "daily_limit":
+			return "limited";
 	}
 	return status < 500 ? "auth" : "unavailable";
 }
@@ -555,9 +569,10 @@ async function requestScan(address: string, apiKey: string, image: Blob): Promis
 	}
 
 	if (res.status >= 400) {
+		const failure = scanFailure(res.status, errorCode(res));
 		throw new ScanError(
-			scanFailure(res.status, errorCode(res)),
-			`OCR request failed with status ${res.status}.`
+			failure,
+			(failure === "limited" && serverDetail(res)) || `OCR request failed with status ${res.status}.`
 		);
 	}
 
@@ -770,6 +785,8 @@ async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
 			showScanFailure(NO_MATH_NOTICE);
 		} else if (failure === "bad_image") {
 			showScanFailure(BAD_IMAGE_NOTICE);
+		} else if (failure === "limited" && error instanceof Error) {
+			showScanFailure(error.message);
 		} else {
 			// The retry keeps the image, so it works even after the clipboard has changed.
 			showScanFailure(SCAN_FAILED_NOTICE, resume);
