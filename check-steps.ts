@@ -35,11 +35,14 @@ interface Token {
 	end: number;
 	/** Brace and environment depth the token sits at. */
 	depth: number;
+	/** Environment depth alone, which a missing brace can't throw off. */
+	envDepth: number;
 }
 
 function tokenize(latex: string): Token[] {
 	const tokens: Token[] = [];
 	let depth = 0;
+	let envDepth = 0;
 	let i = 0;
 	while (i < latex.length) {
 		const start = i;
@@ -52,16 +55,22 @@ function tokenize(latex: string): Token[] {
 				// Take the environment name along, so `\begin{pmatrix}` is one token.
 				const name = /^\s*\{[^}]*\}/.exec(latex.slice(i));
 				if (name) i += name[0].length;
-				if (value === "\\end") depth--;
-				tokens.push({ value, start, end: i, depth: Math.max(depth, 0) });
-				if (value === "\\begin") depth++;
+				if (value === "\\end") {
+					depth--;
+					envDepth--;
+				}
+				tokens.push({ value, start, end: i, depth: Math.max(depth, 0), envDepth: Math.max(envDepth, 0) });
+				if (value === "\\begin") {
+					depth++;
+					envDepth++;
+				}
 				continue;
 			}
-			tokens.push({ value, start, end: i, depth });
+			tokens.push({ value, start, end: i, depth, envDepth });
 			continue;
 		}
 		if (char === "}") depth--;
-		tokens.push({ value: char, start, end: i + 1, depth: Math.max(depth, 0) });
+		tokens.push({ value: char, start, end: i + 1, depth: Math.max(depth, 0), envDepth });
 		if (char === "{") depth++;
 		i++;
 	}
@@ -76,6 +85,16 @@ export interface Line {
 }
 
 /** Splits displayed math into its lines at top-level `\\`, without the alignment marks. */
+/**
+ * The tokens outside any braces or environment. A typo like a missing `}` would hide every line
+ * break and relation after it, so with unbalanced braces only environments count.
+ */
+function topLevel(tokens: Token[]): Token[] {
+	const opened = tokens.filter((token) => token.value === "{").length;
+	const balanced = opened === tokens.filter((token) => token.value === "}").length;
+	return tokens.filter((token) => (balanced ? token.depth : token.envDepth) === 0);
+}
+
 export function splitLines(math: string): Line[] {
 	let offset = math.length - math.trimStart().length;
 	let body = math.trim();
@@ -86,8 +105,8 @@ export function splitLines(math: string): Line[] {
 	}
 	const pieces: Array<[number, number]> = [];
 	let start = 0;
-	for (const token of tokenize(body)) {
-		if (token.depth === 0 && token.value === "\\\\") {
+	for (const token of topLevel(tokenize(body))) {
+		if (token.value === "\\\\") {
 			pieces.push([start, token.start]);
 			start = token.end;
 		}
@@ -108,8 +127,8 @@ export function splitLines(math: string): Line[] {
 function removeAlignment(line: string): string {
 	let out = "";
 	let last = 0;
-	for (const token of tokenize(line)) {
-		if (token.depth === 0 && token.value === "&") {
+	for (const token of topLevel(tokenize(line))) {
+		if (token.value === "&") {
 			out += line.slice(last, token.start) + " ";
 			last = token.end;
 		}
@@ -130,7 +149,7 @@ function cleanLine(line: string): string {
 
 /** The top-level relation signs in a step, like `=` and `\le`, in order. */
 function relations(latex: string): Token[] {
-	return tokenize(latex).filter((token) => token.depth === 0 && RELATIONS.has(token.value));
+	return topLevel(tokenize(latex)).filter((token) => RELATIONS.has(token.value));
 }
 
 function hasRelation(latex: string): boolean {
