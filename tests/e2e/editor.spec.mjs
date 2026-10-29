@@ -8,6 +8,7 @@ import {
 	inlineWidget,
 	menuItem,
 	modalField,
+	NOTE_TEXT,
 	noteLine,
 	noteText,
 	openWidgetMenu,
@@ -139,6 +140,77 @@ test.describe("formulas in the note", () => {
 		await page.keyboard.press("ArrowUp");
 		await page.keyboard.press("ArrowUp");
 		await expect(blockField(page)).toBeFocused();
+	});
+
+	test("Shift+arrow from either side selects a whole inline formula, and Backspace or Delete removes it", async ({ page }) => {
+		for (const [find, offset, select, remove] of [
+			["z^2$", 4, "Shift+ArrowLeft", "Backspace"],
+			["z^2$", 4, "Shift+ArrowLeft", "Delete"],
+			["$x^2", 0, "Shift+ArrowRight", "Backspace"],
+			["$x^2", 0, "Shift+ArrowRight", "Delete"],
+		]) {
+			await resetNote(page);
+			await placeCursor(page, find, offset);
+			await page.keyboard.press(select);
+			expect(await selectedText(page), `${select} then ${remove}`).toBe("$x^2 + y^2 = z^2$");
+			await expect(inlineWidget(page, 0)).toHaveClass(/is-selected/);
+			await page.keyboard.press(remove);
+			await expect(page.locator(".cm-content math-field")).toHaveCount(2);
+			expect(await noteLine(page, "Inline math"), `${select} then ${remove}`).toBe("Inline math  in a sentence.");
+		}
+	});
+
+	test("Shift+arrow from the line above or below selects a whole block formula, and Backspace or Delete removes its lines", async ({ page }) => {
+		for (const [find, offset, select, remove] of [
+			["\n\nPlain", 1, "Shift+ArrowUp", "Backspace"],
+			["\n\nPlain", 1, "Shift+ArrowLeft", "Delete"],
+			["\n\n$$", 1, "Shift+ArrowDown", "Delete"],
+			["\n\n$$", 1, "Shift+ArrowRight", "Backspace"],
+		]) {
+			await resetNote(page);
+			await placeCursor(page, find, offset);
+			await page.keyboard.press(select);
+			expect(await selectedText(page), `${select} then ${remove}`).toBe("\n$$\n\\int_0^1 f(x)\\,dx\n$$\n");
+			await expect(blockWidget(page)).toHaveClass(/is-selected/);
+			await expect(blockField(page)).not.toBeFocused();
+			await page.keyboard.press(remove);
+			await expect(page.locator(".cm-content math-field")).toHaveCount(2);
+			expect(await noteText(page), `${select} then ${remove}`).toContain("in a sentence.\n\n\nPlain paragraph");
+		}
+	});
+
+	test("a formula that is only partly selected, or not at all, doesn't look selected", async ({ page }) => {
+		await placeCursor(page, "z^2$", 4);
+		await page.keyboard.press("Shift+ArrowRight");
+		await expect(inlineWidget(page, 0)).not.toHaveClass(/is-selected/);
+		await page.keyboard.press("Shift+ArrowLeft");
+		await page.keyboard.press("Shift+ArrowLeft");
+		await expect(inlineWidget(page, 0)).toHaveClass(/is-selected/);
+		await page.keyboard.press("ArrowRight");
+		await expect(inlineWidget(page, 0)).not.toHaveClass(/is-selected/);
+	});
+
+	test("the cursor only ever stops before or after a formula, never in its hidden LaTeX", async ({ page }) => {
+		await setSettings(page, { arrowKeyNavigation: false });
+		const insideFormula = () =>
+			page.evaluate(() => {
+				const editor = window.app.workspace.activeEditor.editor;
+				const text = editor.getValue();
+				const { head, anchor } = editor.cm.state.selection.main;
+				// Inline formulas from $ to $; the block formula's $$ lines, from the start of the
+				// opening line to the end of the closing line.
+				const spans = [...text.matchAll(/\$\$\n[\s\S]*?\n\$\$|\$[^$\n]+\$/g)].map((match) => [match.index, match.index + match[0].length]);
+				return [head, anchor].filter((position) => spans.some(([from, to]) => position > from && position < to));
+			});
+		for (const keys of [["ArrowDown", "ArrowUp"], ["Shift+ArrowDown", "Shift+ArrowUp"], ["ArrowRight", "ArrowLeft"]]) {
+			for (const [find, offset] of [["Test note", 0], ["Inline math", 5], ["in a sentence", 3], ["Plain paragraph", 4]]) {
+				await placeCursor(page, find, offset);
+				for (const key of [...Array(6).fill(keys[0]), ...Array(6).fill(keys[1])]) {
+					await page.keyboard.press(key);
+					expect(await insideFormula(), `${find}+${offset}, ${key}`).toEqual([]);
+				}
+			}
+		}
 	});
 
 	test("the note's ⋮ menu shows the raw LaTeX for a while, and switches back", async ({ page }) => {
@@ -355,3 +427,21 @@ test.describe("formulas in the note", () => {
 		await page.keyboard.press("Escape");
 	});
 });
+
+const placeCursor = (page, find, offset) =>
+	page.evaluate(({ find, offset }) => {
+		const editor = window.app.workspace.activeEditor.editor;
+		editor.focus();
+		editor.setCursor(editor.offsetToPos(editor.getValue().indexOf(find) + offset));
+		return true;
+	}, { find, offset });
+
+const selectedText = (page) => page.evaluate(() => window.app.workspace.activeEditor.editor.getSelection());
+
+const resetNote = async (page) => {
+	await page.evaluate((text) => {
+		window.app.workspace.activeEditor.editor.setValue(text);
+		return true;
+	}, NOTE_TEXT);
+	await expect(page.locator(".cm-content math-field")).toHaveCount(3);
+};
