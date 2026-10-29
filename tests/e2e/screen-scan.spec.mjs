@@ -1,5 +1,6 @@
 import { SCANNED_LATEX } from "./stub-scanner.mjs";
 import {
+	modalAiAction,
 	clearClipboard,
 	expect,
 	FORMULA_IMAGE,
@@ -135,7 +136,7 @@ test.describe("scanning a formula from the screen", () => {
 
 	test("the editor window steps aside while the box is drawn, then gets the scan", async ({ page, scanner }) => {
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-screen-button").click();
+		await modalAiAction(page, "Scan from screen");
 		await expect(overlay(page)).toBeVisible();
 		await expect(page.locator(".modal-container")).toBeHidden();
 
@@ -148,7 +149,7 @@ test.describe("scanning a formula from the screen", () => {
 
 	test("Escape cancels the box but leaves the editor window open", async ({ page, scanner }) => {
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-screen-button").click();
+		await modalAiAction(page, "Scan from screen");
 		await expect(overlay(page)).toBeVisible();
 		await page.keyboard.press("Escape");
 		await expect(overlay(page)).toHaveCount(0);
@@ -167,7 +168,7 @@ test.describe("scanning a formula from the screen", () => {
 	test("an empty clipboard offers to select the formula on screen", async ({ page, scanner }) => {
 		await clearClipboard(page);
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		const notice = notices(page).filter({ hasText: "No image found in clipboard." });
 		await notice.getByRole("button", { name: "Select on screen" }).click();
 
@@ -230,7 +231,7 @@ test.describe("scanning anything on the screen", () => {
 	test("the editor window's Scan from screen can box another app, and fills the formula", async ({ page, obsidian, scanner }) => {
 		await runCommand(page, "mathlive:open-modal");
 		const opened = obsidian.context.waitForEvent("page", (candidate) => candidate.url().startsWith("data:text/html"));
-		await page.locator(".mathlive-modal-root .scan-screen-button").click();
+		await modalAiAction(page, "Scan from screen");
 		const picker = await opened;
 		await picker.waitForFunction(() => document.getElementById("picture")?.naturalWidth > 0);
 		expect(await obsidianVisible(page)).toBe(false);

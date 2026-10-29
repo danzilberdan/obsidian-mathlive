@@ -248,7 +248,8 @@ function isEscapedDollar(text: string, index: number) {
 
 // Shows a menu under the button that opened it. A formula with focus keeps Escape to itself, so
 // listen for it before the formula does, or the menu can't be closed from the keyboard.
-export function showMenuBelow(menu: Menu, button: HTMLElement) {
+// `alignStart` lines the menu up with the button's left edge instead of starting at its right.
+export function showMenuBelow(menu: Menu, button: HTMLElement, alignStart = false) {
 	const doc = button.doc;
 	const closeOnEscape = (event: KeyboardEvent) => {
 		if (event.key !== "Escape") {
@@ -266,7 +267,8 @@ export function showMenuBelow(menu: Menu, button: HTMLElement) {
 	});
 
 	const rect = button.getBoundingClientRect();
-	menu.showAtPosition({ x: rect.left, y: rect.bottom, width: rect.width }, doc);
+	const width = alignStart ? undefined : rect.width;
+	menu.showAtPosition({ x: rect.left, y: rect.bottom + (alignStart ? 4 : 0), width }, doc);
 }
 
 // MathLive has one virtual keyboard. When it moves to another container while it is showing, the

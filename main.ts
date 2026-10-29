@@ -41,6 +41,7 @@ import {
 	moveVirtualKeyboard,
 	parseMathSelection,
 	closeMathfieldMenu,
+	showMenuBelow,
 } from "./mathlive-shared";
 import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
 import { toMathJaxLatex } from "./mathjax-latex";
@@ -957,27 +958,44 @@ class MathLiveModal extends Modal {
 		submitButton.addEventListener("click", () => this.close());
 	}
 
+	// One ✨ AI fill button, like a formula's in a note, with each AI action named in its menu.
 	initImageScanner(actions: HTMLElement) {
 		const group = actions.createDiv({ cls: "mathlive-scan-actions" });
-		// Small icons, named by their tooltips.
-		const addButton = (cls: string, icon: string, title: string, onClick: () => void) => {
-			const button = group.createEl("button", {
-				cls: `${cls} mathlive-action-btn mathlive-ai-btn`,
-				attr: { type: "button", "aria-label": title },
-			});
-			setIcon(button.createSpan({ cls: "mathlive-btn-icon" }), icon);
-			button.addEventListener("click", onClick);
-			return button;
-		};
-		addButton("scan-button", "image-plus", "Scan clipboard image", () => {
-			void this.onImageScanRequest();
+		const button = group.createEl("button", {
+			cls: "mathlive-ai-fill-button mathlive-action-btn mathlive-ai-btn",
+			attr: { type: "button", "aria-haspopup": "menu" },
 		});
-		addButton("scan-screen-button", "scan", "Scan from screen", () => {
-			void this.onScreenScanRequest();
-		});
-		const magic = addButton("magic-edit-button", "wand-sparkles", "Magic edit", () => this.toggleMagicEdit(magic));
-		addButton("draw-button", "pencil-line", "Draw formula", () => {
-			void this.onDrawRequest();
+		setIcon(button.createSpan({ cls: "mathlive-btn-icon" }), "sparkles");
+		button.createSpan({ cls: "mathlive-btn-title", text: "AI fill" });
+		setIcon(button.createSpan({ cls: "mathlive-btn-icon mathlive-btn-chevron" }), "chevron-down");
+		button.addEventListener("click", () => {
+			const menu = new Menu();
+			menu.addItem((item) =>
+				item.setTitle("Magic edit").setIcon("wand-sparkles").onClick(() => {
+					if (!this.magicEdit) {
+						this.toggleMagicEdit(button);
+					}
+				})
+			);
+			menu.addItem((item) =>
+				item.setTitle("Find a formula").setIcon("search").onClick(() => this.onFindFormulaRequest())
+			);
+			menu.addItem((item) =>
+				item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(() => {
+					void this.onImageScanRequest();
+				})
+			);
+			menu.addItem((item) =>
+				item.setTitle("Scan from screen").setIcon("scan").onClick(() => {
+					void this.onScreenScanRequest();
+				})
+			);
+			menu.addItem((item) =>
+				item.setTitle("Draw formula").setIcon("pencil-line").onClick(() => {
+					void this.onDrawRequest();
+				})
+			);
+			showMenuBelow(menu, button, true);
 		});
 	}
 

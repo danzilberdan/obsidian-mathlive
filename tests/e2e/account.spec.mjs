@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { SCANNED_LATEX } from "./stub-scanner.mjs";
 import {
+	modalAiAction,
 	expect,
 	modalField,
 	notices,
@@ -21,7 +22,7 @@ const pluginSettings = (page) => page.evaluate(() => ({ ...window.app.plugins.pl
 
 async function scanInEditorWindow(page) {
 	await runCommand(page, "mathlive:open-modal");
-	await page.locator(".mathlive-modal-root .scan-button").click();
+	await modalAiAction(page, "Scan clipboard image");
 }
 
 // The challenge in the /connect link the plugin opened.

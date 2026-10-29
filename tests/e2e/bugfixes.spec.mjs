@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCANNED_LATEX, startStubScanner } from "./stub-scanner.mjs";
 import {
+	modalAiAction,
 	blockField,
 	expect,
 	focusField,
@@ -111,7 +112,7 @@ test.describe("reported bugs", () => {
 			await setSettings(page, { useLocalInference: true, apiKey: "", localInferenceUrl: "http://127.0.0.1:8503/" });
 			expect(await putImageOnClipboard(page)).toBe(true);
 			await runCommand(page, "mathlive:open-modal");
-			await page.locator(".mathlive-modal-root .scan-button").click();
+			await modalAiAction(page, "Scan clipboard image");
 			await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
 			// The trailing slash is trimmed, so the path is not doubled.
 			expect(otherScanner.requests.map((request) => request.url)).toEqual(["/predict/"]);

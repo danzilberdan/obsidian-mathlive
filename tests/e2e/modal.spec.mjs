@@ -1,4 +1,4 @@
-import { blockField, expect, focusField, inlineField, menuItem, modalField, noteLine, noteText, openedUrls, recordOpenedUrls, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
+import { modalAiAction, blockField, expect, focusField, inlineField, menuItem, modalField, noteLine, noteText, openedUrls, recordOpenedUrls, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
 
 const selectInLine = (page, prefix, from, to) =>
 	page.evaluate(
@@ -118,28 +118,39 @@ test.describe("formula editor window", () => {
 	test("the window's buttons sit on one row under the formula", async ({ page }) => {
 		await runCommand(page, "mathlive:open-modal");
 		await waitForModalField(page);
-		const scan = await page.locator(".mathlive-modal-root .scan-button").boundingBox();
+		const ai = await page.locator(".mathlive-modal-root .mathlive-ai-fill-button").boundingBox();
 		const insert = await page.locator(".mathlive-modal-root button.submit").boundingBox();
 		const field = await modalField(page).boundingBox();
-		expect(Math.abs(scan.y - insert.y)).toBeLessThanOrEqual(2);
-		expect(scan.y).toBeGreaterThan(field.y + field.height);
+		expect(Math.abs(ai.y - insert.y)).toBeLessThanOrEqual(2);
+		expect(ai.y).toBeGreaterThan(field.y + field.height);
 		await expect(page.locator(".mathlive-modal-root button.submit")).toHaveText(/^Insert(Ctrl\+Enter|⌘ Enter)$/);
 	});
 
-	test("the scan buttons are small icons named by their tooltips", async ({ page }) => {
+	test("one ✨ AI fill button holds the AI actions, each with an icon and a name", async ({ page }) => {
 		await runCommand(page, "mathlive:open-modal");
 		await waitForModalField(page);
 		const actions = page.locator(".mathlive-modal-root .mathlive-scan-actions");
-		await expect(actions).toHaveText("");
-		for (const name of ["Scan clipboard image", "Scan from screen"]) {
-			const button = actions.getByRole("button", { name });
-			const box = await button.boundingBox();
-			expect(box.width).toBeLessThanOrEqual(34);
-			expect(box.height).toBeLessThanOrEqual(34);
-			await button.hover();
-			await expect(page.locator(".tooltip")).toHaveText(name);
-			await page.mouse.move(5, 5);
-		}
+		await expect(actions.getByRole("button")).toHaveCount(1);
+		const button = actions.getByRole("button", { name: "AI fill" });
+		await button.click();
+		await expect(button).toHaveAttribute("aria-expanded", "true");
+		const menu = page.locator(".menu");
+		await expect(menu.locator(".menu-item-title")).toHaveText([
+			"Magic edit",
+			"Find a formula",
+			"Scan clipboard image",
+			"Scan from screen",
+			"Draw formula",
+		]);
+		await expect(menu.locator(".menu-item-icon svg")).toHaveCount(5);
+		// Escape closes the menu, and leaves the window open.
+		await page.keyboard.press("Escape");
+		await expect(menu).toHaveCount(0);
+		await expect(modalField(page)).toBeVisible();
+
+		await modalAiAction(page, "Find a formula");
+		await expect(page.locator(".mathlive-formula-search")).toBeVisible();
+		await page.keyboard.press("Escape");
 	});
 
 	test("the virtual keyboard opens inside the window", async ({ page }) => {

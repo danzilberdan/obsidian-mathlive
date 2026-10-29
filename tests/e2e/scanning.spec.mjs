@@ -1,5 +1,6 @@
 import { SCANNED_LATEX } from "./stub-scanner.mjs";
 import {
+	modalAiAction,
 	clearClipboard,
 	expect,
 	FORMULA_IMAGE,
@@ -41,7 +42,7 @@ test.describe("scanning a formula image", () => {
 
 	test("the scan button in the editor window adds the scanned LaTeX", async ({ page }) => {
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
 		await expect(notices(page).filter({ hasText: "Scan added to the formula" })).toBeVisible();
 	});
@@ -49,7 +50,7 @@ test.describe("scanning a formula image", () => {
 	test("a slow scan shows a moving progress notice until the LaTeX arrives", async ({ page }) => {
 		await setSettings(page, { apiKey: "slow" });
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 
 		const progress = page.locator(".notice.mathlive-scan-progress");
 		await expect(progress).toBeVisible();
@@ -66,7 +67,7 @@ test.describe("scanning a formula image", () => {
 	test("an empty clipboard says so and sends nothing", async ({ page, scanner }) => {
 		await clearClipboard(page);
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(notices(page).filter({ hasText: "No image found in clipboard." })).toBeVisible();
 		expect(scanner.requests).toHaveLength(0);
 	});
@@ -74,7 +75,7 @@ test.describe("scanning a formula image", () => {
 	test("a scanner error shows a retry message and leaves the formula alone", async ({ page, scanner }) => {
 		await setSettings(page, { apiKey: "server-error" });
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(notices(page).filter({ hasText: FAILED_NOTICE })).toBeVisible();
 		await expect(modalField(page)).toHaveJSProperty("value", "");
 		// A quick failure is retried once on its own before the user sees it.
@@ -84,7 +85,7 @@ test.describe("scanning a formula image", () => {
 	test("Retry in the error message scans the same image again", async ({ page, scanner }) => {
 		await setSettings(page, { apiKey: "server-error" });
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		const failed = notices(page).filter({ hasText: FAILED_NOTICE });
 		await expect(failed).toBeVisible();
 
@@ -101,7 +102,7 @@ test.describe("scanning a formula image", () => {
 	test("a scanner that fails once is retried without bothering the user", async ({ page, scanner }) => {
 		await setSettings(page, { apiKey: "flaky" });
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
 		expect(scanner.requests).toHaveLength(2);
 		await expect(notices(page).filter({ hasText: FAILED_NOTICE })).toHaveCount(0);
@@ -110,7 +111,7 @@ test.describe("scanning a formula image", () => {
 	test("an account with no scans left is told how to get more, with no retry", async ({ page, scanner }) => {
 		await setSettings(page, { apiKey: "no-scans-left" });
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		const notice = notices(page).filter({ hasText: /used all your free scans/ });
 		await expect(notice).toBeVisible();
 		await expect(notice.getByRole("button", { name: "Retry" })).toHaveCount(0);
@@ -120,7 +121,7 @@ test.describe("scanning a formula image", () => {
 	test("a key over the daily limit sees the server's reason, not a sign-in prompt", async ({ page, scanner }) => {
 		await setSettings(page, { apiKey: "daily-limit" });
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(notices(page).filter({ hasText: /daily limit of 150 scans/ })).toBeVisible();
 		await expect(page.locator(".modal").filter({ hasText: /Connect/ })).toHaveCount(0);
 		expect(scanner.requests).toHaveLength(1);
@@ -129,7 +130,7 @@ test.describe("scanning a formula image", () => {
 	test("an image with no math says so", async ({ page, scanner }) => {
 		await setSettings(page, { apiKey: "no-math" });
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(notices(page).filter({ hasText: /No math found in this image/ })).toBeVisible();
 		await expect(modalField(page)).toHaveJSProperty("value", "");
 		expect(scanner.requests).toHaveLength(1);
@@ -145,7 +146,7 @@ test.describe("scanning a formula image", () => {
 		expect(onClipboard.width).toBe(4000);
 
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
 		expect(scanner.requests[0].pngSize).toEqual({
 			width: 1600,
@@ -155,7 +156,7 @@ test.describe("scanning a formula image", () => {
 
 	test("a small screenshot is uploaded as it is", async ({ page, scanner }) => {
 		await runCommand(page, "mathlive:open-modal");
-		await page.locator(".mathlive-modal-root .scan-button").click();
+		await modalAiAction(page, "Scan clipboard image");
 		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
 		expect(scanner.requests[0].pngSize).toEqual({ width: 115, height: 58 });
 	});
