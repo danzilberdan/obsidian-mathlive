@@ -414,6 +414,22 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 		});
 	});
 	closeMenuFromOutside(mfe);
+	mfe.addEventListener("keydown", (event: KeyboardEvent) => {
+		if (event.key !== "Backspace" || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || event.isComposing || mfe.readOnly || !mfe.selectionIsCollapsed) {
+			return;
+		}
+		const replacement = accentLayerAtCursor(mfe);
+		if (!replacement) {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		// A selection command separates undo steps. Expand that selection to the whole
+		// outer accent before replacing it through MathLive's normal insertion API.
+		mfe.executeCommand("extendSelectionBackward");
+		mfe.selection = { ranges: [replacement.range] };
+		mfe.insert(replacement.latex, { selectionMode: "after" });
+	}, { capture: true });
 
 	if (!config.inline) {
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {
@@ -440,6 +456,44 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 
 	return mfe;
+}
+
+function accentLayerAtCursor(mfe: MathfieldElement): { range: [number, number]; latex: string } | undefined {
+	const entries = Array.from({ length: mfe.lastOffset + 1 }, (_, offset) => mfe.getElementInfo(offset));
+	let replacement: { range: [number, number]; latex: string } | undefined;
+	// Children precede their parent in MathLive's offsets. Follow only the right edge
+	// up the tree, keeping the outermost accent; editing inside a wide accent stays normal.
+	for (let offset = mfe.position; offset <= mfe.lastOffset; offset++) {
+		const entry = entries[offset];
+		if (!entry || (offset > mfe.position && (entry.depth ?? 0) >= (entries[offset - 1]?.depth ?? 0))) {
+			break;
+		}
+		const latex = entry.latex ?? "";
+		const command = /^\\(?:hat|widehat|tilde|widetilde|vec|dot|ddot|dddot|ddddot|bar|overline|underline|acute|grave|breve|check|mathring|ring|overrightarrow|overleftarrow|overleftrightarrow|overgroup|undergroup|overbrace|underbrace)\s*\{/.exec(latex);
+		if (!command) {
+			continue;
+		}
+		let nesting = 1;
+		let end = command[0].length;
+		for (; end < latex.length; end++) {
+			if (latex[end] === "\\") {
+				end++;
+			} else if (latex[end] === "{") {
+				nesting++;
+			} else if (latex[end] === "}" && --nesting === 0) {
+				break;
+			}
+		}
+		if (nesting !== 0) {
+			continue;
+		}
+		let before = offset - 1;
+		while (before > 0 && (entries[before]?.depth ?? 0) > (entry.depth ?? 0)) {
+			before--;
+		}
+		replacement = { range: [before, offset], latex: latex.slice(command[0].length, end) + latex.slice(end + 1) };
+	}
+	return replacement;
 }
 
 // MathLive puts an open ☰ or right-click menu inside a clear layer over the window, and removes
