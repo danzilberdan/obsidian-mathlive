@@ -243,7 +243,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
 /* Full-line formulas: inside the input, right of MathLive's keyboard and ☰ buttons and the same
    size, so they read as one row of controls. */
 .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field {
-  padding-right: 72px;
+  padding-right: 110px;
 }
 
 /* MathLive keeps its buttons 5px from the top, also on formulas several lines tall. */
