@@ -391,14 +391,19 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 			if (!("submenu" in item) || !("id" in item) || item.id !== "accent") {
 				return item;
 			}
-			const accents = [["hat", "Hat"], ["tilde", "Tilde"]].map(([command, name]) => ({
-				id: `accent-${command}`,
-				class: "ML__center-menu",
-				ariaLabel: name,
-				tooltip: `\\${command}`,
-				label: () => convertLatexToMarkup(`\\${command}{${mfe.getValue(mfe.selection, "latex") || "x"}}`),
-				onMenuSelect: () => mfe.insert(`\\${command}{#@}`, { selectionMode: "item" }),
-			}));
+			const accents = [["hat", "Hat"], ["tilde", "Tilde"]].map(([command, name]) => {
+				// Selection offsets count math atoms, so a command such as \alpha is one symbol.
+				const accentCommand = () => mfe.selection.ranges.some(([from, to]) => Math.abs(to - from) > 1)
+					? `wide${command}` : command;
+				return {
+					id: `accent-${command}`,
+					class: "ML__center-menu",
+					ariaLabel: name,
+					tooltip: () => `\\${accentCommand()}`,
+					label: () => convertLatexToMarkup(`\\${accentCommand()}{${mfe.getValue(mfe.selection, "latex") || "x"}}`),
+					onMenuSelect: () => mfe.insert(`\\${accentCommand()}{#@}`, { selectionMode: "item" }),
+				};
+			});
 			return {
 				...item,
 				submenu: [
