@@ -34,8 +34,8 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Find a formula.** Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and insert one in a click. Free, no account needed. If the library doesn't have it, **Write it with AI** writes it for one scan.
 - **Draw a formula.** Write it by hand on a drawing pad, or scan the QR code and draw it on your phone or tablet. You see the formula as you draw, and it goes into your note when you click Insert. Uses the MathLive cloud scanner.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
-- **Magic edit.** Click the wand next to a formula and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
-- **Stays out of the way.** Each formula has three small buttons: ✨ AI fill, Magic edit and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
+- **Magic edit.** Pick Magic edit in ✨ next to a formula, or click the wand in the editor window, and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
+- **Stays out of the way.** Each formula has two small buttons: ✨ AI fill (with Magic edit) and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
 
 <p align="center">
   <picture>

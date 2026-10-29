@@ -40,6 +40,7 @@ import {
 	fitVirtualKeyboardSpace,
 	moveVirtualKeyboard,
 	parseMathSelection,
+	closeMathfieldMenu,
 } from "./mathlive-shared";
 import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
 import { toMathJaxLatex } from "./mathjax-latex";
@@ -765,6 +766,7 @@ class MathLiveModal extends Modal {
 	private insertHotkey?: KeymapEventHandler
 	private stopListening?: () => void
 	private magicEdit?: MagicEditBox
+	private menuEscape?: Scope
 	private replaceFrom?: EditorPosition
 	private replaceTo?: EditorPosition
 	
@@ -786,6 +788,16 @@ class MathLiveModal extends Modal {
 		});
 
 		this.initMathlive(modalContent)
+		// Escape closes MathLive's ☰ menu first, then the window.
+		const menuEscape = new Scope(this.scope);
+		menuEscape.register([], "Escape", () => {
+			if (!this.mfe || !closeMathfieldMenu(this.mfe)) {
+				this.close();
+			}
+			return false;
+		});
+		this.app.keymap.pushScope(menuEscape);
+		this.menuEscape = menuEscape;
 		
 		const actionsContainer = modalContent.createDiv({ cls: "mathlive-modal-actions" });
 		this.initImageScanner(actionsContainer)
@@ -844,6 +856,11 @@ class MathLiveModal extends Modal {
 		const deadline = Date.now() + 1000;
 		const tryFocus = () => {
 			if (!this.mfe?.isConnected || doc.activeElement === this.mfe) {
+				return;
+			}
+			// Something opened over the window, such as Find a formula, has the focus now.
+			const active = doc.activeElement;
+			if (active && active !== doc.body && !this.modalEl.contains(active)) {
 				return;
 			}
 			this.mfe.focus();
@@ -1072,6 +1089,13 @@ class MathLiveModal extends Modal {
 
 	onClose() {
 		this.magicEdit?.dismiss();
+		if (this.mfe) {
+			closeMathfieldMenu(this.mfe);
+		}
+		if (this.menuEscape) {
+			this.app.keymap.popScope(this.menuEscape);
+			this.menuEscape = undefined;
+		}
 		this.stopListening?.();
 		this.stopListening = undefined;
 		// Give the keyboard back to the note, or formulas there would open it inside this closed window.

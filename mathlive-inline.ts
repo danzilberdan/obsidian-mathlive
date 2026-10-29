@@ -237,9 +237,23 @@ class MathLiveWidget extends WidgetType {
 			});
 		};
 
-		// Three buttons after each formula: ✨ fills it in with AI and holds the other actions, Magic
-		// edit changes it from a typed or spoken instruction, and Expand opens the editor window.
-		// On full-line formulas they sit inside the input, beside MathLive's keyboard and ☰ buttons.
+		// Magic edit changes the formula from a typed or spoken instruction, in a box under it.
+		const magicEdit = () => {
+			openMagicEditPopover(wrapper, {
+				settings: this.hooks.getSettings(),
+				getLatex: () => mfe.value,
+				setLatex: (latex) => {
+					mfe.value = latex;
+					dispatchChange(mfe.value);
+				},
+				isOpen: () => mfe.isConnected,
+				busyEl: mfe,
+			});
+		};
+
+		// Two buttons after each formula: ✨ fills it in or changes it with AI and holds the other
+		// actions, and Expand opens the editor window. On full-line formulas they sit inside the
+		// input, beside MathLive's keyboard and ☰ buttons.
 		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
 		const addButton = (cls: string, icon: string, label: string, attr: Record<string, string> = {}) => {
 			const button = buttons.createEl("button", {
@@ -257,22 +271,7 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			this.showMenu(aiButton, scanClipboardImage, scanScreenArea, drawFormula, findFormula);
-		});
-		const magicButton = addButton("obsidian-mathlive-widget-magic-button", "wand-sparkles", "Magic edit");
-		magicButton.addEventListener("click", (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			openMagicEditPopover(wrapper, {
-				settings: this.hooks.getSettings(),
-				getLatex: () => mfe.value,
-				setLatex: (latex) => {
-					mfe.value = latex;
-					dispatchChange(mfe.value);
-				},
-				isOpen: () => mfe.isConnected,
-				busyEl: mfe,
-			});
+			this.showMenu(aiButton, magicEdit, scanClipboardImage, scanScreenArea, drawFormula, findFormula);
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -405,6 +404,7 @@ class MathLiveWidget extends WidgetType {
 	// What ✨ can do for this formula, then help and the account.
 	private showMenu(
 		button: HTMLElement,
+		magicEdit: () => void,
 		scanClipboardImage: () => void,
 		scanScreenArea: () => void,
 		drawFormula: () => void,
@@ -412,6 +412,7 @@ class MathLiveWidget extends WidgetType {
 	) {
 		const accountItem = this.hooks.accountAction();
 		const menu = new Menu();
+		menu.addItem((item) => item.setTitle("Magic edit").setIcon("wand-sparkles").onClick(magicEdit));
 		menu.addItem((item) => item.setTitle("Find a formula").setIcon("search").onClick(findFormula));
 		menu.addItem((item) =>
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)

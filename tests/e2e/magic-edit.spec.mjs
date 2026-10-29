@@ -1,4 +1,4 @@
-import { clickWidgetButton, expect, inlineWidget, modalField, noteLine, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
+import { blockWidget, expect, inlineWidget, menuItem, modalField, noteLine, noteText, openWidgetMenu, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
 
 // Magic edit goes to a stub of the MathLive scanner on localhost:8502 (stub-scanner.mjs): "square"
 // squares the formula, "unclear" can't be done, and any recording is heard as "square it".
@@ -25,7 +25,8 @@ const fakeMicrophone = (page, loud) =>
 const editRequests = (scanner) => scanner.requests.filter((request) => request.url === "/edit");
 
 async function openMagicEdit(page) {
-	await clickWidgetButton(inlineWidget(page), "Magic edit");
+	await openWidgetMenu(page, inlineWidget(page));
+	await menuItem(page, "Magic edit").click();
 	await expect(popover(page)).toBeVisible();
 	await expect(popover(page).locator("input")).toBeFocused();
 }
@@ -90,6 +91,18 @@ test.describe("Magic edit", () => {
 		await popover(page).locator("input").press("Enter");
 		await expect(status(page)).toContainText("I didn't hear anything");
 		expect(editRequests(scanner)).toHaveLength(0);
+	});
+
+	test("is in the ✨ menu of a full-line formula too", async ({ page }) => {
+		await openWidgetMenu(page, blockWidget(page));
+		await menuItem(page, "Magic edit").click();
+		await expect(popover(page)).toBeVisible();
+		await popover(page).locator("input").fill("square it");
+		await popover(page).locator("input").press("Enter");
+		await expect(status(page)).toContainText("Done.");
+		await expect.poll(() => noteText(page)).toContain("$$\\left(\n\\int_0^1 f(x)\\,dx\n\\right)^2$$");
+		await page.keyboard.press("Escape");
+		await expect(popover(page)).toHaveCount(0);
 	});
 
 	test("says when the scanner can't do Magic edit", async ({ page }) => {
