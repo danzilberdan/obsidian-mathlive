@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
 let mathfieldElementCtor: MathfieldElementCtor | null = null;
+let convertLatexToMarkup: typeof import("mathlive")["convertLatexToMarkup"];
 let mathliveLoadPromise: Promise<MathfieldElementCtor> | null = null;
 const fontDocuments = new WeakSet<Document>();
 
@@ -68,6 +69,7 @@ async function loadMathfieldElement(): Promise<MathfieldElementCtor> {
 		)
 			.then((mathliveModule) => {
 				mathfieldElementCtor = mathliveModule.MathfieldElement;
+				convertLatexToMarkup = mathliveModule.convertLatexToMarkup;
 				return mathfieldElementCtor;
 			})
 			.finally(() => {
@@ -383,7 +385,29 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 	mfe.defaultMode = config.inline ? "inline-math" : "math";
 	mfe.value = config.initialValue;
-	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
+	mfe.addEventListener("mount", () => {
+		styleMathfieldInPopout(mfe);
+		mfe.menuItems = mfe.menuItems.map((item) => {
+			if (!("submenu" in item) || !("id" in item) || item.id !== "accent") {
+				return item;
+			}
+			const accents = [["hat", "Hat"], ["tilde", "Tilde"]].map(([command, name]) => ({
+				id: `accent-${command}`,
+				class: "ML__center-menu",
+				ariaLabel: name,
+				tooltip: `\\${command}`,
+				label: () => convertLatexToMarkup(`\\${command}{${mfe.getValue(mfe.selection, "latex") || "x"}}`),
+				onMenuSelect: () => mfe.insert(`\\${command}{#@}`, { selectionMode: "item" }),
+			}));
+			return {
+				...item,
+				submenu: [
+					...accents.filter((accent) => !item.submenu.some((entry) => "id" in entry && entry.id === accent.id)),
+					...item.submenu,
+				],
+			};
+		});
+	});
 	closeMenuFromOutside(mfe);
 
 	if (!config.inline) {
