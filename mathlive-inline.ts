@@ -1,6 +1,7 @@
 import type { Text } from "@codemirror/state";
 import {
 	EditorSelection,
+	EditorState,
 	Extension,
 	Prec,
 	RangeSetBuilder,
@@ -71,7 +72,9 @@ class MathLiveWidget extends WidgetType {
 		private readonly config: WidgetConfig,
 		private equation: string,
 		private readonly isInline: boolean,
-		private readonly hooks: WidgetHooks
+		private readonly hooks: WidgetHooks,
+		// Whether a selection in the note covers the whole formula.
+		private readonly selected = false
 	) {
 		super();
 	}
@@ -82,7 +85,8 @@ class MathLiveWidget extends WidgetType {
 			other.config.from === this.config.from &&
 			other.config.to === this.config.to &&
 			other.equation === this.equation &&
-			other.isInline === this.isInline
+			other.isInline === this.isInline &&
+			other.selected === this.selected
 		);
 	}
 
@@ -140,6 +144,7 @@ class MathLiveWidget extends WidgetType {
 
 	private style(wrapper: HTMLDivElement) {
 		const settings = this.hooks.getSettings();
+		wrapper.toggleClass("is-selected", this.selected);
 
 		if (!settings.enableInlineEditorMode) {
 			wrapper.addClass("hidden");
@@ -528,15 +533,20 @@ function arrowEnterBinding(
 ): KeyBinding {
 	return {
 		key,
-		run: (view) => (!getSettings().arrowKeyNavigation ? false : tryEnter(view, match, atStart)),
+		// With text selected the keys act on the selection: a selected formula gets deleted.
+		run: (view) =>
+			!getSettings().arrowKeyNavigation || !view.state.selection.main.empty
+				? false
+				: tryEnter(view, match, atStart),
 	};
 }
 
-// Where the cursor sits just before and just after a formula, outside its hidden LaTeX.
+// Where the cursor sits just before and just after a formula, outside its hidden LaTeX. For a
+// full-line formula that is the end of the line above and the start of the line below.
 function edgesOf(entry: MathFieldEntry) {
 	return entry.isInline
 		? { before: entry.from - 1, after: entry.to + 1 }
-		: { before: entry.from - 2, after: entry.to + 2 };
+		: { before: entry.from - 3, after: entry.to + 3 };
 }
 
 // Arrow keys, Backspace and Delete next to a formula go into it instead of over it.
@@ -552,10 +562,9 @@ function enterMathLiveOnArrow(getSettings: () => PluginSettings): Extension {
 					return false;
 				}
 				const line = doc.lineAt(head).number;
-				const edges = edgesOf(entry);
 				return below
-					? doc.lineAt(Math.max(0, edges.before)).number === line + 1
-					: doc.lineAt(Math.min(doc.length, edges.after)).number === line - 1;
+					? doc.lineAt(Math.max(0, entry.from - 2)).number === line + 1
+					: doc.lineAt(Math.min(doc.length, entry.to + 2)).number === line - 1;
 			},
 			below,
 			getSettings
@@ -706,9 +715,10 @@ function sourceRange(range: MathRange, doc: Text): { from: number; to: number } 
 	return { from, to };
 }
 
-// Whether the cursor is in a formula or right next to it, on its $ or $$.
+// Whether the cursor is in a formula or right next to it: on its $, or for a full-line formula on
+// the line above or below.
 function hasCursorIn(state: Transaction["state"], range: MathRange): boolean {
-	const delimiter = range.isInline ? 1 : 2;
+	const delimiter = range.isInline ? 1 : 3;
 	return state.selection.ranges.some(
 		(selection) => selection.head >= range.from - delimiter && selection.head <= range.to + delimiter
 	);
@@ -731,14 +741,20 @@ function buildDecorations(state: Transaction["state"], hooks: WidgetHooks): Deco
 			continue;
 		}
 		const equation = state.sliceDoc(range.from, range.to);
+		const source = sourceRange(range, state.doc);
+		const selected =
+			source !== null &&
+			state.selection.ranges.some(
+				(selection) => !selection.empty && selection.from <= source.from && selection.to >= source.to
+			);
 		const widget = new MathLiveWidget(
 			{ from: range.from, to: range.to },
 			equation,
 			range.isInline,
-			hooks
+			hooks,
+			selected
 		);
 
-		const source = sourceRange(range, state.doc);
 		if (source) {
 			builder.add(source.from, source.to, Decoration.replace({ widget, block: !range.isInline }));
 			continue;
@@ -766,8 +782,117 @@ export function createInlineMathEditorExtension(hooks: WidgetHooks): Extension {
 				Prec.highest(EditorView.decorations.from(field)),
 				// The cursor steps over a formula as one piece and never lands in its hidden LaTeX.
 				EditorView.atomicRanges.of((view) => view.state.field(field)),
+				keepSelectionOutsideFormulas(field),
 				enterMathLiveOnArrow(hooks.getSettings),
 			];
 		},
+	});
+}
+
+interface FormulaSpan {
+	// The formula's hidden LaTeX, delimiters included.
+	from: number;
+	to: number;
+	// Where the cursor stops before and after it. A full-line formula's lines take no cursor, so
+	// these are the end of the line above and the start of the line below.
+	before: number;
+	after: number;
+	isInline: boolean;
+}
+
+function formulaSpans(state: EditorState, decorations: DecorationSet): FormulaSpan[] {
+	const spans: FormulaSpan[] = [];
+	const length = state.doc.length;
+	for (let cursor = decorations.iter(); cursor.value; cursor.next()) {
+		if (cursor.from === cursor.to) {
+			continue;
+		}
+		const isInline = !(cursor.value.spec as { block?: boolean }).block;
+		spans.push({
+			from: cursor.from,
+			to: cursor.to,
+			before: isInline || cursor.from === 0 ? cursor.from : cursor.from - 1,
+			after: isInline || cursor.to === length ? cursor.to : cursor.to + 1,
+			isInline,
+		});
+	}
+	return spans;
+}
+
+// Moves a selection end that landed inside a formula (moving up or down can) out of it, on the side
+// it was heading to, so the cursor is always before or after a formula and a selection holds either
+// all of it or none of it.
+function snapOutOf(spans: FormulaSpan[], position: number, forward: boolean): number {
+	for (const span of spans) {
+		if (position > span.before && position < span.after) {
+			return forward ? span.after : span.before;
+		}
+	}
+	return position;
+}
+
+function keepSelectionOutsideFormulas(field: StateField<DecorationSet>): Extension {
+	return EditorState.transactionFilter.of((tr) => {
+		const decorations = tr.startState.field(field, false);
+		if (!decorations || decorations.size === 0) {
+			return tr;
+		}
+
+		if (!tr.docChanged) {
+			// Only the user's own moves: the plugin itself puts the cursor in a formula to open it
+			// in the editor window.
+			if (!tr.selection || !tr.isUserEvent("select")) {
+				return tr;
+			}
+			const spans = formulaSpans(tr.startState, decorations);
+			const old = tr.startState.selection;
+			let moved = false;
+			const ranges = tr.selection.ranges.map((range, index) => {
+				const previous = old.ranges[index] ?? old.main;
+				const forward = range.head >= previous.head;
+				const head = snapOutOf(spans, range.head, forward);
+				const anchor = range.empty ? head : snapOutOf(spans, range.anchor, range.anchor > range.head);
+				if (head === range.head && anchor === range.anchor) {
+					return range;
+				}
+				moved = true;
+				return EditorSelection.range(anchor, head);
+			});
+			if (!moved) {
+				return tr;
+			}
+			return [tr, { selection: EditorSelection.create(ranges, tr.selection.mainIndex), sequential: true }];
+		}
+
+		// Deleting or typing over a selected full-line formula takes its lines, not the line break
+		// before them, so the lines around it stay apart.
+		const selection = tr.startState.selection;
+		if (selection.ranges.length !== 1 || selection.main.empty || !(tr.isUserEvent("delete") || tr.isUserEvent("input"))) {
+			return tr;
+		}
+		const { from, to } = selection.main;
+		const block = formulaSpans(tr.startState, decorations).find(
+			(span) => !span.isInline && span.before === from && span.before < span.from && span.to < to
+		);
+		if (!block) {
+			return tr;
+		}
+		let inserted = "";
+		let matches = true;
+		tr.changes.iterChanges((fromA, toA, _fromB, _toB, text) => {
+			if (fromA !== from || toA !== to) {
+				matches = false;
+			}
+			inserted = text.toString();
+		});
+		if (!matches) {
+			return tr;
+		}
+		return {
+			changes: { from: block.from, to, insert: inserted },
+			selection: EditorSelection.cursor(block.from + inserted.length),
+			userEvent: tr.annotation(Transaction.userEvent),
+			scrollIntoView: true,
+		};
 	});
 }

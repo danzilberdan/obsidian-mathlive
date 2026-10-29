@@ -966,3 +966,16 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 .mathlive-formula-write .mathlive-formula-name {
   color: var(--text-accent);
 }
+
+/* A formula the note's selection covers, $ signs included: Backspace or Delete removes it. */
+.obsidian-mathlive-codemirror-wrapper.is-selected .mathlive-field,
+.obsidian-mathlive-codemirror-wrapper.inline.is-selected .mathlive-field {
+  background: var(--text-selection);
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
+}
+
+/* A full-line formula spans the note's width, so its ring goes inside the edge. */
+.obsidian-mathlive-codemirror-wrapper:not(.inline).is-selected .mathlive-field {
+  outline-offset: -2px;
+}
