@@ -248,7 +248,8 @@ function isEscapedDollar(text: string, index: number) {
 
 // Shows a menu under the button that opened it. A formula with focus keeps Escape to itself, so
 // listen for it before the formula does, or the menu can't be closed from the keyboard.
-export function showMenuBelow(menu: Menu, button: HTMLElement) {
+// `alignStart` lines the menu up with the button's left edge instead of starting at its right.
+export function showMenuBelow(menu: Menu, button: HTMLElement, alignStart = false) {
 	const doc = button.doc;
 	const closeOnEscape = (event: KeyboardEvent) => {
 		if (event.key !== "Escape") {
@@ -266,7 +267,8 @@ export function showMenuBelow(menu: Menu, button: HTMLElement) {
 	});
 
 	const rect = button.getBoundingClientRect();
-	menu.showAtPosition({ x: rect.left, y: rect.bottom, width: rect.width }, doc);
+	const width = alignStart ? undefined : rect.width;
+	menu.showAtPosition({ x: rect.left, y: rect.bottom + (alignStart ? 4 : 0), width }, doc);
 }
 
 // MathLive has one virtual keyboard. When it moves to another container while it is showing, the
@@ -382,6 +384,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	mfe.defaultMode = config.inline ? "inline-math" : "math";
 	mfe.value = config.initialValue;
 	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
+	closeMenuFromOutside(mfe);
 
 	if (!config.inline) {
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {
@@ -408,6 +411,61 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 
 	return mfe;
+}
+
+// MathLive puts an open ☰ or right-click menu inside a clear layer over the window, and removes
+// both when the menu closes. A click on that layer is how MathLive itself closes the menu.
+// Returns whether a menu was open.
+export function closeMathfieldMenu(mfe: MathfieldElement): boolean {
+	const layer = mfe.shadowRoot?.querySelector(".ui-menu-container")?.parentElement;
+	layer?.dispatchEvent(new MouseEvent("click"));
+	return Boolean(layer);
+}
+
+// Inside a note that layer only covers the formula, and once focus leaves the menu it doesn't hear
+// Escape. So while a menu may be open, a click anywhere outside it or Escape closes it.
+function closeMenuFromOutside(mfe: MathfieldElement) {
+	let stop: (() => void) | null = null;
+	const watch = () => {
+		if (stop) {
+			return;
+		}
+		const doc = mfe.doc;
+		const onPointerDown = (event: PointerEvent) => {
+			const path = event.composedPath();
+			if (path.some((target) => (target as Element).classList?.contains("ui-menu-container"))) {
+				return;
+			}
+			stop?.();
+			// ☰ again closes the menu rather than opening it once more.
+			const toggle = mfe.shadowRoot?.querySelector("[part=menu-toggle]");
+			if (closeMathfieldMenu(mfe) && toggle && path.includes(toggle)) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		};
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== "Escape") {
+				return;
+			}
+			stop?.();
+			// Only the menu closes, not the formula.
+			if (closeMathfieldMenu(mfe)) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		};
+		doc.addEventListener("pointerdown", onPointerDown, true);
+		doc.addEventListener("keydown", onKeyDown, true);
+		stop = () => {
+			doc.removeEventListener("pointerdown", onPointerDown, true);
+			doc.removeEventListener("keydown", onKeyDown, true);
+			stop = null;
+		};
+	};
+	// MathLive stops these events inside the formula, so listen on the way in.
+	mfe.addEventListener("pointerdown", watch, true);
+	mfe.addEventListener("contextmenu", watch, true);
 }
 
 const SCAN_FAILED_NOTICE = "Couldn't scan the image. Check your connection and try again.";

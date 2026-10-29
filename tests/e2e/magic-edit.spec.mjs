@@ -1,4 +1,4 @@
-import { clickWidgetButton, expect, inlineWidget, modalField, noteLine, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
+import { modalAiAction, blockWidget, expect, inlineWidget, menuItem, modalField, noteLine, noteText, openWidgetMenu, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
 
 // Magic edit goes to a stub of the MathLive scanner on localhost:8502 (stub-scanner.mjs): "square"
 // squares the formula, "unclear" can't be done, and any recording is heard as "square it".
@@ -25,7 +25,8 @@ const fakeMicrophone = (page, loud) =>
 const editRequests = (scanner) => scanner.requests.filter((request) => request.url === "/edit");
 
 async function openMagicEdit(page) {
-	await clickWidgetButton(inlineWidget(page), "Magic edit");
+	await openWidgetMenu(page, inlineWidget(page));
+	await menuItem(page, "Magic edit").click();
 	await expect(popover(page)).toBeVisible();
 	await expect(popover(page).locator("input")).toBeFocused();
 }
@@ -92,6 +93,18 @@ test.describe("Magic edit", () => {
 		expect(editRequests(scanner)).toHaveLength(0);
 	});
 
+	test("is in the ✨ menu of a full-line formula too", async ({ page }) => {
+		await openWidgetMenu(page, blockWidget(page));
+		await menuItem(page, "Magic edit").click();
+		await expect(popover(page)).toBeVisible();
+		await popover(page).locator("input").fill("square it");
+		await popover(page).locator("input").press("Enter");
+		await expect(status(page)).toContainText("Done.");
+		await expect.poll(() => noteText(page)).toContain("$$\\left(\n\\int_0^1 f(x)\\,dx\n\\right)^2$$");
+		await page.keyboard.press("Escape");
+		await expect(popover(page)).toHaveCount(0);
+	});
+
 	test("says when the scanner can't do Magic edit", async ({ page }) => {
 		await setSettings(page, { apiKey: "old-scanner" });
 		await openMagicEdit(page);
@@ -120,7 +133,7 @@ test.describe("Magic edit", () => {
 		await waitForModalField(page);
 		const modal = page.locator(".modal");
 		const size = await modal.boundingBox();
-		await modal.getByRole("button", { name: "Magic edit" }).click();
+		await modalAiAction(page, "Magic edit");
 		const box = modal.locator(".mathlive-magic-edit-popover");
 		await expect(box.locator("input")).toBeFocused();
 		// It floats: the window keeps its size.
@@ -135,7 +148,7 @@ test.describe("Magic edit", () => {
 		// A click elsewhere in the window closes it, and so does Escape, which leaves the window open.
 		await modal.locator(".mathlive-modal-title").click();
 		await expect(box).toHaveCount(0);
-		await modal.getByRole("button", { name: "Magic edit" }).click();
+		await modalAiAction(page, "Magic edit");
 		await box.locator("input").press("Escape");
 		await expect(box).toHaveCount(0);
 		await expect(modalField(page)).toHaveCount(1);

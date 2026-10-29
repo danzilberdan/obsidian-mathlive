@@ -84,7 +84,7 @@ export class GuideModal extends Modal {
 		section(
 			"wand-sparkles",
 			"Magic edit: say what to change",
-			"Click the wand next to a formula, or in the editor window, and type or say what to change: “square the denominator”, “swap alpha and beta”, “make it a matrix”. An AI rewrites the formula, Undo puts it back, and the box stays open for the next change."
+			"Pick Magic edit in ✨ AI fill, next to a formula or in the editor window, and type or say what to change: “square the denominator”, “swap alpha and beta”, “make it a matrix”. An AI rewrites the formula, Undo puts it back, and the box stays open for the next change."
 		);
 		section(
 			"maximize-2",

@@ -154,6 +154,12 @@ export async function clickWidgetButton(widget, name) {
 	await widget.getByRole("button", { name }).click();
 }
 
+// Picks an action from the editor window's ✨ AI fill menu.
+export async function modalAiAction(page, title) {
+	await page.locator(".mathlive-modal-root .mathlive-ai-fill-button").click();
+	await menuItem(page, title).click();
+}
+
 // Opens a formula's ✨ menu and returns Obsidian's menu.
 export async function openWidgetMenu(page, widget) {
 	await clickWidgetButton(widget, "AI fill");

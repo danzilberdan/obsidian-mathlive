@@ -1,4 +1,4 @@
-import { blockField, expect, focusField, menuItem, modalField, noteLine, noteText, openedUrls, recordOpenedUrls, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
+import { modalAiAction, blockField, expect, focusField, inlineField, menuItem, modalField, noteLine, noteText, openedUrls, recordOpenedUrls, runCommand, setSettings, test, waitForModalField } from "./fixtures.mjs";
 
 const selectInLine = (page, prefix, from, to) =>
 	page.evaluate(
@@ -118,28 +118,39 @@ test.describe("formula editor window", () => {
 	test("the window's buttons sit on one row under the formula", async ({ page }) => {
 		await runCommand(page, "mathlive:open-modal");
 		await waitForModalField(page);
-		const scan = await page.locator(".mathlive-modal-root .scan-button").boundingBox();
+		const ai = await page.locator(".mathlive-modal-root .mathlive-ai-fill-button").boundingBox();
 		const insert = await page.locator(".mathlive-modal-root button.submit").boundingBox();
 		const field = await modalField(page).boundingBox();
-		expect(Math.abs(scan.y - insert.y)).toBeLessThanOrEqual(2);
-		expect(scan.y).toBeGreaterThan(field.y + field.height);
+		expect(Math.abs(ai.y - insert.y)).toBeLessThanOrEqual(2);
+		expect(ai.y).toBeGreaterThan(field.y + field.height);
 		await expect(page.locator(".mathlive-modal-root button.submit")).toHaveText(/^Insert(Ctrl\+Enter|⌘ Enter)$/);
 	});
 
-	test("the scan buttons are small icons named by their tooltips", async ({ page }) => {
+	test("one ✨ AI fill button holds the AI actions, each with an icon and a name", async ({ page }) => {
 		await runCommand(page, "mathlive:open-modal");
 		await waitForModalField(page);
 		const actions = page.locator(".mathlive-modal-root .mathlive-scan-actions");
-		await expect(actions).toHaveText("");
-		for (const name of ["Scan clipboard image", "Scan from screen"]) {
-			const button = actions.getByRole("button", { name });
-			const box = await button.boundingBox();
-			expect(box.width).toBeLessThanOrEqual(34);
-			expect(box.height).toBeLessThanOrEqual(34);
-			await button.hover();
-			await expect(page.locator(".tooltip")).toHaveText(name);
-			await page.mouse.move(5, 5);
-		}
+		await expect(actions.getByRole("button")).toHaveCount(1);
+		const button = actions.getByRole("button", { name: "AI fill" });
+		await button.click();
+		await expect(button).toHaveAttribute("aria-expanded", "true");
+		const menu = page.locator(".menu");
+		await expect(menu.locator(".menu-item-title")).toHaveText([
+			"Magic edit",
+			"Find a formula",
+			"Scan clipboard image",
+			"Scan from screen",
+			"Draw formula",
+		]);
+		await expect(menu.locator(".menu-item-icon svg")).toHaveCount(5);
+		// Escape closes the menu, and leaves the window open.
+		await page.keyboard.press("Escape");
+		await expect(menu).toHaveCount(0);
+		await expect(modalField(page)).toBeVisible();
+
+		await modalAiAction(page, "Find a formula");
+		await expect(page.locator(".mathlive-formula-search")).toBeVisible();
+		await page.keyboard.press("Escape");
 	});
 
 	test("the virtual keyboard opens inside the window", async ({ page }) => {
@@ -173,5 +184,101 @@ test.describe("formula editor window", () => {
 		await page.getByText("Select All").click();
 		await expect(page.getByText("Insert Matrix")).toBeHidden();
 		await expect.poll(() => field.evaluate((f) => JSON.stringify(f.selection.ranges[0]) === JSON.stringify([0, f.lastOffset]))).toBe(true);
+	});
+
+	test("MathLive's own menu closes on a click outside it, on ☰ again, and on Escape", async ({ page }) => {
+		const field = blockField(page);
+		const menu = page.getByText("Insert Matrix");
+		const open = async () => {
+			await focusField(field);
+			await field.hover();
+			await field.locator("[part=menu-toggle]").click();
+			await expect(menu).toBeVisible();
+		};
+
+		// A click in the note, away from the formula.
+		await open();
+		await page.getByText("Plain paragraph between formulas.").click();
+		await expect(menu).toBeHidden();
+
+		// ☰ again.
+		await open();
+		await field.locator("[part=menu-toggle]").click();
+		await expect(menu).toBeHidden();
+
+		// Escape, after the mouse has left the formula, keeps the formula as it is.
+		await open();
+		await page.mouse.move(5, 5);
+		await page.keyboard.press("Escape");
+		await expect(menu).toBeHidden();
+		await expect(field).toHaveJSProperty("value", "\n\\int_0^1 f(x)\\,dx\n");
+
+		// The right-click menu too.
+		await inlineField(page, 0).click({ button: "right" });
+		await expect(menu).toBeVisible();
+		// Away from the menu, which may cover the paragraph.
+		await page.mouse.click(850, 650);
+		await expect(menu).toBeHidden();
+	});
+
+	test("the editor window has MathLive's ☰ menu", async ({ page }) => {
+		await runCommand(page, "mathlive:open-modal");
+		await waitForModalField(page);
+		const field = modalField(page);
+		const menu = page.getByText("Insert Matrix");
+		await field.locator("[part=menu-toggle]").click();
+		await expect(menu).toBeVisible();
+		await page.getByText("Select All").click();
+		await expect(menu).toBeHidden();
+
+		// Escape closes only the menu, and a second one the window.
+		await field.locator("[part=menu-toggle]").click();
+		await expect(menu).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(menu).toBeHidden();
+		await expect(field).toBeVisible();
+
+		// A click elsewhere in the window closes it too.
+		await field.locator("[part=menu-toggle]").click();
+		await expect(menu).toBeVisible();
+		// MathLive's clear layer over the window takes the click, so click by position.
+		const title = await page.locator(".mathlive-modal-title").boundingBox();
+		await page.mouse.click(title.x + 10, title.y + title.height / 2);
+		await expect(menu).toBeHidden();
+		await expect(field).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(field).toHaveCount(0);
+	});
+
+	test("the editor window grows on a big screen, with bigger formulas", async ({ page }) => {
+		const measure = async () => {
+			await runCommand(page, "mathlive:open-modal");
+			await waitForModalField(page);
+			const size = await modalField(page).evaluate((field) => ({
+				width: field.getBoundingClientRect().width,
+				height: field.getBoundingClientRect().height,
+				font: Number.parseFloat(getComputedStyle(field).fontSize),
+			}));
+			await page.keyboard.press("Escape");
+			await expect(modalField(page)).toHaveCount(0);
+			return size;
+		};
+		const resize = (width, height) =>
+			page.evaluate(({ width, height }) => {
+				window.require("electron").remote.getCurrentWindow().setContentSize(width, height);
+				return true;
+			}, { width, height });
+
+		const small = await measure();
+		await resize(1400, 900);
+		try {
+			await expect.poll(() => page.evaluate(() => window.innerWidth)).toBeGreaterThan(1300);
+			const big = await measure();
+			expect(big.width).toBeGreaterThan(small.width + 250);
+			expect(big.height).toBeGreaterThan(small.height * 2);
+			expect(big.font).toBeGreaterThan(small.font);
+		} finally {
+			await resize(1024, 800);
+		}
 	});
 });

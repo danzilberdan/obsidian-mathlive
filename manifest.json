@@ -1,7 +1,7 @@
 {
 	"id": "mathlive",
 	"name": "MathLive",
-	"version": "2.2.1",
+	"version": "2.3.0",
 	"minAppVersion": "1.1.0",
 	"description": "Faster and more intuitive MathJax editing using MathLive.",
 	"author": "Dan Zilberman",
