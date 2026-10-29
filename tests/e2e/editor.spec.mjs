@@ -297,6 +297,26 @@ test.describe("formulas in the note", () => {
 		await expect.poll(() => noteLine(page, "Last line")).toBe("Last line $\\alpha+\\beta+y$ done.");
 	});
 
+	test("expanded inline formulas allow mouse cursor placement when the modal disables selection", async ({ page }) => {
+		const inheritedStyle = await page.addStyleTag({ content: ".mathlive-modal-content { user-select: none; }" });
+		try {
+			await clickWidgetButton(inlineWidget(page, 1), "Expand");
+			await waitForModalField(page);
+			const field = modalField(page);
+			await field.evaluate((mfe) => { mfe.position = mfe.lastOffset; });
+
+			const alpha = await field.locator(".ML__mathit").filter({ hasText: /^α$/ }).boundingBox();
+			await page.mouse.click(alpha.x + alpha.width / 4, alpha.y + alpha.height / 2);
+			await expect(field).toHaveJSProperty("position", 0);
+
+			const beta = await field.locator(".ML__mathit").filter({ hasText: /^β$/ }).boundingBox();
+			await page.mouse.click(beta.x + beta.width * 3 / 4, beta.y + beta.height / 2);
+			await expect(field).toHaveJSProperty("position", await field.evaluate((mfe) => mfe.lastOffset));
+		} finally {
+			await inheritedStyle.evaluate((style) => style.remove());
+		}
+	});
+
 	test("Expand opens a block formula in the editor window", async ({ page }) => {
 		await clickWidgetButton(blockWidget(page), "Expand");
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit math block");

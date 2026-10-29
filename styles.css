@@ -32,6 +32,9 @@
 }
 
 .mathlive-modal-content .mathlive-field {
+  /* MathLive disables pointer selection when the modal inherits user-select: none. */
+  user-select: text;
+  -webkit-user-select: text;
   font-size: 1.5rem;
   width: 100%;
   min-height: 4.5rem;
