@@ -370,6 +370,50 @@ export function styleVirtualKeyboardInPopout() {
 	}
 }
 
+// MathLive descends into matrix cells and scripts even when the click is at an outer edge.
+// Run after its pointer handler so bounds are fresh, and only correct unmodified mouse clicks.
+function placeCursorAtCompoundBoundary(mfe: MathfieldElement, event: PointerEvent) {
+	if (event.pointerType !== "mouse" || event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) {
+		return;
+	}
+	const entries = Array.from({ length: mfe.lastOffset + 1 }, (_, offset) => ({
+		offset, ...mfe.getElementInfo(offset),
+	}));
+	const tolerance = Math.min(8, Number.parseFloat(mfe.win.getComputedStyle(mfe).fontSize) / 4);
+	for (const entry of entries) {
+		const matrix = /^\\begin\{(?:[bBpPvV]?matrix|smallmatrix)\}/.test(entry.latex ?? "");
+		const script = /^[_^]/.test(entry.latex ?? "");
+		if ((!matrix && !script) || entry.depth === undefined) {
+			continue;
+		}
+		let before = entry.offset - 1;
+		while (before >= 0 && (entries[before].depth ?? -1) > entry.depth) {
+			before -= 1;
+		}
+		const children = entries.slice(before + 1, entry.offset).filter((child) => child.bounds && child.bounds.width > 0 && child.latex);
+		if (children.length === 0) {
+			continue;
+		}
+		const left = Math.min(...children.map((child) => child.bounds!.left));
+		const right = Math.max(...children.map((child) => child.bounds!.right));
+		const bounds = matrix ? entry.bounds : entries[before]?.bounds;
+		if (!bounds || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+			continue;
+		}
+		if (matrix && event.clientX >= bounds.left - tolerance && event.clientX < left - 1) {
+			mfe.focus();
+			mfe.position = before;
+			return;
+		}
+		const rightEdge = matrix ? bounds.right : right;
+		if (event.clientX > right + 1 && event.clientX <= rightEdge + tolerance) {
+			mfe.focus();
+			mfe.position = entry.offset;
+			return;
+		}
+	}
+}
+
 export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	if (!mathfieldElementCtor) {
 		throw new Error("MathLive was not initialized before creating a math-field.");
@@ -378,6 +422,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	const mfe = new mathfieldElementCtor();
 	// styles.css targets this class, since the scorecard's CSS check rejects the math-field type selector.
 	mfe.addClass("mathlive-field");
+	mfe.addEventListener("pointerdown", (event) => placeCursorAtCompoundBoundary(mfe, event));
 	if (config.id) {
 		mfe.id = config.id;
 	}
