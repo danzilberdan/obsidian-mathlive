@@ -12,6 +12,7 @@ import {
 	requireApiVersion,
 	setIcon,
 	type TextComponent,
+	type TextAreaComponent,
 	type KeymapEventHandler,
 	MarkdownView,
 	Menu,
@@ -48,6 +49,7 @@ import {
 	closeMathfieldMenu,
 	hideShownMenu,
 	showMenuBelow,
+	noticeWithButton,
 } from "./mathlive-shared";
 import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
 import { toMathJaxLatex } from "./mathjax-latex";
@@ -57,6 +59,17 @@ import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
 import { WelcomeModal } from "./welcome";
+import {
+	LATEX_SUITE_ID,
+	PRESET_SHORTHANDS,
+	QUICK_LATEX_ID,
+	formatShorthands,
+	isPluginEnabled,
+	parseShorthands,
+	readQuickLatexShorthands,
+	setActiveShorthands,
+	shorthandSourceExtension,
+} from "./shorthands";
 const BODY_CLASSES = [
 	"mathlive-hide-rendered-inline",
 	"mathlive-hide-rendered-block",
@@ -86,6 +99,7 @@ export default class MathLivePlugin extends Plugin {
 			window.mathVirtualKeyboard.removeEventListener("geometrychange", fitVirtualKeyboardSpace);
 		});
 		await this.loadSettings();
+		this.applyShorthands();
 		this.account = new CloudAccount(this);
 		setScanAccount(this.account);
 		void this.account.refreshStatus();
@@ -275,6 +289,7 @@ export default class MathLivePlugin extends Plugin {
 				findFormula: (insert) => this.openFormulaSearch(insert),
 			})
 		);
+		this.registerEditorExtension(shorthandSourceExtension());
 		this.addSettingTab(new MathliveSettingTab(this.app, this));
 		this.registerEvent(
 			this.app.workspace.on("window-open", (workspaceWindow) => {
@@ -297,7 +312,79 @@ export default class MathLivePlugin extends Plugin {
 				void this.saveSettings();
 				new WelcomeModal(this.app, this.account, () => this.openEditorFromWelcome(), () => this.openGuide()).open();
 			}
+			void this.offerQuickLatexImport();
 		});
+	}
+
+	// Shorthands typed in source mode would expand twice next to Quick Latex or Latex Suite, which
+	// expand their own, so "auto" leaves typed LaTeX to them.
+	shorthandsInSourceMode(): boolean {
+		const mode = this.settings.shorthandsInSource;
+		if (mode !== "auto") {
+			return mode === "on";
+		}
+		return !isPluginEnabled(this.app, QUICK_LATEX_ID) && !isPluginEnabled(this.app, LATEX_SUITE_ID);
+	}
+
+	applyShorthands() {
+		setActiveShorthands({
+			preset: this.settings.shorthandPreset,
+			custom: this.settings.shorthands,
+			inSourceMode: () => this.shorthandsInSourceMode(),
+		});
+	}
+
+	// Adds Quick Latex's shorthands from this vault to MathLive's own. Returns how many were new.
+	async importQuickLatexShorthands(): Promise<number> {
+		const found = await readQuickLatexShorthands(this.app);
+		const preset = parseShorthands(PRESET_SHORTHANDS);
+		const own = parseShorthands(this.settings.shorthands);
+		let added = 0;
+		for (const [key, snippet] of found) {
+			// Quick Latex saves its default list too; those come from the preset instead.
+			if (preset.get(key) === snippet || own.has(key)) {
+				continue;
+			}
+			own.set(key, snippet);
+			added += 1;
+		}
+		this.settings.shorthands = formatShorthands(own);
+		this.settings.shorthandPreset = true;
+		await this.saveSettings();
+		return added;
+	}
+
+	// Once per vault: someone who used Quick Latex here can bring their shorthands along.
+	private async offerQuickLatexImport() {
+		if (this.settings.quickLatexImportOffered) {
+			return;
+		}
+		const pluginDir = `${this.app.vault.configDir}/plugins/${QUICK_LATEX_ID}`;
+		if (!(await this.app.vault.adapter.exists(pluginDir))) {
+			return;
+		}
+		this.settings.quickLatexImportOffered = true;
+		await this.saveSettings();
+		const found = await readQuickLatexShorthands(this.app);
+		const message =
+			found.size > 0
+				? `Coming from Quick Latex? Import your ${shorthandCount(found.size)} into MathLive's editor.`
+				: "Coming from Quick Latex? Use its shorthands, like al for α, in MathLive's editor.";
+		noticeWithButton(message, "Import", () => void this.importAndReport(), 30000);
+	}
+
+	async importAndReport() {
+		const added = await this.importQuickLatexShorthands();
+		const stillOn = isPluginEnabled(this.app, QUICK_LATEX_ID)
+			? " Quick Latex keeps handling typed LaTeX while it is on."
+			: "";
+		new Notice(
+			(added > 0
+				? `Imported ${shorthandCount(added)}, and turned on Quick Latex's defaults.`
+				: "Turned on Quick Latex's shorthands.") +
+				" Type one in a formula and press Space." +
+				stillOn
+		);
 	}
 
 	// Everything MathLive does, with buttons to try each part.
@@ -401,6 +488,7 @@ export default class MathLivePlugin extends Plugin {
 		if (data.cloudScannerUrl === DEFAULT_SETTINGS.cloudScannerUrl) delete data.cloudScannerUrl;
 		if (data.websiteUrl === DEFAULT_SETTINGS.websiteUrl) delete data.websiteUrl;
 		await this.saveData(data);
+		this.applyShorthands();
 		if (options?.refreshCloudAccessStatus) {
 			this.account.invalidateStatus();
 			void this.account.refreshStatus();
@@ -628,6 +716,8 @@ export default class MathLivePlugin extends Plugin {
 
 }
 
+const shorthandCount = (count: number) => `${count} ${count === 1 ? "shorthand" : "shorthands"}`;
+
 type SettingRow = {
 	name: string;
 	desc: string | DocumentFragment;
@@ -812,6 +902,57 @@ export class MathliveSettingTab extends PluginSettingTab {
 					name: "Edit only the formula at the cursor",
 					desc: "Formulas look like the rest of your note until the cursor is in one. Then that formula gets a MathLive editor next to it. Click a formula or move the cursor into it to edit it.",
 					addControl: toggle("editOnlyAtCursor"),
+				},
+			],
+		},
+		{
+			heading: "Shorthands",
+			rows: [
+				{
+					name: "Quick Latex shorthands",
+					desc: "In a formula, type a shorthand and press Space: al becomes α, sq a square root, bb \\mathbb, and so on, as in Quick Latex.",
+					addControl: toggle("shorthandPreset"),
+				},
+				{
+					name: "Your shorthands",
+					desc: "One per line, in Quick Latex's format: rr:::\\mathbb{R}; Use #cursor to mark where the cursor goes. Yours win over the defaults.",
+					addControl: setting => {
+						let input: TextAreaComponent | null = null;
+						setting.addTextArea(text => {
+							input = text;
+							text.inputEl.rows = 6;
+							text.inputEl.addClass("mathlive-shorthands-input");
+							text
+								.setPlaceholder("rr:::\\mathbb{R};\nvec:::\\vec{#cursor};")
+								.setValue(this.plugin.settings.shorthands)
+								.onChange(async (value) => {
+									this.plugin.settings.shorthands = value;
+									await this.plugin.saveSettings();
+								});
+						});
+						setting.addButton(button => button
+							.setButtonText("Import from Quick Latex")
+							.setTooltip("Adds the shorthands Quick Latex saved in this vault")
+							.onClick(async () => {
+								await this.plugin.importAndReport();
+								input?.setValue(this.plugin.settings.shorthands);
+							}));
+					},
+				},
+				{
+					name: "Shorthands in typed LaTeX",
+					desc: "Also expand shorthands when typing LaTeX between $ signs in the note. Automatic leaves typed LaTeX to Quick Latex or Latex Suite when either is on, so a shorthand never expands twice.",
+					addControl: setting => {
+						setting.addDropdown(dropdown => dropdown
+							.addOption("auto", "Automatic")
+							.addOption("on", "On")
+							.addOption("off", "Off")
+							.setValue(this.plugin.settings.shorthandsInSource)
+							.onChange(async (value) => {
+								this.plugin.settings.shorthandsInSource = value as PluginSettings["shorthandsInSource"];
+								await this.plugin.saveSettings();
+							}));
+					},
 				},
 			],
 		},

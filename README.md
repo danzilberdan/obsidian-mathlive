@@ -35,6 +35,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Draw a formula.** Write it by hand on a drawing pad, or scan the QR code and draw it on your phone or tablet. You see the formula as you draw, and it goes into your note when you click Insert. Uses the MathLive cloud scanner.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Magic edit.** Pick Magic edit in ✨ AI fill, next to a formula or in the editor window, and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
+- **Quick Latex shorthands.** Type `al` and Space for `\alpha`, `sq` for a square root, or your own shorthands, in the visual editor and in typed LaTeX. Imports your Quick Latex shortcuts and works alongside Latex Suite.
 - **Stays out of the way.** Each formula has two small buttons: ✨ AI fill (with Magic edit) and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
 
 <p align="center">
@@ -65,6 +66,13 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
     <img src="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/editor-window-light.png" alt="The MathLive editor window with the math keyboard open" width="820">
   </picture>
 </p>
+
+## Coming from Quick Latex or Latex Suite?
+
+MathLive keeps your typing habits and adds a visual editor and formula scanning on top.
+
+- **Quick Latex users.** If Quick Latex was ever set up in your vault, MathLive offers once to import your shorthands. You can also turn on **Quick Latex shorthands** in Settings → MathLive (al → α, sq → √, bb → \mathbb and the rest of Quick Latex's defaults), add your own in Quick Latex's `key:::LaTeX;` format, or click **Import from Quick Latex**. In a formula, type a shorthand and press Space.
+- **Latex Suite users.** Keep it. MathLive's shorthands work in its visual editor, and when Latex Suite (or Quick Latex) is on, MathLive leaves typed LaTeX between `$` signs to it, so nothing expands twice. **Shorthands in typed LaTeX** in the settings changes this.
 
 ## Scanning formulas
 
@@ -115,6 +123,8 @@ The self-hosted scanner uses `http://localhost:8502` unless you set another addr
 | Update inline widgets immediately | Write changes into the note as you type, or when the formula loses focus |
 | Arrow key navigation between editor and widgets | Move the cursor into and out of formulas with the arrow keys |
 | Edit only the formula at the cursor | Keep formulas drawn like the rest of the note, and show the editor only for the formula with the cursor in it |
+| Quick Latex shorthands, Your shorthands | Turn short letter codes into LaTeX when you press Space in a formula; import them from Quick Latex |
+| Shorthands in typed LaTeX | Also expand shorthands in LaTeX typed between `$` signs (Automatic: only when Quick Latex and Latex Suite are off) |
 
 ## Disclosures
 

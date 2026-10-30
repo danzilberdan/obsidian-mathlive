@@ -51,7 +51,7 @@ test.describe("settings", () => {
 				heading: item.classList.contains("setting-item-heading"),
 			}))
 		);
-		expect(rows.filter((row) => row.heading).map((row) => row.name)).toEqual(["Image scanner", "Inline editor", "Advanced"]);
+		expect(rows.filter((row) => row.heading).map((row) => row.name)).toEqual(["Image scanner", "Inline editor", "Shorthands", "Advanced"]);
 		expect(rows.map((row) => row.name)).toEqual(
 			expect.arrayContaining([
 				"Guide",
@@ -67,10 +67,25 @@ test.describe("settings", () => {
 				"Hide rendered block math",
 				"Update inline widgets immediately",
 				"Arrow key navigation between editor and widgets",
+				"Quick Latex shorthands",
+				"Your shorthands",
+				"Shorthands in typed LaTeX",
 			])
 		);
 		await expect(settingsWindow.locator(".mathlive-settings-intro")).toContainText("visual formula editor");
 		await expect(settingRow(settingsWindow, "API key").getByRole("link")).toHaveAttribute("href", /mathlive\.danz\.blog/);
+	});
+
+	test("shorthands typed in the settings are saved", async ({ obsidian, page: _page }) => {
+		const settingsWindow = await openSettings(obsidian);
+		const row = settingRow(settingsWindow, "Your shorthands");
+		await row.scrollIntoViewIfNeeded();
+		await row.locator("textarea").fill("rr:::\\mathbb{R};");
+		await expect.poll(() => readSavedSettings(obsidian.vault).shorthands).toBe("rr:::\\mathbb{R};");
+		if (process.env.SHORTHANDS_SCREENSHOT) {
+			await settingRow(settingsWindow, "Quick Latex shorthands").scrollIntoViewIfNeeded();
+			await settingsWindow.locator(".vertical-tab-content").screenshot({ path: process.env.SHORTHANDS_SCREENSHOT });
+		}
 	});
 
 	test("the options show up in Obsidian's settings search", async ({ obsidian }) => {
