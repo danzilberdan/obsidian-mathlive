@@ -270,6 +270,18 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   height: 20px;
 }
 
+/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. */
+@media (pointer: coarse) {
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field {
+    padding-right: 124px;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-button {
+    width: 60px;
+    height: 60px;
+  }
+}
+
 /* With a mouse, a formula's buttons, MathLive's keyboard and ☰ included, show only while it is
    over the formula or the buttons, or while the ✨ menu is open or a button has keyboard focus. The buttons are part of the
    formula, so moving onto them keeps them. */
