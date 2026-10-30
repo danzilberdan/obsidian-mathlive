@@ -107,7 +107,7 @@ export class GuideModal extends Modal {
 		);
 
 		const plan = section("gem", "Your scans", this.actions.account.planDetail());
-		const next = this.actions.account.planAction();
+		const next = this.actions.account.planAction("plugin_guide");
 		if (next) {
 			const buttonEl = plan.createEl("button", { text: next.title, cls: "mod-cta" });
 			buttonEl.addEventListener("click", () => next.run());

@@ -82,6 +82,12 @@ export class CloudAccount {
 		return this.settings.websiteUrl.replace(/\/+$/, "") + path;
 	}
 
+	// The pricing page, labelled with the button that led there. The site counts which upgrade
+	// buttons get used; the plugin itself sends nothing.
+	pricingUrl(src: string) {
+		return this.siteUrl(`/pricing?src=${src}`);
+	}
+
 	usesCloud() {
 		return !this.settings.useLocalInference;
 	}
@@ -322,7 +328,7 @@ export class CloudAccount {
 			noticeWithButton(
 				"You've used your free scans. More come at the start of next month, or go unlimited.",
 				"See plans",
-				() => window.open(this.siteUrl("/pricing")),
+				() => window.open(this.pricingUrl("plugin_out")),
 				15000
 			);
 			return;
@@ -369,7 +375,7 @@ export class CloudAccount {
 				noticeWithButton(
 					`${left} free ${left === 1 ? "scan" : "scans"} left this month.`,
 					"See plans",
-					() => window.open(this.siteUrl("/pricing")),
+					() => window.open(this.pricingUrl("plugin_low")),
 					10000
 				);
 			}
@@ -473,8 +479,9 @@ export class CloudAccount {
 		return `${now}${FREE_ACCOUNT_SCANS} Upgrade for unlimited scans and more PDF pages each month, monthly or once for life.`;
 	}
 
-	// What to do next about the plan: connect for more free scans, or upgrade.
-	planAction(): { title: string; run: () => void } | undefined {
+	// What to do next about the plan: connect for more free scans, or upgrade. `src` says where
+	// the button is, for the upgrade link.
+	planAction(src: "plugin_editor" | "plugin_guide"): { title: string; run: () => void } | undefined {
 		if (!this.usesCloud() || this.isConnecting()) {
 			return undefined;
 		}
@@ -482,7 +489,7 @@ export class CloudAccount {
 			return { title: "Get 10 free scans", run: () => void this.connect() };
 		}
 		if (this.status && !this.status.hasUnlimitedAccess) {
-			return { title: "Upgrade", run: () => window.open(this.siteUrl("/pricing")) };
+			return { title: "Upgrade", run: () => window.open(this.pricingUrl(src)) };
 		}
 		return undefined;
 	}

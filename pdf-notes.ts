@@ -22,7 +22,7 @@ import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
 // Where the pack of extra pages is sold.
 function buyPagesUrl(settings: PluginSettings) {
-	return (settings.websiteUrl || DEFAULT_SETTINGS.websiteUrl).replace(/\/+$/, "") + "/checkout?plan=pages";
+	return (settings.websiteUrl || DEFAULT_SETTINGS.websiteUrl).replace(/\/+$/, "") + "/checkout?plan=pages&src=plugin_pdf";
 }
 
 // The scanner reads pages up to 2048 px on the longest side, so render them at that size.
