@@ -147,6 +147,11 @@ test.describe("formula editor window", () => {
 		await page.keyboard.press("Escape");
 		await expect(menu).toHaveCount(0);
 		await expect(modalField(page)).toBeVisible();
+		// Also when pressed before Obsidian has handed the just-opened menu the keyboard.
+		await button.click();
+		await page.keyboard.press("Escape");
+		await expect(menu).toHaveCount(0);
+		await expect(modalField(page)).toBeVisible();
 
 		await modalAiAction(page, "Find a formula");
 		await expect(page.locator(".mathlive-formula-search")).toBeVisible();

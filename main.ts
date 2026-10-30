@@ -46,6 +46,7 @@ import {
 	moveVirtualKeyboard,
 	parseMathSelection,
 	closeMathfieldMenu,
+	hideShownMenu,
 	showMenuBelow,
 } from "./mathlive-shared";
 import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
@@ -956,9 +957,12 @@ class MathLiveModal extends Modal {
 		});
 
 		this.initMathlive(modalContent)
-		// Escape closes MathLive's ☰ menu first, then the window.
+		// Escape closes the ✨ AI fill menu or MathLive's ☰ menu first, then the window.
 		const menuEscape = new Scope(this.scope);
 		menuEscape.register([], "Escape", () => {
+			if (hideShownMenu()) {
+				return false;
+			}
 			if (!this.mfe || !closeMathfieldMenu(this.mfe)) {
 				this.close();
 			}
