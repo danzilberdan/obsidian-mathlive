@@ -39,6 +39,7 @@ import {
 	scanImageInto,
 	CAN_SCAN_SCREEN,
 	setScanAccount,
+	stopWatchingKeyboardTaps,
 	type ScanTarget,
 	releaseVirtualKeyboardFrom,
 	styleVirtualKeyboardInPopout,
@@ -370,6 +371,7 @@ export default class MathLivePlugin extends Plugin {
 	onunload() {
 		endDrawSessions();
 		setScanAccount(null);
+		stopWatchingKeyboardTaps();
 		this.account.cancelConnect();
 		for (const doc of this.getOpenDocuments()) {
 			doc.body.removeClasses(BODY_CLASSES);
