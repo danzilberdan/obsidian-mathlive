@@ -126,26 +126,37 @@ test.describe("scanning photos and images in notes", () => {
 	});
 });
 
-test("on a touch screen a full-line formula's buttons line up with MathLive's", async ({ page }) => {
+test("on a touch screen a full-line formula keeps its width, with the buttons in a row under it", async ({ page }) => {
 	const cdp = await page.context().newCDPSession(page);
 	await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 	try {
 		expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
-		const boxes = await blockWidget(page).evaluate((widget) => {
+		const layout = await blockWidget(page).evaluate((widget) => {
 			const box = (el) => {
-				const { top, left, width, height } = el.getBoundingClientRect();
-				return { top: Math.round(top), left: Math.round(left), width: Math.round(width), height: Math.round(height) };
+				const { top, left, width, height, bottom } = el.getBoundingClientRect();
+				return { top: Math.round(top), left: Math.round(left), width: Math.round(width), height: Math.round(height), bottom: Math.round(bottom) };
 			};
-			const shadow = widget.querySelector("math-field").shadowRoot;
-			return [
-				shadow.querySelector(".ML__virtual-keyboard-toggle"),
-				shadow.querySelector(".ML__menu-toggle"),
-				...widget.querySelectorAll(".obsidian-mathlive-widget-button"),
-			].map(box);
+			const field = widget.querySelector("math-field");
+			const shadow = field.shadowRoot;
+			return {
+				field: box(field),
+				content: box(shadow.querySelector(".ML__content")),
+				buttons: [
+					shadow.querySelector(".ML__virtual-keyboard-toggle"),
+					shadow.querySelector(".ML__menu-toggle"),
+					...widget.querySelectorAll(".obsidian-mathlive-widget-button"),
+				].map(box),
+			};
 		});
-		expect(boxes).toHaveLength(4);
-		for (const b of boxes) expect(b).toMatchObject({ top: boxes[0].top, width: 60, height: 60 });
-		const gaps = boxes.slice(1).map((b, i) => b.left - (boxes[i].left + boxes[i].width));
+		// The formula has the whole width, not what four 60px buttons beside it would leave.
+		expect(layout.content.width).toBeGreaterThan(layout.field.width - 10);
+		const { buttons } = layout;
+		expect(buttons).toHaveLength(4);
+		for (const b of buttons) {
+			expect(b).toMatchObject({ top: buttons[0].top, width: 60, height: 60 });
+			expect(b.top).toBeGreaterThanOrEqual(layout.content.bottom);
+		}
+		const gaps = buttons.slice(1).map((b, i) => b.left - (buttons[i].left + buttons[i].width));
 		expect(gaps).toEqual([4, 4, 4]);
 	} finally {
 		await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: false });

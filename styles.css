@@ -270,10 +270,30 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   height: 20px;
 }
 
-/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. */
+/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. Four of
+   those leave a phone-width formula little room, so the buttons get a row of their own under the
+   formula: MathLive's wrap onto it at the right, and ours sit after them. */
 @media (pointer: coarse) {
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field {
-    padding-right: 124px;
+    padding-right: 0;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(container) {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(content) {
+    flex: 1 0 100%;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(menu-toggle) {
+    margin-right: 128px;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-buttons {
+    top: auto;
+    bottom: 5px;
   }
 
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-button {
