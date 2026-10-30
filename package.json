@@ -11,7 +11,7 @@
 		"lint": "tsc --noEmit -p . && eslint . --max-warnings 0 && stylelint styles.css --max-warnings 0",
 		"test:e2e": "npm run build && playwright test"
 	},
-	"keywords": [],
+	"keywords": ["obsidian-plugin", "latex", "math", "mathjax", "equation-editor", "ocr", "image-to-latex", "pdf-to-markdown", "handwriting-recognition"],
 	"author": "Dan Zilberman",
 	"license": "MIT",
 	"devDependencies": {

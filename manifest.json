@@ -3,7 +3,7 @@
 	"name": "MathLive",
 	"version": "2.3.0",
 	"minAppVersion": "1.1.0",
-	"description": "Faster and more intuitive MathJax editing using MathLive.",
+	"description": "Visual LaTeX math editor with formula OCR. Scan screenshots, PDFs and handwriting into editable equations.",
 	"author": "Dan Zilberman",
 	"authorUrl": "https://github.com/danzilberdan",
 	"fundingUrl": "https://www.buymeacoffee.com/danzilberdan",
