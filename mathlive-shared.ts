@@ -256,8 +256,21 @@ function isEscapedDollar(text: string, index: number) {
 // Shows a menu under the button that opened it. A formula with focus keeps Escape to itself, so
 // listen for it before the formula does, or the menu can't be closed from the keyboard.
 // `alignStart` lines the menu up with the button's left edge instead of starting at its right.
+let shownMenu: Menu | null = null;
+
+// Hides the menu showMenuBelow last opened, if it is still open. Obsidian hands a just-opened menu
+// the keyboard a moment later, so an Escape pressed in between reaches the window under it.
+export function hideShownMenu(): boolean {
+	if (!shownMenu) {
+		return false;
+	}
+	shownMenu.hide();
+	return true;
+}
+
 export function showMenuBelow(menu: Menu, button: HTMLElement, alignStart = false) {
 	const doc = button.doc;
+	shownMenu = menu;
 	const closeOnEscape = (event: KeyboardEvent) => {
 		if (event.key !== "Escape") {
 			return;
@@ -269,6 +282,9 @@ export function showMenuBelow(menu: Menu, button: HTMLElement, alignStart = fals
 	doc.addEventListener("keydown", closeOnEscape, true);
 	button.setAttr("aria-expanded", "true");
 	menu.onHide(() => {
+		if (shownMenu === menu) {
+			shownMenu = null;
+		}
 		doc.removeEventListener("keydown", closeOnEscape, true);
 		button.setAttr("aria-expanded", "false");
 	});

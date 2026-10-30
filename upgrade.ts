@@ -73,6 +73,7 @@ export class UpgradeModal extends Modal {
 	private opened: UpgradePlan | null = null;
 	private checking: number | null = null;
 	private resumed = false;
+	private period: UpgradePlan = "annual";
 
 	constructor(
 		app: App,
@@ -140,22 +141,48 @@ export class UpgradeModal extends Modal {
 		list.createEl("li", { text: `${prices.lifetimePages} PDF pages a month turned into notes` });
 		list.createEl("li", { text: "Cancel a subscription anytime, or pay once for life" });
 
+		// One Unlimited card, yearly unless switched to monthly, and Lifetime beside it.
 		const plans = contentEl.createDiv({ cls: "mathlive-upgrade-plans" });
-		const plan = (id: UpgradePlan, title: string, price: string, note: string, featured = false) => {
-			const button = plans.createEl("button", { cls: featured ? "mathlive-upgrade-plan mod-cta" : "mathlive-upgrade-plan" });
-			button.createSpan({ cls: "mathlive-upgrade-plan-title", text: title });
-			button.createSpan({ cls: "mathlive-upgrade-plan-price", text: price });
-			button.createSpan({ cls: "mathlive-upgrade-plan-note", text: note });
-			button.addEventListener("click", () => void this.checkout(id));
-		};
+		const periods: { id: UpgradePlan; label: string; usd: number }[] = [];
 		if (prices.annualUsd !== null) {
-			const perMonth = prices.annualUsd / 12;
-			plan("annual", "Yearly", `${usd(prices.annualUsd)}/yr`, `${usd(Math.round(perMonth * 100) / 100)} a month`, true);
+			periods.push({ id: "annual", label: "Yearly", usd: prices.annualUsd });
 		}
-		plan("lifetime", "Lifetime", usd(prices.lifetimeUsd), "One payment, yours for life", prices.annualUsd === null);
 		if (prices.monthlyUsd !== null) {
-			plan("monthly", "Monthly", `${usd(prices.monthlyUsd)}/mo`, "Cancel anytime");
+			periods.push({ id: "monthly", label: "Monthly", usd: prices.monthlyUsd });
 		}
+		const period = periods.find((option) => option.id === this.period) ?? periods[0];
+		if (period) {
+			const card = plans.createDiv({ cls: "mathlive-upgrade-plan is-featured" });
+			card.createSpan({ cls: "mathlive-upgrade-plan-title", text: "Unlimited" });
+			if (periods.length > 1) {
+				const toggle = card.createDiv({ cls: "mathlive-upgrade-period", attr: { role: "group" } });
+				for (const option of periods) {
+					const choice = toggle.createEl("button", {
+						text: option.label,
+						attr: { type: "button", "aria-pressed": String(option === period) },
+					});
+					choice.toggleClass("is-active", option === period);
+					choice.addEventListener("click", () => {
+						this.period = option.id;
+						this.render();
+					});
+				}
+			}
+			const yearly = period.id === "annual";
+			card.createSpan({ cls: "mathlive-upgrade-plan-price", text: `${usd(period.usd)}${yearly ? "/yr" : "/mo"}` });
+			card.createSpan({
+				cls: "mathlive-upgrade-plan-note",
+				text: yearly ? `${usd(Math.round((period.usd / 12) * 100) / 100)} a month, billed yearly` : "Billed monthly, cancel anytime",
+			});
+			card.createEl("button", { cls: "mod-cta", text: "Go unlimited" })
+				.addEventListener("click", () => void this.checkout(period.id));
+		}
+		const lifetime = plans.createDiv({ cls: period ? "mathlive-upgrade-plan" : "mathlive-upgrade-plan is-featured" });
+		lifetime.createSpan({ cls: "mathlive-upgrade-plan-title", text: "Lifetime" });
+		lifetime.createSpan({ cls: "mathlive-upgrade-plan-price", text: usd(prices.lifetimeUsd) });
+		lifetime.createSpan({ cls: "mathlive-upgrade-plan-note", text: "One payment, yours for life" });
+		lifetime.createEl("button", { cls: period ? "" : "mod-cta", text: "Pay once" })
+			.addEventListener("click", () => void this.checkout("lifetime"));
 
 		new Setting(contentEl).addButton((button) =>
 			button.setButtonText(`Wait until ${date}`).onClick(() => this.close())

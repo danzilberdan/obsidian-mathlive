@@ -126,10 +126,18 @@ test.describe("account", () => {
 		const dialog = page.locator(".mathlive-upgrade-modal");
 		await expect(dialog.locator(".modal-title")).toHaveText("You're out of free scans");
 		await expect(dialog).toContainText("Your next 5 arrive on");
-		await expect(dialog.locator(".mathlive-upgrade-plan")).toHaveText([/Yearly\$39\/yr\$3\.25 a month/, /Lifetime\$69/, /Monthly\$6\/mo/]);
-		await expect(dialog.locator(".mathlive-upgrade-plan.mod-cta")).toContainText("Yearly");
+		// Unlimited shows yearly first, with a switch to monthly, and Lifetime beside it.
+		const unlimited = dialog.locator(".mathlive-upgrade-plan.is-featured");
+		await expect(unlimited).toContainText("Unlimited");
+		await expect(unlimited.getByRole("button", { name: "Yearly" })).toHaveAttribute("aria-pressed", "true");
+		await expect(unlimited.locator(".mathlive-upgrade-plan-price")).toHaveText("$39/yr");
+		await expect(unlimited).toContainText("$3.25 a month, billed yearly");
+		await unlimited.getByRole("button", { name: "Monthly" }).click();
+		await expect(unlimited.locator(".mathlive-upgrade-plan-price")).toHaveText("$6/mo");
+		await unlimited.getByRole("button", { name: "Yearly" }).click();
+		await expect(dialog.locator(".mathlive-upgrade-plan", { hasText: "Lifetime" })).toContainText("$69");
 
-		await dialog.locator(".mathlive-upgrade-plan", { hasText: "Yearly" }).click();
+		await unlimited.getByRole("button", { name: "Go unlimited" }).click();
 		await expect.poll(() => openedUrls(page)).toContain("https://checkout.example/go?plan=annual&src=plugin_out");
 		const linkRequest = scanner.requests.find((request) => request.url === "/checkout-link");
 		expect(linkRequest.apiKey).toBe("out-key");
