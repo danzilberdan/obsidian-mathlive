@@ -261,6 +261,12 @@ class MathLiveWidget extends WidgetType {
 		// actions, and Expand opens the editor window. On full-line formulas they sit inside the
 		// input, beside MathLive's keyboard and ☰ buttons.
 		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
+		// Tabbing onto a button shows the buttons. Done here rather than with CSS :has(), which the
+		// community scorecard flags as slow.
+		buttons.addEventListener("focusin", (event) => {
+			buttons.toggleClass("mathlive-keyboard-focus", (event.target as HTMLElement).matches(":focus-visible"));
+		});
+		buttons.addEventListener("focusout", () => buttons.removeClass("mathlive-keyboard-focus"));
 		const addButton = (cls: string, icon: string, label: string, attr: Record<string, string> = {}) => {
 			const button = buttons.createEl("button", {
 				cls: `obsidian-mathlive-widget-button ${cls} clickable-icon`,

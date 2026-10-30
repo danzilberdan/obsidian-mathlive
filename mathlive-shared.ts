@@ -2,6 +2,7 @@ import type { MathfieldElement } from "mathlive";
 import { type App, type Menu, Notice, Platform, requestUrl, setIcon } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
+import { attachShorthands } from "./shorthands";
 
 // Set at build time from manifest.json (webpack.config.js).
 declare const MATHLIVE_VERSION: string;
@@ -281,7 +282,9 @@ export function showMenuBelow(menu: Menu, button: HTMLElement, alignStart = fals
 	};
 	doc.addEventListener("keydown", closeOnEscape, true);
 	button.setAttr("aria-expanded", "true");
+	button.parentElement?.addClass("mathlive-menu-open");
 	menu.onHide(() => {
+		button.parentElement?.removeClass("mathlive-menu-open");
 		if (shownMenu === menu) {
 			shownMenu = null;
 		}
@@ -462,6 +465,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	mfe.value = config.initialValue;
 	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
 	closeMenuFromOutside(mfe);
+	attachShorthands(mfe);
 	keepFocusOnKeyboardTaps(mfe);
 
 	if (!config.inline) {

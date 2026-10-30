@@ -271,7 +271,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
 }
 
 /* With a mouse, a formula's buttons, MathLive's keyboard and ☰ included, show only while it is
-   over the formula or the buttons, or while the ✨ menu is open. The buttons are part of the
+   over the formula or the buttons, or while the ✨ menu is open or a button has keyboard focus. The buttons are part of the
    formula, so moving onto them keeps them. */
 @media (hover: hover) {
   .obsidian-mathlive-codemirror-wrapper .obsidian-mathlive-widget-buttons,
@@ -285,7 +285,8 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   .obsidian-mathlive-codemirror-wrapper:hover .obsidian-mathlive-widget-buttons,
   .obsidian-mathlive-codemirror-wrapper:hover .mathlive-field::part(virtual-keyboard-toggle),
   .obsidian-mathlive-codemirror-wrapper:hover .mathlive-field::part(menu-toggle),
-  .obsidian-mathlive-widget-buttons:has([aria-expanded="true"], :focus-visible) {
+  .obsidian-mathlive-widget-buttons.mathlive-menu-open,
+  .obsidian-mathlive-widget-buttons.mathlive-keyboard-focus {
     opacity: 1;
     pointer-events: auto;
     transition-delay: 0s;
@@ -1007,6 +1008,12 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 /* The hidden file input behind "Scan a photo". */
 .mathlive-image-picker {
 	display: none;
+}
+
+.mathlive-shorthands-input {
+	min-width: 18em;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
 }
 
 /* The plans offered when the free scans run out. */
