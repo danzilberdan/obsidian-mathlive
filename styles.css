@@ -1008,3 +1008,63 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 .mathlive-image-picker {
 	display: none;
 }
+
+/* The plans offered when the free scans run out. */
+.mathlive-upgrade-list {
+  padding-inline-start: var(--size-4-6);
+}
+.mathlive-upgrade-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-4);
+}
+.mathlive-upgrade-plan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--size-2-2);
+  padding: var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+.mathlive-upgrade-plan.is-featured {
+  border-color: var(--interactive-accent);
+}
+.mathlive-upgrade-plan > button {
+  margin-top: auto;
+  width: 100%;
+}
+.mathlive-upgrade-period {
+  display: flex;
+  gap: var(--size-2-1);
+  padding: var(--size-2-1);
+  border-radius: var(--radius-s);
+  background-color: var(--background-modifier-hover);
+}
+.mathlive-upgrade-period button {
+  height: auto;
+  padding: var(--size-2-1) var(--size-4-2);
+  background: none;
+  box-shadow: none;
+  font-size: var(--font-ui-smaller);
+}
+.mathlive-upgrade-period button.is-active {
+  background-color: var(--background-primary);
+  box-shadow: var(--shadow-s);
+  font-weight: var(--font-semibold);
+}
+.mathlive-upgrade-plan-title {
+  font-weight: var(--font-semibold);
+}
+.mathlive-upgrade-plan-price {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-bold);
+}
+.mathlive-upgrade-plan-note {
+  font-size: var(--font-ui-smaller);
+  opacity: 0.8;
+}
+.mathlive-upgrade-modal .setting-item {
+  border-top: none;
+}

@@ -1,6 +1,7 @@
 import { App, Modal, Notice, Platform, requestUrl, Setting } from "obsidian";
 import { noticeWithButton } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
+import { loadPrices, UpgradeModal, type UpgradePlan } from "./upgrade";
 
 // The plugin's link to a MathLive account, for cloud scans. Connecting opens the website, where
 // the user signs in and clicks Connect; the plugin then picks up a key of its own, so nothing is
@@ -80,6 +81,37 @@ export class CloudAccount {
 
 	siteUrl(path: string) {
 		return this.settings.websiteUrl.replace(/\/+$/, "") + path;
+	}
+
+	// The pricing page, labelled with the button that led there. The site counts which upgrade
+	// buttons get used; the plugin itself sends nothing.
+	pricingUrl(src: string) {
+		return this.siteUrl(`/pricing?src=${src}`);
+	}
+
+	// A link straight to Polar's checkout for this account, signed by the scanner, so there's no
+	// sign-in on the way. Falls back to the website's checkout page when the scanner can't make one.
+	async checkoutUrl(plan: UpgradePlan, src: string): Promise<string> {
+		const fallback = this.siteUrl(`/checkout?plan=${plan}&src=${src}`);
+		const key = this.settings.apiKey?.trim();
+		if (!this.usesCloud() || !key) {
+			return fallback;
+		}
+		try {
+			const response = await requestUrl({
+				url: this.scannerUrl("/checkout-link"),
+				method: "POST",
+				headers: { "Api-Key": key },
+				contentType: "application/json",
+				body: JSON.stringify({ plan, src }),
+				throw: false,
+			});
+			const url = response.status === 200 ? (response.json as { url?: unknown }).url : null;
+			return typeof url === "string" && url.startsWith("https://") ? url : fallback;
+		} catch (error) {
+			console.warn("MathLive: couldn't make a checkout link.", error);
+			return fallback;
+		}
 	}
 
 	usesCloud() {
@@ -319,12 +351,7 @@ export class CloudAccount {
 			return;
 		}
 		if (reason === "no_scans_left") {
-			noticeWithButton(
-				"You've used your free scans. More come at the start of next month, or go unlimited.",
-				"See plans",
-				() => window.open(this.siteUrl("/pricing")),
-				15000
-			);
+			new UpgradeModal(this.host.app, this, resume).open();
 			return;
 		}
 		if (this.settings.apiKeySource === null && this.hasKey()) {
@@ -347,7 +374,7 @@ export class CloudAccount {
 	// After a successful cloud scan: count it, and say so when scans are running low.
 	afterScan() {
 		this.invalidateStatus();
-		void this.refreshStatus().then((status) => {
+		void this.refreshStatus().then(async (status) => {
 			if (!status || status.hasUnlimitedAccess || typeof status.scansLeft !== "number") {
 				return;
 			}
@@ -366,10 +393,12 @@ export class CloudAccount {
 			}
 			if (left > 0 && left <= LOW_SCANS && !recently) {
 				this.lowScansWarnedAt = Date.now();
+				const prices = await loadPrices(this.siteUrl("/prices.json"));
+				const yearly = prices.annualUsd === null ? "" : ` Unlimited is $${prices.annualUsd} a year.`;
 				noticeWithButton(
-					`${left} free ${left === 1 ? "scan" : "scans"} left this month.`,
-					"See plans",
-					() => window.open(this.siteUrl("/pricing")),
+					`${left} free ${left === 1 ? "scan" : "scans"} left this month.${yearly}`,
+					"Go unlimited",
+					() => window.open(this.pricingUrl("plugin_low")),
 					10000
 				);
 			}
@@ -473,8 +502,9 @@ export class CloudAccount {
 		return `${now}${FREE_ACCOUNT_SCANS} Upgrade for unlimited scans and more PDF pages each month, monthly or once for life.`;
 	}
 
-	// What to do next about the plan: connect for more free scans, or upgrade.
-	planAction(): { title: string; run: () => void } | undefined {
+	// What to do next about the plan: connect for more free scans, or upgrade. `src` says where
+	// the button is, for the upgrade link.
+	planAction(src: "plugin_editor" | "plugin_guide"): { title: string; run: () => void } | undefined {
 		if (!this.usesCloud() || this.isConnecting()) {
 			return undefined;
 		}
@@ -482,7 +512,7 @@ export class CloudAccount {
 			return { title: "Get 10 free scans", run: () => void this.connect() };
 		}
 		if (this.status && !this.status.hasUnlimitedAccess) {
-			return { title: "Upgrade", run: () => window.open(this.siteUrl("/pricing")) };
+			return { title: "Upgrade", run: () => window.open(this.pricingUrl(src)) };
 		}
 		return undefined;
 	}
