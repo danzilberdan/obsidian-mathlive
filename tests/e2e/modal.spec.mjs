@@ -106,7 +106,7 @@ test.describe("formula editor window", () => {
 		await waitForModalField(page);
 		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("2 free scans leftUpgrade");
 		await footer.getByText("Upgrade").click();
-		await expect.poll(() => openedUrls(page)).toEqual(["http://127.0.0.1:8502/site/pricing"]);
+		await expect.poll(() => openedUrls(page)).toEqual(["http://127.0.0.1:8502/site/pricing?src=plugin_editor"]);
 
 		await footer.getByText("Learn what MathLive can do").click();
 		await expect(page.locator(".mathlive-guide-modal")).toBeVisible();

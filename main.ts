@@ -40,6 +40,7 @@ import {
 	scanImageInto,
 	CAN_SCAN_SCREEN,
 	setScanAccount,
+	stopWatchingKeyboardTaps,
 	type ScanTarget,
 	releaseVirtualKeyboardFrom,
 	styleVirtualKeyboardInPopout,
@@ -457,6 +458,7 @@ export default class MathLivePlugin extends Plugin {
 	onunload() {
 		endDrawSessions();
 		setScanAccount(null);
+		stopWatchingKeyboardTaps();
 		this.account.cancelConnect();
 		for (const doc of this.getOpenDocuments()) {
 			doc.body.removeClasses(BODY_CLASSES);
@@ -1041,7 +1043,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 	} else if (account.isConnected()) {
 		if (account.status && !account.status.hasUnlimitedAccess) {
 			setting.addButton((button) =>
-				button.setButtonText("Upgrade").onClick(() => window.open(account.siteUrl("/pricing")))
+				button.setButtonText("Upgrade").onClick(() => window.open(account.pricingUrl("plugin_settings")))
 			);
 		}
 		setting
@@ -1228,7 +1230,7 @@ class MathLiveModal extends Modal {
 			const plan = footer.createDiv({ cls: "mathlive-modal-plan" });
 			setIcon(plan.createSpan({ cls: "mathlive-btn-icon" }), "gem");
 			plan.createSpan({ cls: "mathlive-modal-plan-text", text: account.planLine() });
-			const next = account.planAction();
+			const next = account.planAction("plugin_editor");
 			if (next) {
 				const link = plan.createEl("a", { cls: "mathlive-modal-plan-action", text: next.title, href: "#" });
 				link.addEventListener("click", (event) => {
