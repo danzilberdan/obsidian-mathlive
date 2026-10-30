@@ -49,7 +49,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 1. In Obsidian, open **Settings → Community plugins** and turn on community plugins if you haven't yet.
 2. Click **Browse**, search for **MathLive**, then click **Install** and **Enable**.
 
-Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer on desktop.
+Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer, on desktop and on phones and tablets (iPhone, iPad and Android). On a phone or tablet, ✨ → **Scan a photo** opens the camera or your photo library, and **Scan formula from an image in this note** reads a photo you already attached. Scan from screen is desktop only.
 
 ## Getting started
 
@@ -132,8 +132,10 @@ Obsidian asks plugins to state the following up front.
   - `https://mathlive.danz.blog/ocr/formulas/write` receives your search text, with your key, when you choose **Write it with AI**, and returns the formula. Claude by Anthropic writes it.
   - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, scans left, and pages left before converting a PDF.
   - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
+  - Requests to MathLive's scanner also say what kind of device sent them (such as iPhone, Android or macOS), the plugin's version, and where a scanned image came from (clipboard, screen, photo, an image in the note, or a drawing), so we can tell which devices and features need work. These are logged with the scan, never with what was scanned.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
+- **Camera and photos.** **Scan a photo** opens your device's own image picker, which offers the camera on phones; the plugin never opens the camera itself. Only the photo you pick is sent to the scanner. **Scan formula from an image in this note** reads only the image you choose.
 - **Microphone.** The plugin uses the microphone only while you record a Magic edit, from clicking the mic until you click it again (at most a minute). A recording that stays silent is not sent. The server turns the recording into text, then forgets it.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
 - **Data.** The scan server turns the image (or drawing) into LaTeX (or a PDF page into Markdown) and does not keep the image; Magic edit's formula, instruction and recording aren't kept either. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.

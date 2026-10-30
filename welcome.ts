@@ -1,5 +1,6 @@
 import { App, Modal, Setting } from "obsidian";
 import type { CloudAccount } from "./account";
+import { CAN_SCAN_SCREEN } from "./mathlive-shared";
 
 // Shown once, right after MathLive is installed: what it does and how to start.
 export class WelcomeModal extends Modal {
@@ -30,7 +31,9 @@ export class WelcomeModal extends Modal {
 		);
 		item(
 			"Fill formulas with AI.",
-			"Click ✨ next to a formula to scan a screenshot, or draw a box around a formula anywhere on your screen, even in another app. Your first scans need no account."
+			CAN_SCAN_SCREEN
+				? "Click ✨ next to a formula to scan a screenshot, or draw a box around a formula anywhere on your screen, even in another app. Your first scans need no account."
+				: "Tap ✨ next to a formula and take a photo of a formula on paper or a whiteboard. Your first scans need no account."
 		);
 		item(
 			"Expand for more room.",

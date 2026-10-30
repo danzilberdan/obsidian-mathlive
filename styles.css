@@ -1003,3 +1003,8 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 .obsidian-mathlive-codemirror-wrapper:not(.inline).is-selected .mathlive-field {
   outline-offset: -2px;
 }
+
+/* The hidden file input behind "Scan a photo". */
+.mathlive-image-picker {
+	display: none;
+}

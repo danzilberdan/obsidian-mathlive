@@ -16,6 +16,7 @@ import {
 	errorCode,
 	NO_SCANS_LEFT_NOTICE,
 	scannerAddress,
+	scannerHeaders,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
@@ -172,7 +173,7 @@ async function requestPage(settings: PluginSettings, image: Blob): Promise<strin
 				url: scannerAddress(settings) + "/pages/",
 				method: "POST",
 				contentType,
-				headers: { "Api-Key": settings.apiKey ?? "" },
+				headers: scannerHeaders(settings),
 				body,
 				throw: false,
 			}),

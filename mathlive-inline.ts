@@ -23,6 +23,8 @@ import {
 	mathfieldScanTarget,
 	type ScanTarget,
 	scanScreenAreaInto,
+	scanPhotoInto,
+	CAN_SCAN_SCREEN,
 	createMathfield,
 	moveVirtualKeyboard,
 	showMenuBelow,
@@ -218,11 +220,15 @@ class MathLiveWidget extends WidgetType {
 				refocusMathfield();
 			},
 		});
+		// A box on the screen on desktop, a photo on phones and tablets.
 		const scanScreenArea = () => {
 			void scanScreenAreaInto(this.hooks.app, mathfieldScanTarget(scanOptions()), mfe.doc);
 		};
+		const scanPhoto = () => {
+			void scanPhotoInto(mathfieldScanTarget(scanOptions()), mfe.doc);
+		};
 		const scanClipboardImage = () => {
-			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
+			void appendLatexFromClipboardImage(scanOptions(), CAN_SCAN_SCREEN ? scanScreenArea : undefined);
 		};
 		const drawFormula = () => this.hooks.drawFormula(mathfieldScanTarget(scanOptions()));
 		const findFormula = () => {
@@ -271,7 +277,7 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			this.showMenu(aiButton, magicEdit, scanClipboardImage, scanScreenArea, drawFormula, findFormula);
+			this.showMenu(aiButton, magicEdit, scanClipboardImage, CAN_SCAN_SCREEN ? scanScreenArea : scanPhoto, drawFormula, findFormula);
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -406,7 +412,7 @@ class MathLiveWidget extends WidgetType {
 		button: HTMLElement,
 		magicEdit: () => void,
 		scanClipboardImage: () => void,
-		scanScreenArea: () => void,
+		scanScreenOrPhoto: () => void,
 		drawFormula: () => void,
 		findFormula: () => void
 	) {
@@ -418,7 +424,9 @@ class MathLiveWidget extends WidgetType {
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
 		);
 		menu.addItem((item) =>
-			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
+			CAN_SCAN_SCREEN
+				? item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenOrPhoto)
+				: item.setTitle("Scan a photo").setIcon("camera").onClick(scanScreenOrPhoto)
 		);
 		menu.addItem((item) => item.setTitle("Draw formula").setIcon("pencil-line").onClick(drawFormula));
 		menu.addSeparator();

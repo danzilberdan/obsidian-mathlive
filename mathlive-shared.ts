@@ -1,8 +1,15 @@
 import type { MathfieldElement } from "mathlive";
-import { type App, type Menu, Notice, requestUrl, setIcon } from "obsidian";
+import { type App, type Menu, Notice, Platform, requestUrl, setIcon } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
-import { ScreenAccessModal, selectAnywhereOnScreen, selectScreenArea, wholeScreenAccess } from "./screen-capture";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
+
+// Set at build time from manifest.json (webpack.config.js).
+declare const MATHLIVE_VERSION: string;
+
+// Scan from screen pictures Obsidian's window through Electron, which only the desktop app has. Its
+// module is loaded on first use, so the plugin also loads on phones and tablets.
+export const CAN_SCAN_SCREEN = Platform.isDesktopApp && !Platform.isMobile;
+const loadScreenCapture = () => import(/* webpackMode: "eager" */ "./screen-capture");
 
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
 let mathfieldElementCtor: MathfieldElementCtor | null = null;
@@ -504,8 +511,10 @@ async function readClipboardImageBlob(): Promise<Blob | null> {
 	return null;
 }
 
-// Scales big screenshots down before upload, which makes scans on slow connections much faster.
-// Anything the browser can't decode goes up unchanged and the scanner decides.
+// Scales big screenshots and photos down before upload, which makes scans on slow connections much
+// faster, and turns formats the scanner may not read, like a phone's HEIC photo, into ones it does.
+// Photos stay JPEG, which is far smaller than PNG for them. Anything the browser can't decode goes
+// up unchanged and the scanner decides.
 async function shrinkImage(image: Blob): Promise<Blob> {
 	let bitmap: ImageBitmap;
 	try {
@@ -516,11 +525,12 @@ async function shrinkImage(image: Blob): Promise<Blob> {
 
 	try {
 		const longest = Math.max(bitmap.width, bitmap.height);
-		if (longest <= MAX_UPLOAD_SIDE) {
+		const readable = ["image/png", "image/jpeg", "image/webp"].includes(image.type);
+		if (longest <= MAX_UPLOAD_SIDE && readable) {
 			return image;
 		}
 
-		const scale = MAX_UPLOAD_SIDE / longest;
+		const scale = Math.min(1, MAX_UPLOAD_SIDE / longest);
 		const canvas = createEl("canvas");
 		canvas.width = Math.max(1, Math.round(bitmap.width * scale));
 		canvas.height = Math.max(1, Math.round(bitmap.height * scale));
@@ -530,8 +540,9 @@ async function shrinkImage(image: Blob): Promise<Blob> {
 		}
 		context.imageSmoothingQuality = "high";
 		context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+		const photo = image.type === "image/jpeg" || image.type === "image/heic" || image.type === "image/heif";
 		return await new Promise<Blob>((resolve) => {
-			canvas.toBlob((blob) => resolve(blob ?? image), "image/png");
+			canvas.toBlob((blob) => resolve(blob ?? image), photo ? "image/jpeg" : "image/png", 0.9);
 		});
 	} finally {
 		bitmap.close();
@@ -619,7 +630,7 @@ function scanFailure(status: number, code: string | null): ScanFailure {
 	return status < 500 ? "auth" : "unavailable";
 }
 
-async function requestScan(address: string, apiKey: string, image: Blob): Promise<string> {
+async function requestScan(address: string, headers: Record<string, string>, image: Blob): Promise<string> {
 	const { body, contentType } = await buildMultipartBody("file", image);
 	let res;
 	try {
@@ -628,9 +639,7 @@ async function requestScan(address: string, apiKey: string, image: Blob): Promis
 				url: address + "/predict/",
 				method: "POST",
 				contentType,
-				headers: {
-					"Api-Key": apiKey,
-				},
+				headers,
 				body,
 				throw: false,
 			}),
@@ -672,17 +681,47 @@ export function scannerAddress(settings: PluginSettings): string {
 	return (settings.cloudScannerUrl || DEFAULT_SETTINGS.cloudScannerUrl).replace(/\/+$/, "");
 }
 
+// Where a scanned image came from, so the scan log can tell how people scan.
+export type ImageSource = "clipboard" | "screen" | "photo" | "note-image" | "drawing";
+
+// What kind of device asks, so the scan log can count scans from phones and tablets. Only the
+// MathLive scanner gets it, never a self-hosted one.
+export function devicePlatform(): string {
+	if (Platform.isIosApp) {
+		return Platform.isTablet ? "ipados" : "ios";
+	}
+	if (Platform.isAndroidApp) {
+		return Platform.isTablet ? "android-tablet" : "android";
+	}
+	return Platform.isMacOS ? "macos" : Platform.isWin ? "windows" : Platform.isLinux ? "linux" : "desktop";
+}
+
+// The headers of every request to the scanner: the key, and for the MathLive scanner the device
+// kind, the plugin version and where the image came from.
+export function scannerHeaders(settings: PluginSettings, source?: ImageSource): Record<string, string> {
+	const headers: Record<string, string> = { "Api-Key": settings.apiKey ?? "" };
+	if (!settings.useLocalInference) {
+		headers["X-MathLive-Platform"] = devicePlatform();
+		headers["X-MathLive-Version"] = MATHLIVE_VERSION;
+		if (source) {
+			headers["X-MathLive-Source"] = source;
+		}
+	}
+	return headers;
+}
+
 export async function scanImageToLatex(
 	settings: PluginSettings,
-	imageData: Blob
+	imageData: Blob,
+	source?: ImageSource
 ): Promise<string> {
 	const address = scannerAddress(settings);
 
 	const image = await shrinkImage(imageData);
-	const apiKey = settings.apiKey ?? "";
+	const headers = scannerHeaders(settings, source);
 	const started = Date.now();
 	try {
-		return await requestScan(address, apiKey, image);
+		return await requestScan(address, headers, image);
 	} catch (error) {
 		const quick = Date.now() - started < QUICK_FAILURE_MS;
 		if (!(error instanceof ScanError) || error.failure !== "unavailable" || !quick) {
@@ -690,7 +729,7 @@ export async function scanImageToLatex(
 		}
 		console.warn("MathLive: scan failed quickly, trying once more.", error);
 		await new Promise((resolve) => window.setTimeout(resolve, 1000));
-		return await requestScan(address, apiKey, image);
+		return await requestScan(address, headers, image);
 	}
 }
 
@@ -823,12 +862,12 @@ export function afterCloudScan(settings: PluginSettings) {
 	}
 }
 
-async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
+async function scanInto(target: ScanTarget, image: Blob, source: ImageSource): Promise<boolean> {
 	const { settings } = target;
 
 	const done = startScanProgress("Reading the formula…", target.busyEl);
 	try {
-		const latex = await scanImageToLatex(settings, image).finally(done);
+		const latex = await scanImageToLatex(settings, image, source).finally(done);
 		// The formula may have closed or re-rendered while the scan ran.
 		if (!target.isOpen()) {
 			new Notice(target.closedMessage);
@@ -847,7 +886,7 @@ async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
 		// Once the user has connected or paid, the same image is scanned again.
 		const resume = () => {
 			if (target.isOpen()) {
-				void scanInto(target, image);
+				void scanInto(target, image, source);
 			}
 		};
 		if ((failure === "auth" || failure === "no_scans_left") && !settings.useLocalInference && scanAccount) {
@@ -900,7 +939,7 @@ export async function appendLatexFromClipboardImage(
 		return false;
 	}
 
-	return await scanInto(mathfieldScanTarget(options), image);
+	return await scanInto(mathfieldScanTarget(options), image, "clipboard");
 }
 
 function showEmptyClipboard(scanScreenArea?: () => void) {
@@ -942,7 +981,45 @@ export async function scanScreenAreaInto(
 		return false;
 	}
 
-	return await scanInto(target, image);
+	return await scanInto(target, image, "screen");
+}
+
+// Opens the device's image picker: on a phone or tablet it offers the camera and the photo
+// library. Resolves with the picked image, or null when the user cancels.
+function pickImage(doc: Document): Promise<File | null> {
+	return new Promise((resolve) => {
+		const input = doc.body.createEl("input", { type: "file", cls: "mathlive-image-picker", attr: { accept: "image/*" } });
+		const finish = (file: File | null) => {
+			input.remove();
+			resolve(file);
+		};
+		input.addEventListener("change", () => finish(input.files?.[0] ?? null), { once: true });
+		input.addEventListener("cancel", () => finish(null), { once: true });
+		input.click();
+	});
+}
+
+// Scans a photo the user takes or picks. The picker opens first, straight from the tap, because
+// phones only open it from one; a key is got after that if needed.
+export async function scanPhotoInto(target: ScanTarget, doc: Document): Promise<boolean> {
+	const image = await pickImage(doc);
+	if (!image || !target.isOpen()) {
+		return false;
+	}
+	return await scanImageInto(target, image, "photo");
+}
+
+// Scans an image the plugin already has, such as one embedded in a note.
+export async function scanImageInto(target: ScanTarget, image: Blob, source: ImageSource): Promise<boolean> {
+	const resume = () => {
+		if (target.isOpen()) {
+			void scanImageInto(target, image, source);
+		}
+	};
+	if (!(await ensureCanScan(target.settings, resume))) {
+		return false;
+	}
+	return await scanInto(target, image, source);
 }
 
 let screenAccessHinted = false;
@@ -953,6 +1030,7 @@ async function pickOnScreen(
 	doc: Document,
 	hideWhileSelecting?: () => () => void
 ): Promise<Blob | null> {
+	const { ScreenAccessModal, selectAnywhereOnScreen, selectScreenArea, wholeScreenAccess } = await loadScreenCapture();
 	if (settings.scanOtherApps) {
 		const access = await wholeScreenAccess();
 		if (access === "ok") {

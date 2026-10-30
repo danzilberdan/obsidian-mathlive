@@ -97,6 +97,11 @@ export function startStubScanner(port = 8502) {
 				hasPng: body.includes(Buffer.from([0x89, 0x50, 0x4e, 0x47])),
 				pngSize: pngSize(body),
 				bytes: body.length,
+				client: {
+					platform: req.headers["x-mathlive-platform"] ?? null,
+					version: req.headers["x-mathlive-version"] ?? null,
+					source: req.headers["x-mathlive-source"] ?? null,
+				},
 			});
 
 			const reply = (status, payload) => {
