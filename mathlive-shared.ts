@@ -387,6 +387,15 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	mfe.value = config.initialValue;
 	mfe.addEventListener("mount", () => {
 		styleMathfieldInPopout(mfe);
+		if (mfe.shadowRoot && !mfe.shadowRoot.querySelector(".mathlive-wide-accents")) {
+			const style = createEl("style", { cls: "mathlive-wide-accents" });
+			// MathLive centers a zero-width SVG box as if it were a fixed-width accent.
+			// That margin shrinks and shifts the stretchy SVG's containing block.
+			style.textContent = `.ML__vlist > .ML__center:has(> span > span > .ML__stretchy > svg[preserveAspectRatio="none"]) {
+				margin-left: 0 !important;
+			}`;
+			mfe.shadowRoot.append(style);
+		}
 		mfe.menuItems = mfe.menuItems.map((item) => {
 			if (!("submenu" in item) || !("id" in item) || item.id !== "accent") {
 				return item;
