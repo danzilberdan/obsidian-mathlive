@@ -116,7 +116,11 @@ export class CloudAccount {
 
 	// How the device shows on the account page, so the user can tell their computers apart.
 	deviceName(): string {
-		const system = Platform.isMacOS ? "macOS" : Platform.isWin ? "Windows" : Platform.isLinux ? "Linux" : "desktop";
+		const system = Platform.isIosApp
+			? Platform.isTablet ? "iPad" : "iPhone"
+			: Platform.isAndroidApp
+				? "Android"
+				: Platform.isMacOS ? "macOS" : Platform.isWin ? "Windows" : Platform.isLinux ? "Linux" : "desktop";
 		return `${this.host.app.vault.getName()} on ${system}`.slice(0, 60);
 	}
 

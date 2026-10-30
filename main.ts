@@ -19,6 +19,8 @@ import {
 	TFile,
 	type View,
 	Notice,
+	SuggestModal,
+	getLinkpath,
 } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 import type { MathfieldElement } from "mathlive";
@@ -33,6 +35,9 @@ import {
 	findEnclosingMath,
 	mathfieldScanTarget,
 	scanScreenAreaInto,
+	scanPhotoInto,
+	scanImageInto,
+	CAN_SCAN_SCREEN,
 	setScanAccount,
 	type ScanTarget,
 	releaseVirtualKeyboardFrom,
@@ -105,11 +110,27 @@ export default class MathLivePlugin extends Plugin {
 				new MathLiveModal(this.app, editor, this, true).open();
 			}
 		});
+		if (CAN_SCAN_SCREEN) {
+			this.addCommand({
+				id: "scan-screen-area",
+				name: "Scan formula from screen",
+				callback: () => {
+					void this.scanScreenAreaIntoNote();
+				},
+			});
+		}
 		this.addCommand({
-			id: "scan-screen-area",
-			name: "Scan formula from screen",
+			id: "scan-photo",
+			name: Platform.isMobile ? "Scan formula from a photo" : "Scan formula from an image file",
 			callback: () => {
-				void this.scanScreenAreaIntoNote();
+				void this.scanPhotoIntoNote();
+			},
+		});
+		this.addCommand({
+			id: "scan-note-image",
+			name: "Scan formula from an image in this note",
+			callback: () => {
+				void this.scanNoteImage();
 			},
 		});
 		this.addCommand({
@@ -167,8 +188,33 @@ export default class MathLivePlugin extends Plugin {
 				);
 			})
 		);
+		// An image file, from the file list or an image's own menu, is scanned into the open note.
 		this.registerEvent(
-			this.app.workspace.on("editor-menu", (menu, editor) => {
+			this.app.workspace.on("file-menu", (menu, file) => {
+				if (!isImage(file)) {
+					return;
+				}
+				menu.addItem((item) =>
+					item
+						.setTitle("Scan formula with MathLive")
+						.setIcon("scan-text")
+						.onClick(() => void this.scanImageFileIntoNote(file))
+				);
+			})
+		);
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu, editor, info) => {
+				const image =
+					info instanceof MarkdownView ? this.noteImages(info).find((each) => each.line === editor.getCursor().line) : undefined;
+				if (image) {
+					menu.addItem((item) =>
+						item
+							.setTitle("Scan this image with MathLive")
+							.setIcon("scan-text")
+							.setSection("insert")
+							.onClick(() => void this.scanEmbeddedImage(info as MarkdownView, image))
+					);
+				}
 				menu.addItem((item) =>
 					item
 						.setTitle("Find a formula")
@@ -185,9 +231,18 @@ export default class MathLivePlugin extends Plugin {
 			menu.addItem((item) =>
 				item.setTitle("Find a formula").setIcon("search").onClick(() => this.findFormula())
 			);
-			menu.addItem((item) =>
-				item.setTitle("Scan formula from screen").setIcon("scan").onClick(() => void this.scanScreenAreaIntoNote())
-			);
+			if (CAN_SCAN_SCREEN) {
+				menu.addItem((item) =>
+					item.setTitle("Scan formula from screen").setIcon("scan").onClick(() => void this.scanScreenAreaIntoNote())
+				);
+			} else {
+				menu.addItem((item) =>
+					item.setTitle("Scan a photo").setIcon("camera").onClick(() => void this.scanPhotoIntoNote())
+				);
+				menu.addItem((item) =>
+					item.setTitle("Scan an image in this note").setIcon("scan-text").onClick(() => void this.scanNoteImage())
+				);
+			}
 			menu.addItem((item) =>
 				item.setTitle("Draw formula").setIcon("pencil-line").onClick(() => void this.drawFormulaIntoNote())
 			);
@@ -249,7 +304,7 @@ export default class MathLivePlugin extends Plugin {
 		new GuideModal(this.app, {
 			account: this.account,
 			addFormula: () => this.openEditorFromWelcome(),
-			scanFromScreen: () => void this.scanScreenAreaIntoNote(),
+			scanFromScreen: () => void (CAN_SCAN_SCREEN ? this.scanScreenAreaIntoNote() : this.scanPhotoIntoNote()),
 			drawFormula: () => void this.drawFormulaIntoNote(),
 			convertPdf: () => this.convertPdf(),
 			findFormula: () => this.findFormula(),
@@ -407,6 +462,117 @@ export default class MathLivePlugin extends Plugin {
 			return;
 		}
 		await scanScreenAreaInto(this.app, target, activeDocument);
+	}
+
+	// The phone's camera or photo library, or a file picker on a computer.
+	async scanPhotoIntoNote() {
+		const target = this.noteScanTarget();
+		if (!target) {
+			new Notice("Open a note first, so the scanned formula has somewhere to go.");
+			return;
+		}
+		await scanPhotoInto(target, activeDocument);
+	}
+
+	// The images embedded in a note, read from its text so a photo attached a moment ago counts.
+	noteImages(view: MarkdownView): NoteImage[] {
+		const note = view.file;
+		if (!note) {
+			return [];
+		}
+		const images: NoteImage[] = [];
+		const editor = view.editor;
+		for (let line = 0; line < editor.lineCount(); line++) {
+			const text = editor.getLine(line);
+			for (const match of text.matchAll(EMBED_PATTERN)) {
+				const link = match[1] ?? match[2];
+				if (!link || /^[a-z]+:/i.test(link)) {
+					continue;
+				}
+				let path = link;
+				try {
+					path = decodeURIComponent(link);
+				} catch {
+					// Not URL-encoded.
+				}
+				const file = this.app.metadataCache.getFirstLinkpathDest(getLinkpath(path), note.path);
+				if (isImage(file)) {
+					images.push({ file, line, embed: match[0] });
+				}
+			}
+		}
+		return images;
+	}
+
+	// The image on the cursor's line, the only image, or one the user picks from the note.
+	async scanNoteImage() {
+		const view = this.findNoteForScan();
+		if (!view?.file) {
+			new Notice("Open a note with an image first.");
+			return;
+		}
+		const images = this.noteImages(view);
+		if (images.length === 0) {
+			new Notice("This note has no images. Attach a photo to it first, or scan one straight from the camera.");
+			return;
+		}
+		const atCursor = images.find((image) => image.line === view.editor.getCursor().line);
+		if (atCursor || images.length === 1) {
+			await this.scanEmbeddedImage(view, atCursor ?? images[0]);
+			return;
+		}
+		new NoteImageModal(this.app, images, (image) => void this.scanEmbeddedImage(view, image)).open();
+	}
+
+	// The formula goes on its own lines under the image, so the photo and its LaTeX stay together.
+	async scanEmbeddedImage(view: MarkdownView, image: NoteImage) {
+		const note = view.file;
+		if (!note) {
+			return;
+		}
+		const blob = await this.readImage(image.file);
+		if (!blob) {
+			return;
+		}
+		const target: ScanTarget = {
+			settings: this.settings,
+			isOpen: () => view.file === note && view.containerEl.isConnected,
+			insert: (latex) => insertMathUnderEmbed(view.editor, image, latex),
+			addedMessage: "Scanned formula added under the image",
+			closedMessage: "The note was closed before the scan finished. Open it and scan again.",
+		};
+		await scanImageInto(target, blob, "note-image");
+	}
+
+	// From the file list or an image's menu: under the image if the open note shows it, else at the
+	// note's cursor.
+	async scanImageFileIntoNote(file: TFile) {
+		const view = this.findNoteForScan();
+		const embedded = view ? this.noteImages(view).find((image) => image.file === file) : undefined;
+		if (view && embedded) {
+			await this.scanEmbeddedImage(view, embedded);
+			return;
+		}
+		const target = this.noteScanTarget();
+		if (!target) {
+			new Notice("Open a note first, so the scanned formula has somewhere to go.");
+			return;
+		}
+		const blob = await this.readImage(file);
+		if (blob) {
+			await scanImageInto(target, blob, "note-image");
+		}
+	}
+
+	private async readImage(file: TFile): Promise<Blob | null> {
+		try {
+			const data = await this.app.vault.readBinary(file);
+			return new Blob([data], { type: IMAGE_TYPES[file.extension.toLowerCase()] ?? "" });
+		} catch (error) {
+			console.error("MathLive: couldn't read the image:", error);
+			new Notice(`MathLive couldn't open ${file.name}.`);
+			return null;
+		}
 	}
 
 	// Until switched back or Obsidian restarts, notes show formulas as LaTeX the Obsidian way.
@@ -597,6 +763,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 				},
 				{
 					name: "Scan other apps",
+					visible: () => CAN_SCAN_SCREEN,
 					desc: "Scan from screen lets you drag a box around a formula anywhere on your screen, in Obsidian or in another app such as a browser or PDF reader, and its LaTeX goes in your note at the cursor. Start it from ✨ in the left ribbon, ✨ next to a formula, or a hotkey. Turn this off to only scan inside Obsidian's window.",
 					addControl: toggle("scanOtherApps"),
 				},
@@ -951,10 +1118,13 @@ class MathLiveModal extends Modal {
 			attr: { type: "button" },
 		});
 		submitButton.createSpan({ cls: "mathlive-btn-title", text: "Insert" });
-		submitButton.createEl("kbd", {
-			cls: "mathlive-btn-hint",
-			text: Platform.isMacOS ? "⌘ Enter" : "Ctrl+Enter",
-		});
+		// Phones and tablets usually have no keyboard to press it on.
+		if (!Platform.isMobile) {
+			submitButton.createEl("kbd", {
+				cls: "mathlive-btn-hint",
+				text: Platform.isMacOS ? "⌘ Enter" : "Ctrl+Enter",
+			});
+		}
 		submitButton.addEventListener("click", () => this.close());
 	}
 
@@ -986,9 +1156,13 @@ class MathLiveModal extends Modal {
 				})
 			);
 			menu.addItem((item) =>
-				item.setTitle("Scan from screen").setIcon("scan").onClick(() => {
-					void this.onScreenScanRequest();
-				})
+				CAN_SCAN_SCREEN
+					? item.setTitle("Scan from screen").setIcon("scan").onClick(() => {
+							void this.onScreenScanRequest();
+						})
+					: item.setTitle("Scan a photo").setIcon("camera").onClick(() => {
+							void this.onPhotoScanRequest();
+						})
 			);
 			menu.addItem((item) =>
 				item.setTitle("Draw formula").setIcon("pencil-line").onClick(() => {
@@ -1067,9 +1241,21 @@ class MathLiveModal extends Modal {
 			return;
 		}
 
-		await appendLatexFromClipboardImage(this.scanTarget(this.mfe), () => {
-			void this.onScreenScanRequest();
-		});
+		await appendLatexFromClipboardImage(
+			this.scanTarget(this.mfe),
+			CAN_SCAN_SCREEN ? () => void this.onScreenScanRequest() : undefined
+		);
+	}
+
+	async onPhotoScanRequest() {
+		const mathfield = this.mfe;
+		if (!mathfield) {
+			return;
+		}
+		await scanPhotoInto(mathfieldScanTarget(this.scanTarget(mathfield)), this.containerEl.doc);
+		if (mathfield.isConnected) {
+			this.focusFormulaWhenShown();
+		}
 	}
 
 	// Puts a formula from the library at the cursor in this window's formula.
@@ -1149,4 +1335,74 @@ function insertScannedMath(editor: Editor, scanned: string) {
 	}
 	editor.replaceRange(text, cursor);
 	editor.setCursor(editor.offsetToPos(offset + text.length));
+}
+
+interface NoteImage {
+	file: TFile;
+	line: number;
+	// The embed as written, such as ![[photo.jpg]], to find it again if lines move.
+	embed: string;
+}
+
+// ![[image.png]] or ![[image.png|300]], and ![alt](image.png).
+const EMBED_PATTERN = /!\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]|!\[[^\]]*\]\(<?([^)>\s]+)>?(?:\s+"[^"]*")?\)/g;
+
+const IMAGE_TYPES: Record<string, string> = {
+	png: "image/png",
+	jpg: "image/jpeg",
+	jpeg: "image/jpeg",
+	webp: "image/webp",
+	gif: "image/gif",
+	bmp: "image/bmp",
+	heic: "image/heic",
+	heif: "image/heif",
+	avif: "image/avif",
+};
+
+function isImage(file: unknown): file is TFile {
+	return file instanceof TFile && file.extension.toLowerCase() in IMAGE_TYPES;
+}
+
+// Under the image's line as a full-line formula. The note may have changed during the scan, so the
+// image is looked for again near where it was; if it's gone, the formula goes at the cursor.
+function insertMathUnderEmbed(editor: Editor, image: NoteImage, scanned: string) {
+	let line = -1;
+	for (let distance = 0; distance < editor.lineCount() && line < 0; distance++) {
+		for (const candidate of [image.line - distance, image.line + distance]) {
+			if (candidate >= 0 && candidate < editor.lineCount() && editor.getLine(candidate).includes(image.embed)) {
+				line = candidate;
+				break;
+			}
+		}
+	}
+	if (line < 0) {
+		insertScannedMath(editor, scanned);
+		return;
+	}
+	const text = `\n\n$$\n${toMathJaxLatex(scanned)}\n$$`;
+	const end = { line, ch: editor.getLine(line).length };
+	editor.replaceRange(text, end);
+	editor.setCursor(editor.offsetToPos(editor.posToOffset(end) + text.length));
+}
+
+// Picks one of a note's images to scan.
+class NoteImageModal extends SuggestModal<NoteImage> {
+	constructor(app: App, private images: NoteImage[], private onPick: (image: NoteImage) => void) {
+		super(app);
+		this.setPlaceholder("Scan which image?");
+	}
+
+	getSuggestions(query: string): NoteImage[] {
+		const words = query.toLowerCase();
+		return this.images.filter((image) => image.file.name.toLowerCase().includes(words));
+	}
+
+	renderSuggestion(image: NoteImage, el: HTMLElement) {
+		el.createDiv({ text: image.file.name });
+		el.createEl("small", { text: `Line ${image.line + 1}` });
+	}
+
+	onChooseSuggestion(image: NoteImage) {
+		this.onPick(image);
+	}
 }

@@ -1,11 +1,11 @@
 {
 	"id": "mathlive",
 	"name": "MathLive",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"minAppVersion": "1.1.0",
 	"description": "Visual LaTeX math editor with formula OCR. Scan screenshots, PDFs and handwriting into editable equations.",
 	"author": "Dan Zilberman",
 	"authorUrl": "https://github.com/danzilberdan",
 	"fundingUrl": "https://www.buymeacoffee.com/danzilberdan",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }

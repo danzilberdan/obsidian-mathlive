@@ -2,7 +2,7 @@
 // AI rewrite its LaTeX. A box opens under the formula with a text field and a mic; the result
 // replaces the formula, and Undo puts the old one back. Costs a scan only when the formula changes.
 import { Notice, Platform, requestUrl, setIcon } from "obsidian";
-import { ensureCanScan, errorCode, scanAccountHooks, scannerAddress } from "./mathlive-shared";
+import { ensureCanScan, errorCode, scanAccountHooks, scannerAddress, scannerHeaders } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
 const EDIT_TIMEOUT_MS = 45_000;
@@ -67,7 +67,7 @@ async function requestEdit(settings: PluginSettings, latex: string, instruction:
 				url: scannerAddress(settings) + "/edit",
 				method: "POST",
 				contentType: "application/json",
-				headers: { "Api-Key": settings.apiKey ?? "" },
+				headers: scannerHeaders(settings),
 				body: JSON.stringify(body),
 				throw: false,
 			}),
