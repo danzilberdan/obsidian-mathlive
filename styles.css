@@ -1008,3 +1008,38 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 .mathlive-image-picker {
 	display: none;
 }
+
+/* The plans offered when the free scans run out. */
+.mathlive-upgrade-list {
+  padding-inline-start: var(--size-4-6);
+}
+.mathlive-upgrade-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-4);
+}
+.mathlive-upgrade-plans .mathlive-upgrade-plan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--size-2-1);
+  height: auto;
+  padding: var(--size-4-3);
+  white-space: normal;
+  text-align: start;
+}
+.mathlive-upgrade-plan-title {
+  font-weight: var(--font-semibold);
+}
+.mathlive-upgrade-plan-price {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-bold);
+}
+.mathlive-upgrade-plan-note {
+  font-size: var(--font-ui-smaller);
+  opacity: 0.8;
+}
+.mathlive-upgrade-modal .setting-item {
+  border-top: none;
+}

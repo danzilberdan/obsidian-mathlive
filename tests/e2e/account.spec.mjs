@@ -114,10 +114,43 @@ test.describe("account", () => {
 		// The stub answers this key's status as an account with 2 scans left.
 		await setSettings(page, { apiKey: "low-key", apiKeySource: "device" });
 		await scanInEditorWindow(page);
-		const notice = notices(page).filter({ hasText: "2 free scans left this month." });
+		const notice = notices(page).filter({ hasText: "2 free scans left this month. Unlimited is $39 a year." });
 		await expect(notice).toBeVisible();
-		await notice.getByRole("button", { name: "See plans" }).click();
-		expect(await openedUrls(page)).toContain(`${SITE}/pricing`);
+		await notice.getByRole("button", { name: "Go unlimited" }).click();
+		expect(await openedUrls(page)).toContain(`${SITE}/pricing?src=plugin_low`);
+	});
+
+	test("out of scans offers the plans, and buying one finishes the refused scan", async ({ page, scanner }) => {
+		await setSettings(page, { apiKey: "out-key", apiKeySource: "device" });
+		await scanInEditorWindow(page);
+		const dialog = page.locator(".mathlive-upgrade-modal");
+		await expect(dialog.locator(".modal-title")).toHaveText("You're out of free scans");
+		await expect(dialog).toContainText("Your next 5 arrive on");
+		await expect(dialog.locator(".mathlive-upgrade-plan")).toHaveText([/Yearly\$39\/yr\$3\.25 a month/, /Lifetime\$69/, /Monthly\$6\/mo/]);
+		await expect(dialog.locator(".mathlive-upgrade-plan.mod-cta")).toContainText("Yearly");
+
+		await dialog.locator(".mathlive-upgrade-plan", { hasText: "Yearly" }).click();
+		await expect.poll(() => openedUrls(page)).toContain("https://checkout.example/go?plan=annual&src=plugin_out");
+		const linkRequest = scanner.requests.find((request) => request.url === "/checkout-link");
+		expect(linkRequest.apiKey).toBe("out-key");
+		await expect(dialog).toContainText("Finish paying in your browser");
+		expect(scanner.requests.filter((request) => request.url === "/predict/")).toHaveLength(1);
+
+		// Paid in the browser: the window notices on its own, closes and runs the scan.
+		scanner.account.paid = true;
+		await expect(dialog).toHaveCount(0, { timeout: 15_000 });
+		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
+		expect(scanner.requests.filter((request) => request.url === "/predict/")).toHaveLength(2);
+	});
+
+	test("out of scans can wait for next month", async ({ page, scanner }) => {
+		await setSettings(page, { apiKey: "out-key", apiKeySource: "device" });
+		await scanInEditorWindow(page);
+		const dialog = page.locator(".mathlive-upgrade-modal");
+		await dialog.getByRole("button", { name: /^Wait until / }).click();
+		await expect(dialog).toHaveCount(0);
+		expect(scanner.requests.filter((request) => request.url === "/checkout-link")).toHaveLength(0);
+		expect(await openedUrls(page)).toHaveLength(0);
 	});
 
 	test("settings connect, show the account and disconnect", async ({ obsidian, page, scanner }) => {
