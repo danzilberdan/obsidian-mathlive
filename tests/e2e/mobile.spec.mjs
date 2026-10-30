@@ -4,6 +4,7 @@ import {
 	expect,
 	FORMULA_IMAGE,
 	blockWidget,
+	inlineField,
 	menuItem,
 	noteText,
 	notices,
@@ -158,6 +159,38 @@ test("on a touch screen a full-line formula keeps its width, with the buttons in
 		}
 		const gaps = buttons.slice(1).map((b, i) => b.left - (buttons[i].left + buttons[i].width));
 		expect(gaps).toEqual([4, 4, 4]);
+	} finally {
+		await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+		await cdp.detach();
+	}
+});
+
+test("on a touch screen an inline formula shows its buttons only while it is edited", async ({ page }) => {
+	const cdp = await page.context().newCDPSession(page);
+	await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+	try {
+		expect(await page.evaluate(() => matchMedia("(hover: none)").matches)).toBe(true);
+		const buttons = (index) => inlineWidget(page, index).locator(".obsidian-mathlive-widget-buttons");
+		await expect(buttons(0)).toBeHidden();
+		await expect(buttons(1)).toBeHidden();
+		// Full-line formulas keep theirs.
+		await expect(blockWidget(page).locator(".obsidian-mathlive-widget-buttons")).toBeVisible();
+
+		await inlineField(page, 0).evaluate((field) => field.focus());
+		await expect(buttons(0)).toBeVisible();
+		await expect(buttons(1)).toBeHidden();
+
+		// Tapping ✨ keeps the formula focused, and its menu keeps the buttons.
+		const box = await inlineWidget(page, 0).locator(".obsidian-mathlive-widget-ai-button").boundingBox();
+		const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+		await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point] });
+		await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+		await expect(menuItem(page, "Find a formula")).toBeVisible();
+		await expect(buttons(0)).toBeVisible();
+		await page.keyboard.press("Escape");
+
+		await inlineField(page, 0).evaluate((field) => field.blur());
+		await expect(buttons(0)).toBeHidden();
 	} finally {
 		await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: false });
 		await cdp.detach();

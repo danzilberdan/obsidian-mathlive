@@ -344,6 +344,20 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   }
 }
 
+/* Without a mouse, an inline formula's buttons show only while it is being edited or its ✨ menu
+   is open, so they don't fill every line of a note. */
+@media (hover: none) {
+  .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-buttons {
+    display: none;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper.inline.mathlive-editing .obsidian-mathlive-widget-buttons,
+  .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-buttons.mathlive-menu-open,
+  .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-buttons.mathlive-keyboard-focus {
+    display: inline-flex;
+  }
+}
+
 /* Inline, the buttons fit the line of text: as tall as the text, centred on it. */
 .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-button {
   width: 1.3em;

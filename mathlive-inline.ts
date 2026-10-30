@@ -328,6 +328,18 @@ class MathLiveWidget extends WidgetType {
 			event.stopPropagation();
 		});
 
+		// On touch screens, where nothing hovers, an inline formula shows its buttons only while it
+		// is being edited (styles.css), so a note full of formulas isn't full of buttons. A tap on a
+		// button keeps the formula focused; the ✨ menu keeps them while it is open.
+		mfe.addEventListener("focus", () => wrapper.addClass("mathlive-editing"));
+		mfe.addEventListener("blur", () => {
+			window.setTimeout(() => {
+				if (mfe.doc.activeElement !== mfe) {
+					wrapper.removeClass("mathlive-editing");
+				}
+			}, 300);
+		});
+
 		mfe.addEventListener("focus", () => {
 			// The keyboard opens in the window this formula is in.
 			moveVirtualKeyboard(mfe.doc.body);
