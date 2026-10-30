@@ -393,6 +393,11 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 			// That margin shrinks and shifts the stretchy SVG's containing block.
 			style.textContent = `.ML__vlist > .ML__center:has(> span > span > .ML__stretchy > svg[preserveAspectRatio="none"]) {
 				margin-left: 0 !important;
+			}
+			/* An already accented base carries its own horizontal correction. Center
+			   the next fixed-width accent without applying that correction again. */
+			.ML__vlist:has(> span:first-child :is(.ML__accent-body, .ML__stretchy)) > .ML__center:has(> .ML__accent-body) {
+				margin-left: 0 !important;
 			}`;
 			mfe.shadowRoot.append(style);
 		}
