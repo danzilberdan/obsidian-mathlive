@@ -377,6 +377,60 @@ export function styleVirtualKeyboardInPopout() {
 	}
 }
 
+// On phones and tablets a tap on the math keyboard, above all on its 123 / abc / αβγ tabs, could
+// take the focus from the formula, so the next key went nowhere. The keyboard's taps are watched in
+// every window a formula is edited in, and a formula that loses the focus during one takes it back.
+const KEYBOARD_TAP_MS = 800;
+let lastKeyboardTap = 0;
+const keyboardTapWatchers = new Map<Document, () => void>();
+
+function watchKeyboardTaps(doc: Document) {
+	if (keyboardTapWatchers.has(doc)) {
+		return;
+	}
+	const onTap = (event: Event) => {
+		const target = event.target as Element | null;
+		if (!target?.closest?.(".ML__keyboard")) {
+			return;
+		}
+		lastKeyboardTap = Date.now();
+		// MathLive switches tabs on pointerdown. The touch and mouse events after it would move the
+		// focus to the tab, which can't hold it.
+		if (event.type !== "pointerdown" && target.closest("[data-layer]")) {
+			event.preventDefault();
+		}
+	};
+	const options = { capture: true, passive: false };
+	for (const type of ["pointerdown", "touchstart", "mousedown"]) {
+		doc.addEventListener(type, onTap, options);
+	}
+	keyboardTapWatchers.set(doc, () => {
+		for (const type of ["pointerdown", "touchstart", "mousedown"]) {
+			doc.removeEventListener(type, onTap, options);
+		}
+	});
+}
+
+// When the plugin unloads.
+export function stopWatchingKeyboardTaps() {
+	for (const stop of keyboardTapWatchers.values()) {
+		stop();
+	}
+	keyboardTapWatchers.clear();
+}
+
+function keepFocusOnKeyboardTaps(mfe: MathfieldElement) {
+	mfe.addEventListener("focus", () => watchKeyboardTaps(mfe.doc));
+	mfe.addEventListener("blur", () => {
+		if (Date.now() - lastKeyboardTap > KEYBOARD_TAP_MS || !window.mathVirtualKeyboard.visible || !mfe.isConnected) {
+			return;
+		}
+		const selection = mfe.selection;
+		mfe.focus();
+		mfe.selection = selection;
+	});
+}
+
 export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	if (!mathfieldElementCtor) {
 		throw new Error("MathLive was not initialized before creating a math-field.");
@@ -392,6 +446,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	mfe.value = config.initialValue;
 	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
 	closeMenuFromOutside(mfe);
+	keepFocusOnKeyboardTaps(mfe);
 
 	if (!config.inline) {
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {

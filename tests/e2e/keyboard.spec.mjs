@@ -102,3 +102,67 @@ test.describe("math keyboard in the note", () => {
 		expect(await reservedSpace(page)).toBe("");
 	});
 });
+
+// On a phone, a tap on the keyboard's tabs could take the focus from the formula (Dan, 2.4.0). The
+// test plays such a tap: MathLive switches the tab on pointerdown, then the phone moves the focus.
+test.describe("math keyboard taps", () => {
+	test.afterEach(async ({ page }) => {
+		await page.evaluate(() => {
+			window.mathVirtualKeyboard.hide();
+			document.body.style.paddingBottom = "";
+			return true;
+		});
+	});
+
+	// Taps another tab, and answers which layer was showing before and after.
+	const tapTabThenLoseFocus = (page) =>
+		page.evaluate(() => {
+			const visible = () => document.querySelector(".ML__keyboard .MLK__layer.is-visible")?.id;
+			const before = visible();
+			const switcher = document.querySelector(".ML__keyboard .MLK__layer.is-visible [data-layer]");
+			switcher.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 0, pointerType: "touch" }));
+			document.activeElement?.blur();
+			return { before, after: visible() };
+		});
+
+	for (const [name, field, open] of [
+		["an inline formula", (page) => inlineField(page, 0), (page) => showKeyboard(page, 0)],
+		[
+			"the editor window",
+			(page) => modalField(page),
+			async (page) => {
+				await runCommand(page, "mathlive:open-modal");
+				await waitForModalField(page);
+				await modalField(page).evaluate((mfe) => mfe.executeCommand("showVirtualKeyboard"));
+				await expect(page.locator(".ML__keyboard")).toBeVisible();
+			},
+		],
+	]) {
+		test(`switching keyboard tabs keeps the cursor in ${name}`, async ({ page }) => {
+			await open(page);
+			await field(page).evaluate((mfe) => {
+				mfe.value = "a+b";
+				mfe.position = 1;
+				return true;
+			});
+			await expect(page.locator(".ML__keyboard .MLK__layer.is-visible [data-layer]").first()).toBeAttached();
+			const layers = await tapTabThenLoseFocus(page);
+			expect(layers.after).not.toBe(layers.before);
+			await expect(field(page)).toBeFocused();
+			expect(await field(page).evaluate((mfe) => mfe.position)).toBe(1);
+			await field(page).evaluate((mfe) => {
+				mfe.insert("x");
+				return true;
+			});
+			expect(await field(page).evaluate((mfe) => mfe.value)).toBe("ax+b");
+
+			// Leaving the formula some other way still works.
+			await page.waitForTimeout(900);
+			await field(page).evaluate((mfe) => {
+				mfe.blur();
+				return true;
+			});
+			await expect(field(page)).not.toBeFocused();
+		});
+	}
+});
