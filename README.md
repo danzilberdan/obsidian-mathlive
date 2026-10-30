@@ -36,6 +36,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Magic edit.** Pick Magic edit in ✨ AI fill, next to a formula or in the editor window, and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
 - **Quick Latex shorthands.** Type `al` and Space for `\alpha`, `sq` for a square root, or your own shorthands, in the visual editor and in typed LaTeX. Imports your Quick Latex shortcuts and works alongside Latex Suite.
+- **Works on phones and tablets.** The same editor and math keyboard run in Obsidian for iOS and Android. Scan a formula from a photo, either a new one from the camera or one from your library, or scan an image that is already in your note.
 - **Stays out of the way.** Each formula has two small buttons: ✨ AI fill (with Magic edit) and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
 
 <p align="center">
@@ -50,7 +51,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 1. In Obsidian, open **Settings → Community plugins** and turn on community plugins if you haven't yet.
 2. Click **Browse**, search for **MathLive**, then click **Install** and **Enable**.
 
-Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer on desktop.
+Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer, on desktop and on mobile (iPhone, iPad and Android).
 
 ## Getting started
 
@@ -79,6 +80,10 @@ MathLive keeps your typing habits and adds a visual editor and formula scanning 
 **From the screen.** Open the PDF, slide or image next to your note, put the cursor where the formula should go, and click ✨ in the left ribbon and pick **Scan formula from screen** (or run **MathLive: Scan formula from screen**, which you can give a hotkey). Obsidian steps aside and you drag a box around the formula anywhere on your screen, in Obsidian or in another app such as your browser or slides. Its LaTeX goes into the note at the cursor: as a math block on an empty line, or as inline math in a line of text. Press `Esc` to cancel. The editor window and a formula's ✨ menu have **Scan from screen** too, which adds the scan to that formula. On macOS, scanning other apps needs Screen Recording access for Obsidian; until then scans stay inside Obsidian's window and MathLive shows you where to turn it on. To always scan inside Obsidian only, turn off **Scan other apps** in the settings.
 
 **From the clipboard.** Copy a screenshot of a formula, for example from another app or handwritten notes, then choose **Scan clipboard image** from ✨ AI fill in the editor window or next to a formula.
+
+**From a photo.** On a phone or tablet, tap ✨ next to a formula, or in the editor window, and pick **Scan a photo**. Your device's image picker opens, where you can take a picture of a textbook or whiteboard or choose one from your photos. To put the formula in the note at the cursor, pick **Scan a photo** from ✨ in the ribbon, or run **MathLive: Scan formula from a photo**. On a computer, the same command scans an image file.
+
+**From an image in your note.** Run **MathLive: Scan formula from an image in this note**, or right-click (on a phone, long-press) the line with the image and pick **Scan this image with MathLive**. The formula goes under the image as a math block. An image file's menu in the file list has **Scan formula with MathLive** too.
 
 Check the result and fix anything the scanner got wrong.
 
