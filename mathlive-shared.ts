@@ -352,6 +352,27 @@ function styleMathfieldInPopout(mfe: MathfieldElement) {
 	mfe.shadowRoot.adoptedStyleSheets = sheets;
 }
 
+// On touch screens a full-line formula's buttons get a row of their own under it (styles.css).
+// That makes the formula 100px tall, where MathLive stacks its keyboard and ☰ buttons, so keep
+// them side by side on that row.
+let togglesInRowSheet: CSSStyleSheet | undefined;
+
+function keepTogglesInRow(mfe: MathfieldElement) {
+	if (mfe.win !== window || !mfe.shadowRoot) {
+		return;
+	}
+	if (!togglesInRowSheet) {
+		togglesInRowSheet = new CSSStyleSheet();
+		togglesInRowSheet.replaceSync(
+			"@media (pointer: coarse) { .ML__toggles--vertical { flex-direction: row; align-items: flex-start; gap: 4px; } }"
+		);
+	}
+	const sheets = mfe.shadowRoot.adoptedStyleSheets;
+	if (!sheets.includes(togglesInRowSheet)) {
+		mfe.shadowRoot.adoptedStyleSheets = [...sheets, togglesInRowSheet];
+	}
+}
+
 // MathLive makes room for its keyboard by adding the keyboard's height to the main window's bottom
 // padding, and puts back what was there when the keyboard closes. When a close is missed, the blank
 // strip stays, and the next keyboard adds its height on top of it. So after every change, make the
@@ -463,7 +484,12 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 	mfe.defaultMode = config.inline ? "inline-math" : "math";
 	mfe.value = config.initialValue;
-	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
+	mfe.addEventListener("mount", () => {
+		styleMathfieldInPopout(mfe);
+		if (!config.inline && !config.id) {
+			keepTogglesInRow(mfe);
+		}
+	});
 	closeMenuFromOutside(mfe);
 	attachShorthands(mfe);
 	keepFocusOnKeyboardTaps(mfe);
