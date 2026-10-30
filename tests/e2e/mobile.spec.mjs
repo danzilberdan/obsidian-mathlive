@@ -3,6 +3,7 @@ import { SCANNED_LATEX } from "./stub-scanner.mjs";
 import {
 	expect,
 	FORMULA_IMAGE,
+	blockWidget,
 	menuItem,
 	noteText,
 	notices,
@@ -123,4 +124,31 @@ test.describe("scanning photos and images in notes", () => {
 		await expect(notices(page).filter({ hasText: "Scanned formula added to the note" })).toBeVisible();
 		expect(scans(scanner)[0].client).toEqual({ platform: null, version: null, source: null });
 	});
+});
+
+test("on a touch screen a full-line formula's buttons line up with MathLive's", async ({ page }) => {
+	const cdp = await page.context().newCDPSession(page);
+	await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+	try {
+		expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
+		const boxes = await blockWidget(page).evaluate((widget) => {
+			const box = (el) => {
+				const { top, left, width, height } = el.getBoundingClientRect();
+				return { top: Math.round(top), left: Math.round(left), width: Math.round(width), height: Math.round(height) };
+			};
+			const shadow = widget.querySelector("math-field").shadowRoot;
+			return [
+				shadow.querySelector(".ML__virtual-keyboard-toggle"),
+				shadow.querySelector(".ML__menu-toggle"),
+				...widget.querySelectorAll(".obsidian-mathlive-widget-button"),
+			].map(box);
+		});
+		expect(boxes).toHaveLength(4);
+		for (const b of boxes) expect(b).toMatchObject({ top: boxes[0].top, width: 60, height: 60 });
+		const gaps = boxes.slice(1).map((b, i) => b.left - (boxes[i].left + boxes[i].width));
+		expect(gaps).toEqual([4, 4, 4]);
+	} finally {
+		await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+		await cdp.detach();
+	}
 });
