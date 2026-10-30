@@ -49,7 +49,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 1. In Obsidian, open **Settings → Community plugins** and turn on community plugins if you haven't yet.
 2. Click **Browse**, search for **MathLive**, then click **Install** and **Enable**.
 
-Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer, on desktop and on phones and tablets (iPhone, iPad and Android). On a phone or tablet, ✨ → **Scan a photo** opens the camera or your photo library, and **Scan formula from an image in this note** reads a photo you already attached. Scan from screen is desktop only.
+Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer on desktop.
 
 ## Getting started
 
