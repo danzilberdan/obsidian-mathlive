@@ -124,7 +124,7 @@ test.describe("find a formula", () => {
 		await runCommand(page, "mathlive:find-formula");
 		await searchInput(page).fill("black scholes");
 		await suggestion(page, "with AI").click();
-		await expect(notices(page).filter({ hasText: "You've used your free scans" })).toBeVisible();
+		await expect(page.locator(".mathlive-upgrade-modal .modal-title")).toHaveText("You're out of free scans");
 	});
 
 	test("when the library is down, writing with AI is still offered", async ({ page }) => {

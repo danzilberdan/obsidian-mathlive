@@ -22,7 +22,7 @@ export default defineConfig([
 			"obsidianmd/ui/sentence-case": [
 				"error",
 				{
-					brands: ["MathLive", "MathJax", "LaTeX", "Obsidian", "Docker", "Dan Zilberman", "Live Preview", "Markdown", "macOS", "System Settings", "Privacy & Security", "Screen Recording"],
+					brands: ["MathLive", "MathJax", "LaTeX", "Obsidian", "Docker", "Dan Zilberman", "Live Preview", "Markdown", "macOS", "System Settings", "Privacy & Security", "Screen Recording", "Quick Latex", "Latex Suite"],
 					acronyms: ["API", "OCR", "PDF"],
 				},
 			],

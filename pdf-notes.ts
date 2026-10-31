@@ -16,12 +16,13 @@ import {
 	errorCode,
 	NO_SCANS_LEFT_NOTICE,
 	scannerAddress,
+	scannerHeaders,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
 // Where the pack of extra pages is sold.
 function buyPagesUrl(settings: PluginSettings) {
-	return (settings.websiteUrl || DEFAULT_SETTINGS.websiteUrl).replace(/\/+$/, "") + "/checkout?plan=pages";
+	return (settings.websiteUrl || DEFAULT_SETTINGS.websiteUrl).replace(/\/+$/, "") + "/checkout?plan=pages&src=plugin_pdf";
 }
 
 // The scanner reads pages up to 2048 px on the longest side, so render them at that size.
@@ -172,7 +173,7 @@ async function requestPage(settings: PluginSettings, image: Blob): Promise<strin
 				url: scannerAddress(settings) + "/pages/",
 				method: "POST",
 				contentType,
-				headers: { "Api-Key": settings.apiKey ?? "" },
+				headers: scannerHeaders(settings),
 				body,
 				throw: false,
 			}),

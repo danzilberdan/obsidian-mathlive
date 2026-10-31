@@ -106,7 +106,7 @@ test.describe("formula editor window", () => {
 		await waitForModalField(page);
 		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("2 free scans leftUpgrade");
 		await footer.getByText("Upgrade").click();
-		await expect.poll(() => openedUrls(page)).toEqual(["http://127.0.0.1:8502/site/pricing"]);
+		await expect.poll(() => openedUrls(page)).toEqual(["http://127.0.0.1:8502/site/pricing?src=plugin_editor"]);
 
 		await footer.getByText("Learn what MathLive can do").click();
 		await expect(page.locator(".mathlive-guide-modal")).toBeVisible();
@@ -144,6 +144,11 @@ test.describe("formula editor window", () => {
 		]);
 		await expect(menu.locator(".menu-item-icon svg")).toHaveCount(5);
 		// Escape closes the menu, and leaves the window open.
+		await page.keyboard.press("Escape");
+		await expect(menu).toHaveCount(0);
+		await expect(modalField(page)).toBeVisible();
+		// Also when pressed before Obsidian has handed the just-opened menu the keyboard.
+		await button.click();
 		await page.keyboard.press("Escape");
 		await expect(menu).toHaveCount(0);
 		await expect(modalField(page)).toBeVisible();

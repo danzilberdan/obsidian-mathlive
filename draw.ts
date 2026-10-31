@@ -10,6 +10,7 @@ import {
 	errorCode,
 	serverDetail,
 	scanImageToLatex,
+	scannerHeaders,
 	scannerAddress,
 	ScanError,
 	type ScanTarget,
@@ -198,7 +199,7 @@ export class DrawModal extends Modal {
 	}
 
 	private get headers() {
-		return { "Api-Key": this.settings.apiKey ?? "" };
+		return scannerHeaders(this.settings, "drawing");
 	}
 
 	onOpen() {
@@ -410,7 +411,7 @@ export class DrawModal extends Modal {
 		}
 		this.setHint("Reading…");
 		try {
-			const latex = this.cloud ? await this.recognize(image) : await scanImageToLatex(this.settings, image);
+			const latex = this.cloud ? await this.recognize(image) : await scanImageToLatex(this.settings, image, "drawing");
 			if (number === this.readNumber && this.shown && latex !== null) {
 				this.showLatex(latex);
 			}
