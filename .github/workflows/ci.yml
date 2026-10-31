@@ -32,6 +32,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Check the plugin loads without Electron, as on phones
+        run: node scripts/check-mobile-load.mjs
+
   ui-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20

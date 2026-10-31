@@ -50,6 +50,7 @@ module.exports = {
       // The MathLive server the build talks to. Release tags with "-staging" build against staging.
       new webpack.DefinePlugin({
         MATHLIVE_ORIGIN: JSON.stringify(process.env.MATHLIVE_ORIGIN || "https://mathlive.danz.blog"),
+        MATHLIVE_VERSION: JSON.stringify(require("./manifest.json").version),
       }),
     ],
     output: {
