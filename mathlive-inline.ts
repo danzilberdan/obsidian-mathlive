@@ -121,7 +121,7 @@ class MathLiveWidget extends WidgetType {
 	updateDOM(dom: HTMLElement): boolean {
 		const wrapper = dom as HTMLDivElement;
 		const mfe = wrapper.getElementsByTagName("math-field")[0] as MathfieldElement | undefined;
-		if (!mfe) {
+		if (!mfe || wrapper.classList.contains("inline") !== this.isInline) {
 			return false;
 		}
 
@@ -257,8 +257,7 @@ class MathLiveWidget extends WidgetType {
 			});
 		};
 
-		// Two buttons after each formula: ✨ fills it in or changes it with AI and holds the other
-		// actions, and Expand opens the editor window. On full-line formulas they sit inside the
+		// Formula buttons: AI fill, conversion between inline and display math, and Expand. On full-line formulas they sit inside the
 		// input, beside MathLive's keyboard and ☰ buttons.
 		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
 		// Tabbing onto a button shows the buttons. Done here rather than with CSS :has(), which the
@@ -284,6 +283,44 @@ class MathLiveWidget extends WidgetType {
 			event.preventDefault();
 			event.stopPropagation();
 			this.showMenu(aiButton, magicEdit, scanClipboardImage, CAN_SCAN_SCREEN ? scanScreenArea : scanPhoto, drawFormula, findFormula);
+		});
+		const convertButton = addButton(
+			"obsidian-mathlive-widget-convert-button",
+			this.isInline ? "panel-top" : "text-cursor-input",
+			this.isInline ? "Convert to display math" : "Convert to inline math"
+		);
+		convertButton.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const delimiter = this.isInline ? 1 : 2;
+			const from = Number.parseInt(mfe.dataset.from ?? "", 10) - delimiter;
+			const to = Number.parseInt(mfe.dataset.to ?? "", 10) + delimiter;
+			if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to > view.state.doc.length) {
+				return;
+			}
+			const latex = toMathJaxLatex(mfe.value).trim();
+			let insert: string;
+			let cursor = from;
+			if (this.isInline) {
+				// Keep the display formula on its own lines, separated from surrounding paragraphs.
+				const before = view.state.sliceDoc(Math.max(0, from - 2), from);
+				const after = view.state.sliceDoc(to, Math.min(view.state.doc.length, to + 2));
+				const leading = before ? "\n".repeat(2 - (before.match(/\n*$/)?.[0].length ?? 0)) : "";
+				const trailing = after ? "\n".repeat(2 - (after.match(/^\n*/)?.[0].length ?? 0)) : "";
+				insert = `${leading}$$\n${latex}\n$$${trailing}`;
+				cursor += leading.length;
+			} else {
+				insert = `$${inlineMathLatex(latex) || "{}"}$`;
+			}
+			// The replacement also commits deferred edits; a blur must not write to the old range.
+			mfe.dataset.hasUnsavedChanges = "false";
+			view.dispatch({
+				changes: { from, to, insert },
+				selection: EditorSelection.cursor(cursor),
+				userEvent: "input",
+				scrollIntoView: true,
+			});
+			view.focus();
 		});
 		const expandButton = addButton("obsidian-mathlive-widget-expand-button", "maximize-2", "Expand");
 		expandButton.addEventListener("click", (event) => {
@@ -459,6 +496,19 @@ class MathLiveWidget extends WidgetType {
 	}
 }
 
+// Inline math must fit on one source line. Remove TeX comments before joining lines so a
+// comment cannot swallow the rest of the formula (or its closing dollar sign).
+function inlineMathLatex(latex: string): string {
+	return latex.split(/\r?\n/).map((line) => {
+		for (let index = 0; index < line.length; index += 1) {
+			if (line[index] === "%" && !isEscaped(line, index)) {
+				return line.slice(0, index);
+			}
+		}
+		return line;
+	}).join(" ").trim();
+}
+
 function isFocusInMathField(doc: Document): boolean {
 	const active = doc.activeElement as HTMLElement | null;
 	if (active?.closest?.("math-field")) {
@@ -609,7 +659,7 @@ function enterMathLiveOnArrow(getSettings: () => PluginSettings): Extension {
 	);
 }
 
-function isEscapedDollar(text: string, index: number): boolean {
+function isEscaped(text: string, index: number): boolean {
 	let backslashCount = 0;
 	for (let cursor = index - 1; cursor >= 0 && text[cursor] === "\\"; cursor -= 1) {
 		backslashCount += 1;
@@ -689,7 +739,7 @@ function collectMathRangesFromDoc(source: string): MathRange[] {
 	let blockStart: number | null = null;
 
 	for (let index = 0; index < doc.length; ) {
-		if (doc[index] !== "$" || isEscapedDollar(doc, index)) {
+		if (doc[index] !== "$" || isEscaped(doc, index)) {
 			index += 1;
 			continue;
 		}
