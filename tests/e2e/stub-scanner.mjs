@@ -11,6 +11,9 @@
 // 404 there, like a scanner from before pages, and "pages-down" always gets 503. "two-pages-left"
 // has a monthly plan with 2 pages left in /access-status, and "page-limit" is told 402 page_limit.
 // /edit stands in for Magic edit; "edit-down" gets 503 there.
+// "out-key" has no scans left until `account.paid` is set, as if a plan was bought in the browser.
+// POST /checkout-link answers a one-click checkout link for connected keys, and /site/prices.json
+// the website's live prices.
 // /draw/sessions/... stands in for Draw formula's sessions like the Rust backend's draw.rs: the
 // test plays the phone through `draw.phone(id)`. `draw.scansLeft` is what an insert can charge.
 import crypto from "node:crypto";
@@ -66,6 +69,7 @@ export function startStubScanner(port = 8502) {
 	let flakyFailed = false;
 	const account = {
 		trialAvailable: true,
+		paid: false,
 		approved: new Set(),
 		forgotten: [],
 		approve(challenge) {
@@ -73,6 +77,7 @@ export function startStubScanner(port = 8502) {
 		},
 		reset() {
 			this.trialAvailable = true;
+			this.paid = false;
 			this.approved.clear();
 			this.forgotten.length = 0;
 		},
@@ -97,6 +102,11 @@ export function startStubScanner(port = 8502) {
 				hasPng: body.includes(Buffer.from([0x89, 0x50, 0x4e, 0x47])),
 				pngSize: pngSize(body),
 				bytes: body.length,
+				client: {
+					platform: req.headers["x-mathlive-platform"] ?? null,
+					version: req.headers["x-mathlive-version"] ?? null,
+					source: req.headers["x-mathlive-source"] ?? null,
+				},
 			});
 
 			const reply = (status, payload) => {
@@ -188,6 +198,17 @@ export function startStubScanner(port = 8502) {
 				account.forgotten.push(apiKey);
 				res.writeHead(204);
 				res.end();
+			} else if (req.method === "GET" && req.url === "/site/prices.json") {
+				reply(200, { lifetimeUsd: 69, annualUsd: 39, monthlyUsd: 6, monthlyFreeScans: 5, lifetimePages: 300, checkoutOpen: true });
+			} else if (req.method === "POST" && req.url === "/checkout-link") {
+				const { plan, src } = JSON.parse(body.toString() || "{}");
+				if (apiKey === "out-key" || apiKey === "device-key" || apiKey === "low-key") {
+					reply(200, { url: `https://checkout.example/go?plan=${plan}&src=${src}` });
+				} else {
+					reply(401, { detail: "Invalid API key.", code: "access_denied" });
+				}
+			} else if (req.url === "/access-status" && apiKey === "out-key") {
+				reply(200, { hasUnlimitedAccess: account.paid, scansLeft: 0, trial: false, email: "ada@example.com", device: "vault on Linux" });
 			} else if (req.url === "/access-status") {
 				if (STATUS[apiKey]) {
 					reply(200, STATUS[apiKey]);
@@ -205,7 +226,7 @@ export function startStubScanner(port = 8502) {
 			} else if (apiKey === "flaky" && !flakyFailed) {
 				flakyFailed = true;
 				reply(503, { detail: "Restarting" });
-			} else if (apiKey === "no-scans-left" || apiKey === "trial-used") {
+			} else if (apiKey === "no-scans-left" || apiKey === "trial-used" || (apiKey === "out-key" && !account.paid)) {
 				reply(400, { detail: "No scans left.", code: "no_scans_left" });
 			} else if (apiKey === "no-math") {
 				reply(502, { detail: "No math found in this image.", code: "no_math" });

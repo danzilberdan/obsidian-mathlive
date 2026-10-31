@@ -1,8 +1,16 @@
 import type { MathfieldElement } from "mathlive";
-import { type App, type Menu, Notice, requestUrl, setIcon } from "obsidian";
+import { type App, type Menu, Notice, Platform, requestUrl, setIcon } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
-import { ScreenAccessModal, selectAnywhereOnScreen, selectScreenArea, wholeScreenAccess } from "./screen-capture";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
+import { attachShorthands } from "./shorthands";
+
+// Set at build time from manifest.json (webpack.config.js).
+declare const MATHLIVE_VERSION: string;
+
+// Scan from screen pictures Obsidian's window through Electron, which only the desktop app has. Its
+// module is loaded on first use, so the plugin also loads on phones and tablets.
+export const CAN_SCAN_SCREEN = Platform.isDesktopApp && !Platform.isMobile;
+const loadScreenCapture = () => import(/* webpackMode: "eager" */ "./screen-capture");
 
 type MathfieldElementCtor = typeof import("mathlive")["MathfieldElement"];
 let mathfieldElementCtor: MathfieldElementCtor | null = null;
@@ -249,8 +257,21 @@ function isEscapedDollar(text: string, index: number) {
 // Shows a menu under the button that opened it. A formula with focus keeps Escape to itself, so
 // listen for it before the formula does, or the menu can't be closed from the keyboard.
 // `alignStart` lines the menu up with the button's left edge instead of starting at its right.
+let shownMenu: Menu | null = null;
+
+// Hides the menu showMenuBelow last opened, if it is still open. Obsidian hands a just-opened menu
+// the keyboard a moment later, so an Escape pressed in between reaches the window under it.
+export function hideShownMenu(): boolean {
+	if (!shownMenu) {
+		return false;
+	}
+	shownMenu.hide();
+	return true;
+}
+
 export function showMenuBelow(menu: Menu, button: HTMLElement, alignStart = false) {
 	const doc = button.doc;
+	shownMenu = menu;
 	const closeOnEscape = (event: KeyboardEvent) => {
 		if (event.key !== "Escape") {
 			return;
@@ -261,7 +282,12 @@ export function showMenuBelow(menu: Menu, button: HTMLElement, alignStart = fals
 	};
 	doc.addEventListener("keydown", closeOnEscape, true);
 	button.setAttr("aria-expanded", "true");
+	button.parentElement?.addClass("mathlive-menu-open");
 	menu.onHide(() => {
+		button.parentElement?.removeClass("mathlive-menu-open");
+		if (shownMenu === menu) {
+			shownMenu = null;
+		}
 		doc.removeEventListener("keydown", closeOnEscape, true);
 		button.setAttr("aria-expanded", "false");
 	});
@@ -326,6 +352,27 @@ function styleMathfieldInPopout(mfe: MathfieldElement) {
 	mfe.shadowRoot.adoptedStyleSheets = sheets;
 }
 
+// On touch screens a full-line formula's buttons get a row of their own under it (styles.css).
+// That makes the formula 100px tall, where MathLive stacks its keyboard and ☰ buttons, so keep
+// them side by side on that row.
+let togglesInRowSheet: CSSStyleSheet | undefined;
+
+function keepTogglesInRow(mfe: MathfieldElement) {
+	if (mfe.win !== window || !mfe.shadowRoot) {
+		return;
+	}
+	if (!togglesInRowSheet) {
+		togglesInRowSheet = new CSSStyleSheet();
+		togglesInRowSheet.replaceSync(
+			"@media (pointer: coarse) { .ML__toggles--vertical { flex-direction: row; align-items: flex-start; gap: 4px; } }"
+		);
+	}
+	const sheets = mfe.shadowRoot.adoptedStyleSheets;
+	if (!sheets.includes(togglesInRowSheet)) {
+		mfe.shadowRoot.adoptedStyleSheets = [...sheets, togglesInRowSheet];
+	}
+}
+
 // MathLive makes room for its keyboard by adding the keyboard's height to the main window's bottom
 // padding, and puts back what was there when the keyboard closes. When a close is missed, the blank
 // strip stays, and the next keyboard adds its height on top of it. So after every change, make the
@@ -370,6 +417,60 @@ export function styleVirtualKeyboardInPopout() {
 	}
 }
 
+// On phones and tablets a tap on the math keyboard, above all on its 123 / abc / αβγ tabs, could
+// take the focus from the formula, so the next key went nowhere. The keyboard's taps are watched in
+// every window a formula is edited in, and a formula that loses the focus during one takes it back.
+const KEYBOARD_TAP_MS = 800;
+let lastKeyboardTap = 0;
+const keyboardTapWatchers = new Map<Document, () => void>();
+
+function watchKeyboardTaps(doc: Document) {
+	if (keyboardTapWatchers.has(doc)) {
+		return;
+	}
+	const onTap = (event: Event) => {
+		const target = event.target as Element | null;
+		if (!target?.closest?.(".ML__keyboard")) {
+			return;
+		}
+		lastKeyboardTap = Date.now();
+		// MathLive switches tabs on pointerdown. The touch and mouse events after it would move the
+		// focus to the tab, which can't hold it.
+		if (event.type !== "pointerdown" && target.closest("[data-layer]")) {
+			event.preventDefault();
+		}
+	};
+	const options = { capture: true, passive: false };
+	for (const type of ["pointerdown", "touchstart", "mousedown"]) {
+		doc.addEventListener(type, onTap, options);
+	}
+	keyboardTapWatchers.set(doc, () => {
+		for (const type of ["pointerdown", "touchstart", "mousedown"]) {
+			doc.removeEventListener(type, onTap, options);
+		}
+	});
+}
+
+// When the plugin unloads.
+export function stopWatchingKeyboardTaps() {
+	for (const stop of keyboardTapWatchers.values()) {
+		stop();
+	}
+	keyboardTapWatchers.clear();
+}
+
+function keepFocusOnKeyboardTaps(mfe: MathfieldElement) {
+	mfe.addEventListener("focus", () => watchKeyboardTaps(mfe.doc));
+	mfe.addEventListener("blur", () => {
+		if (Date.now() - lastKeyboardTap > KEYBOARD_TAP_MS || !window.mathVirtualKeyboard.visible || !mfe.isConnected) {
+			return;
+		}
+		const selection = mfe.selection;
+		mfe.focus();
+		mfe.selection = selection;
+	});
+}
+
 export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	if (!mathfieldElementCtor) {
 		throw new Error("MathLive was not initialized before creating a math-field.");
@@ -383,8 +484,15 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	}
 	mfe.defaultMode = config.inline ? "inline-math" : "math";
 	mfe.value = config.initialValue;
-	mfe.addEventListener("mount", () => styleMathfieldInPopout(mfe));
+	mfe.addEventListener("mount", () => {
+		styleMathfieldInPopout(mfe);
+		if (!config.inline && !config.id) {
+			keepTogglesInRow(mfe);
+		}
+	});
 	closeMenuFromOutside(mfe);
+	attachShorthands(mfe);
+	keepFocusOnKeyboardTaps(mfe);
 
 	if (!config.inline) {
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {
@@ -504,8 +612,10 @@ async function readClipboardImageBlob(): Promise<Blob | null> {
 	return null;
 }
 
-// Scales big screenshots down before upload, which makes scans on slow connections much faster.
-// Anything the browser can't decode goes up unchanged and the scanner decides.
+// Scales big screenshots and photos down before upload, which makes scans on slow connections much
+// faster, and turns formats the scanner may not read, like a phone's HEIC photo, into ones it does.
+// Photos stay JPEG, which is far smaller than PNG for them. Anything the browser can't decode goes
+// up unchanged and the scanner decides.
 async function shrinkImage(image: Blob): Promise<Blob> {
 	let bitmap: ImageBitmap;
 	try {
@@ -516,11 +626,12 @@ async function shrinkImage(image: Blob): Promise<Blob> {
 
 	try {
 		const longest = Math.max(bitmap.width, bitmap.height);
-		if (longest <= MAX_UPLOAD_SIDE) {
+		const readable = ["image/png", "image/jpeg", "image/webp"].includes(image.type);
+		if (longest <= MAX_UPLOAD_SIDE && readable) {
 			return image;
 		}
 
-		const scale = MAX_UPLOAD_SIDE / longest;
+		const scale = Math.min(1, MAX_UPLOAD_SIDE / longest);
 		const canvas = createEl("canvas");
 		canvas.width = Math.max(1, Math.round(bitmap.width * scale));
 		canvas.height = Math.max(1, Math.round(bitmap.height * scale));
@@ -530,8 +641,9 @@ async function shrinkImage(image: Blob): Promise<Blob> {
 		}
 		context.imageSmoothingQuality = "high";
 		context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+		const photo = image.type === "image/jpeg" || image.type === "image/heic" || image.type === "image/heif";
 		return await new Promise<Blob>((resolve) => {
-			canvas.toBlob((blob) => resolve(blob ?? image), "image/png");
+			canvas.toBlob((blob) => resolve(blob ?? image), photo ? "image/jpeg" : "image/png", 0.9);
 		});
 	} finally {
 		bitmap.close();
@@ -619,7 +731,7 @@ function scanFailure(status: number, code: string | null): ScanFailure {
 	return status < 500 ? "auth" : "unavailable";
 }
 
-async function requestScan(address: string, apiKey: string, image: Blob): Promise<string> {
+async function requestScan(address: string, headers: Record<string, string>, image: Blob): Promise<string> {
 	const { body, contentType } = await buildMultipartBody("file", image);
 	let res;
 	try {
@@ -628,9 +740,7 @@ async function requestScan(address: string, apiKey: string, image: Blob): Promis
 				url: address + "/predict/",
 				method: "POST",
 				contentType,
-				headers: {
-					"Api-Key": apiKey,
-				},
+				headers,
 				body,
 				throw: false,
 			}),
@@ -672,17 +782,47 @@ export function scannerAddress(settings: PluginSettings): string {
 	return (settings.cloudScannerUrl || DEFAULT_SETTINGS.cloudScannerUrl).replace(/\/+$/, "");
 }
 
+// Where a scanned image came from, so the scan log can tell how people scan.
+export type ImageSource = "clipboard" | "screen" | "photo" | "note-image" | "drawing";
+
+// What kind of device asks, so the scan log can count scans from phones and tablets. Only the
+// MathLive scanner gets it, never a self-hosted one.
+export function devicePlatform(): string {
+	if (Platform.isIosApp) {
+		return Platform.isTablet ? "ipados" : "ios";
+	}
+	if (Platform.isAndroidApp) {
+		return Platform.isTablet ? "android-tablet" : "android";
+	}
+	return Platform.isMacOS ? "macos" : Platform.isWin ? "windows" : Platform.isLinux ? "linux" : "desktop";
+}
+
+// The headers of every request to the scanner: the key, and for the MathLive scanner the device
+// kind, the plugin version and where the image came from.
+export function scannerHeaders(settings: PluginSettings, source?: ImageSource): Record<string, string> {
+	const headers: Record<string, string> = { "Api-Key": settings.apiKey ?? "" };
+	if (!settings.useLocalInference) {
+		headers["X-MathLive-Platform"] = devicePlatform();
+		headers["X-MathLive-Version"] = MATHLIVE_VERSION;
+		if (source) {
+			headers["X-MathLive-Source"] = source;
+		}
+	}
+	return headers;
+}
+
 export async function scanImageToLatex(
 	settings: PluginSettings,
-	imageData: Blob
+	imageData: Blob,
+	source?: ImageSource
 ): Promise<string> {
 	const address = scannerAddress(settings);
 
 	const image = await shrinkImage(imageData);
-	const apiKey = settings.apiKey ?? "";
+	const headers = scannerHeaders(settings, source);
 	const started = Date.now();
 	try {
-		return await requestScan(address, apiKey, image);
+		return await requestScan(address, headers, image);
 	} catch (error) {
 		const quick = Date.now() - started < QUICK_FAILURE_MS;
 		if (!(error instanceof ScanError) || error.failure !== "unavailable" || !quick) {
@@ -690,7 +830,7 @@ export async function scanImageToLatex(
 		}
 		console.warn("MathLive: scan failed quickly, trying once more.", error);
 		await new Promise((resolve) => window.setTimeout(resolve, 1000));
-		return await requestScan(address, apiKey, image);
+		return await requestScan(address, headers, image);
 	}
 }
 
@@ -823,12 +963,12 @@ export function afterCloudScan(settings: PluginSettings) {
 	}
 }
 
-async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
+async function scanInto(target: ScanTarget, image: Blob, source: ImageSource): Promise<boolean> {
 	const { settings } = target;
 
 	const done = startScanProgress("Reading the formula…", target.busyEl);
 	try {
-		const latex = await scanImageToLatex(settings, image).finally(done);
+		const latex = await scanImageToLatex(settings, image, source).finally(done);
 		// The formula may have closed or re-rendered while the scan ran.
 		if (!target.isOpen()) {
 			new Notice(target.closedMessage);
@@ -847,7 +987,7 @@ async function scanInto(target: ScanTarget, image: Blob): Promise<boolean> {
 		// Once the user has connected or paid, the same image is scanned again.
 		const resume = () => {
 			if (target.isOpen()) {
-				void scanInto(target, image);
+				void scanInto(target, image, source);
 			}
 		};
 		if ((failure === "auth" || failure === "no_scans_left") && !settings.useLocalInference && scanAccount) {
@@ -900,7 +1040,7 @@ export async function appendLatexFromClipboardImage(
 		return false;
 	}
 
-	return await scanInto(mathfieldScanTarget(options), image);
+	return await scanInto(mathfieldScanTarget(options), image, "clipboard");
 }
 
 function showEmptyClipboard(scanScreenArea?: () => void) {
@@ -942,7 +1082,45 @@ export async function scanScreenAreaInto(
 		return false;
 	}
 
-	return await scanInto(target, image);
+	return await scanInto(target, image, "screen");
+}
+
+// Opens the device's image picker: on a phone or tablet it offers the camera and the photo
+// library. Resolves with the picked image, or null when the user cancels.
+function pickImage(doc: Document): Promise<File | null> {
+	return new Promise((resolve) => {
+		const input = doc.body.createEl("input", { type: "file", cls: "mathlive-image-picker", attr: { accept: "image/*" } });
+		const finish = (file: File | null) => {
+			input.remove();
+			resolve(file);
+		};
+		input.addEventListener("change", () => finish(input.files?.[0] ?? null), { once: true });
+		input.addEventListener("cancel", () => finish(null), { once: true });
+		input.click();
+	});
+}
+
+// Scans a photo the user takes or picks. The picker opens first, straight from the tap, because
+// phones only open it from one; a key is got after that if needed.
+export async function scanPhotoInto(target: ScanTarget, doc: Document): Promise<boolean> {
+	const image = await pickImage(doc);
+	if (!image || !target.isOpen()) {
+		return false;
+	}
+	return await scanImageInto(target, image, "photo");
+}
+
+// Scans an image the plugin already has, such as one embedded in a note.
+export async function scanImageInto(target: ScanTarget, image: Blob, source: ImageSource): Promise<boolean> {
+	const resume = () => {
+		if (target.isOpen()) {
+			void scanImageInto(target, image, source);
+		}
+	};
+	if (!(await ensureCanScan(target.settings, resume))) {
+		return false;
+	}
+	return await scanInto(target, image, source);
 }
 
 let screenAccessHinted = false;
@@ -953,6 +1131,7 @@ async function pickOnScreen(
 	doc: Document,
 	hideWhileSelecting?: () => () => void
 ): Promise<Blob | null> {
+	const { ScreenAccessModal, selectAnywhereOnScreen, selectScreenArea, wholeScreenAccess } = await loadScreenCapture();
 	if (settings.scanOtherApps) {
 		const access = await wholeScreenAccess();
 		if (access === "ok") {

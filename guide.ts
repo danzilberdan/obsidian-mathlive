@@ -1,6 +1,7 @@
 import { App, Modal, setIcon } from "obsidian";
 import type { CloudAccount } from "./account";
 import { AUTHOR_URL } from "./mathlive-inline";
+import { CAN_SCAN_SCREEN } from "./mathlive-shared";
 
 // What the guide's buttons do, from the plugin.
 export interface GuideActions {
@@ -66,8 +67,10 @@ export class GuideModal extends Modal {
 		section(
 			"sparkles",
 			"AI fill: scan a formula instead of typing it",
-			"Click ✨ next to any formula, or in the editor window. Scan a screenshot from your clipboard, or draw a box around a formula anywhere on your screen: a PDF, a website, a video, another app. The LaTeX lands in your formula, ready to edit.",
-			{ text: "Scan from screen", run: () => this.actions.scanFromScreen(), cta: true }
+			CAN_SCAN_SCREEN
+				? "Click ✨ next to any formula, or in the editor window. Scan a screenshot from your clipboard, or draw a box around a formula anywhere on your screen: a PDF, a website, a video, another app. The LaTeX lands in your formula, ready to edit."
+				: "Tap ✨ next to any formula, or in the editor window, and take a photo of a formula on paper, a whiteboard or a screen. To scan a photo already in a note, long-press it or run “Scan formula from an image in this note”. The LaTeX lands in your note, ready to edit.",
+			{ text: CAN_SCAN_SCREEN ? "Scan from screen" : "Scan a photo", run: () => this.actions.scanFromScreen(), cta: true }
 		);
 		section(
 			"search",
@@ -104,7 +107,7 @@ export class GuideModal extends Modal {
 		);
 
 		const plan = section("gem", "Your scans", this.actions.account.planDetail());
-		const next = this.actions.account.planAction();
+		const next = this.actions.account.planAction("plugin_guide");
 		if (next) {
 			const buttonEl = plan.createEl("button", { text: next.title, cls: "mod-cta" });
 			buttonEl.addEventListener("click", () => next.run());

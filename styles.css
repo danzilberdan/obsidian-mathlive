@@ -270,8 +270,40 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   height: 20px;
 }
 
+/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. Four of
+   those leave a phone-width formula little room, so the buttons get a row of their own under the
+   formula: MathLive's wrap onto it at the right, and ours sit after them. */
+@media (pointer: coarse) {
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field {
+    padding-right: 0;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(container) {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(content) {
+    flex: 1 0 100%;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(menu-toggle) {
+    margin-right: 128px;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-buttons {
+    top: auto;
+    bottom: 5px;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-button {
+    width: 60px;
+    height: 60px;
+  }
+}
+
 /* With a mouse, a formula's buttons, MathLive's keyboard and ☰ included, show only while it is
-   over the formula or the buttons, or while the ✨ menu is open. The buttons are part of the
+   over the formula or the buttons, or while the ✨ menu is open or a button has keyboard focus. The buttons are part of the
    formula, so moving onto them keeps them. */
 @media (hover: hover) {
   .obsidian-mathlive-codemirror-wrapper .obsidian-mathlive-widget-buttons,
@@ -285,7 +317,8 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   .obsidian-mathlive-codemirror-wrapper:hover .obsidian-mathlive-widget-buttons,
   .obsidian-mathlive-codemirror-wrapper:hover .mathlive-field::part(virtual-keyboard-toggle),
   .obsidian-mathlive-codemirror-wrapper:hover .mathlive-field::part(menu-toggle),
-  .obsidian-mathlive-widget-buttons:has([aria-expanded="true"], :focus-visible) {
+  .obsidian-mathlive-widget-buttons.mathlive-menu-open,
+  .obsidian-mathlive-widget-buttons.mathlive-keyboard-focus {
     opacity: 1;
     pointer-events: auto;
     transition-delay: 0s;
@@ -308,6 +341,20 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
     border-radius: var(--radius-s, 4px);
     background: var(--background-primary);
     box-shadow: var(--shadow-s);
+  }
+}
+
+/* Without a mouse, an inline formula's buttons show only while it is being edited or its ✨ menu
+   is open, so they don't fill every line of a note. */
+@media (hover: none) {
+  .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-buttons {
+    display: none;
+  }
+
+  .obsidian-mathlive-codemirror-wrapper.inline.mathlive-editing .obsidian-mathlive-widget-buttons,
+  .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-buttons.mathlive-menu-open,
+  .obsidian-mathlive-codemirror-wrapper.inline .obsidian-mathlive-widget-buttons.mathlive-keyboard-focus {
+    display: inline-flex;
   }
 }
 
@@ -1002,4 +1049,75 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 /* A full-line formula spans the note's width, so its ring goes inside the edge. */
 .obsidian-mathlive-codemirror-wrapper:not(.inline).is-selected .mathlive-field {
   outline-offset: -2px;
+}
+
+/* The hidden file input behind "Scan a photo". */
+.mathlive-image-picker {
+	display: none;
+}
+
+.mathlive-shorthands-input {
+	min-width: 18em;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
+}
+
+/* The plans offered when the free scans run out. */
+.mathlive-upgrade-list {
+  padding-inline-start: var(--size-4-6);
+}
+.mathlive-upgrade-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-4);
+}
+.mathlive-upgrade-plan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--size-2-2);
+  padding: var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+.mathlive-upgrade-plan.is-featured {
+  border-color: var(--interactive-accent);
+}
+.mathlive-upgrade-plan > button {
+  margin-top: auto;
+  width: 100%;
+}
+.mathlive-upgrade-period {
+  display: flex;
+  gap: var(--size-2-1);
+  padding: var(--size-2-1);
+  border-radius: var(--radius-s);
+  background-color: var(--background-modifier-hover);
+}
+.mathlive-upgrade-period button {
+  height: auto;
+  padding: var(--size-2-1) var(--size-4-2);
+  background: none;
+  box-shadow: none;
+  font-size: var(--font-ui-smaller);
+}
+.mathlive-upgrade-period button.is-active {
+  background-color: var(--background-primary);
+  box-shadow: var(--shadow-s);
+  font-weight: var(--font-semibold);
+}
+.mathlive-upgrade-plan-title {
+  font-weight: var(--font-semibold);
+}
+.mathlive-upgrade-plan-price {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-bold);
+}
+.mathlive-upgrade-plan-note {
+  font-size: var(--font-ui-smaller);
+  opacity: 0.8;
+}
+.mathlive-upgrade-modal .setting-item {
+  border-top: none;
 }

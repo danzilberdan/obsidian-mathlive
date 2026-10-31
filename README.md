@@ -35,6 +35,8 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Draw a formula.** Write it by hand on a drawing pad, or scan the QR code and draw it on your phone or tablet. You see the formula as you draw, and it goes into your note when you click Insert. Uses the MathLive cloud scanner.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Magic edit.** Pick Magic edit in ✨ AI fill, next to a formula or in the editor window, and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
+- **Quick Latex shorthands.** Type `al` and Space for `\alpha`, `sq` for a square root, or your own shorthands, in the visual editor and in typed LaTeX. Imports your Quick Latex shortcuts and works alongside Latex Suite.
+- **Works on phones and tablets.** The same editor and math keyboard run in Obsidian for iOS and Android. Scan a formula from a photo, either a new one from the camera or one from your library, or scan an image that is already in your note.
 - **Stays out of the way.** Each formula has two small buttons: ✨ AI fill (with Magic edit) and ⤢ Expand. Everything is still plain LaTeX in your Markdown files.
 
 <p align="center">
@@ -49,7 +51,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 1. In Obsidian, open **Settings → Community plugins** and turn on community plugins if you haven't yet.
 2. Click **Browse**, search for **MathLive**, then click **Install** and **Enable**.
 
-Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer on desktop.
+Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly. MathLive works in Obsidian 1.1.0 or newer, on desktop and on mobile (iPhone, iPad and Android).
 
 ## Getting started
 
@@ -68,11 +70,22 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
   </picture>
 </p>
 
+## Coming from Quick Latex or Latex Suite?
+
+MathLive keeps your typing habits and adds a visual editor and formula scanning on top.
+
+- **Quick Latex users.** If Quick Latex was ever set up in your vault, MathLive offers once to import your shorthands. You can also turn on **Quick Latex shorthands** in Settings → MathLive (al → α, sq → √, bb → \mathbb and the rest of Quick Latex's defaults), add your own in Quick Latex's `key:::LaTeX;` format, or click **Import from Quick Latex**. In a formula, type a shorthand and press Space.
+- **Latex Suite users.** Keep it. MathLive's shorthands work in its visual editor, and when Latex Suite (or Quick Latex) is on, MathLive leaves typed LaTeX between `$` signs to it, so nothing expands twice. **Shorthands in typed LaTeX** in the settings changes this.
+
 ## Scanning formulas
 
 **From the screen.** Open the PDF, slide or image next to your note, put the cursor where the formula should go, and click ✨ in the left ribbon and pick **Scan formula from screen** (or run **MathLive: Scan formula from screen**, which you can give a hotkey). Obsidian steps aside and you drag a box around the formula anywhere on your screen, in Obsidian or in another app such as your browser or slides. Its LaTeX goes into the note at the cursor: as a math block on an empty line, or as inline math in a line of text. Press `Esc` to cancel. The editor window and a formula's ✨ menu have **Scan from screen** too, which adds the scan to that formula. On macOS, scanning other apps needs Screen Recording access for Obsidian; until then scans stay inside Obsidian's window and MathLive shows you where to turn it on. To always scan inside Obsidian only, turn off **Scan other apps** in the settings.
 
 **From the clipboard.** Copy a screenshot of a formula, for example from another app or handwritten notes, then choose **Scan clipboard image** from ✨ AI fill in the editor window or next to a formula.
+
+**From a photo.** On a phone or tablet, tap ✨ next to a formula, or in the editor window, and pick **Scan a photo**. Your device's image picker opens, where you can take a picture of a textbook or whiteboard or choose one from your photos. To put the formula in the note at the cursor, pick **Scan a photo** from ✨ in the ribbon, or run **MathLive: Scan formula from a photo**. On a computer, the same command scans an image file.
+
+**From an image in your note.** Run **MathLive: Scan formula from an image in this note**, or right-click (on a phone, long-press) the line with the image and pick **Scan this image with MathLive**. The formula goes under the image as a math block. An image file's menu in the file list has **Scan formula with MathLive** too.
 
 Check the result and fix anything the scanner got wrong.
 
@@ -117,6 +130,8 @@ The self-hosted scanner uses `http://localhost:8502` unless you set another addr
 | Update inline widgets immediately | Write changes into the note as you type, or when the formula loses focus |
 | Arrow key navigation between editor and widgets | Move the cursor into and out of formulas with the arrow keys |
 | Edit only the formula at the cursor | Keep formulas drawn like the rest of the note, and show the editor only for the formula with the cursor in it |
+| Quick Latex shorthands, Your shorthands | Turn short letter codes into LaTeX when you press Space in a formula; import them from Quick Latex |
+| Shorthands in typed LaTeX | Also expand shorthands in LaTeX typed between `$` signs (Automatic: only when Quick Latex and Latex Suite are off) |
 
 ## Disclosures
 
@@ -134,8 +149,10 @@ Obsidian asks plugins to state the following up front.
   - `https://mathlive.danz.blog/ocr/formulas/write` receives your search text, with your key, when you choose **Write it with AI**, and returns the formula. Claude by Anthropic writes it.
   - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, scans left, and pages left before converting a PDF.
   - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
+  - Requests to MathLive's scanner also say what kind of device sent them (such as iPhone, Android or macOS), the plugin's version, and where a scanned image came from (clipboard, screen, photo, an image in the note, or a drawing), so we can tell which devices and features need work. These are logged with the scan, never with what was scanned.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.
 - **Clipboard.** The plugin reads your clipboard only when you click a scan button, to get the image you copied.
+- **Camera and photos.** **Scan a photo** opens your device's own image picker, which offers the camera on phones; the plugin never opens the camera itself. Only the photo you pick is sent to the scanner. **Scan formula from an image in this note** reads only the image you choose.
 - **Microphone.** The plugin uses the microphone only while you record a Magic edit, from clicking the mic until you click it again (at most a minute). A recording that stays silent is not sent. The server turns the recording into text, then forgets it.
 - **Screen.** Scanning from the screen takes a picture only when you start it: of the Obsidian window, or of the whole screen when you scan from another app. Only the box you draw is sent to the scanner; the rest of the picture never leaves your computer.
 - **Data.** The scan server turns the image (or drawing) into LaTeX (or a PDF page into Markdown) and does not keep the image; Magic edit's formula, instruction and recording aren't kept either. Your account stores your email, your keys (with each connected device's name), your scan count and when a key was last used. A trial stores only a key and a one-way fingerprint of your IP address, to limit trials per network. Server logs record requests and errors to keep the service running.

@@ -19,6 +19,13 @@ export interface PluginSettings {
 	editOnlyAtCursor: boolean;
 	// Scans from the screen can box anything on it, other apps included, not just Obsidian.
 	scanOtherApps: boolean;
+	// Quick Latex style shorthands: its default set, the user's own list in its format, and whether
+	// they also work in typed LaTeX ("auto": only when Quick Latex and Latex Suite are off).
+	shorthandPreset: boolean;
+	shorthands: string;
+	shorthandsInSource: "auto" | "on" | "off";
+	// The offer to import Quick Latex's shorthands shows once.
+	quickLatexImportOffered: boolean;
 	// The welcome window shows once, on a fresh install.
 	welcomeShown: boolean;
 	// Not in the settings tab: where the cloud scanner and website are, so tests can point the
@@ -41,6 +48,10 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	arrowKeyNavigation: true,
 	editOnlyAtCursor: false,
 	scanOtherApps: true,
+	shorthandPreset: false,
+	shorthands: "",
+	shorthandsInSource: "auto",
+	quickLatexImportOffered: false,
 	welcomeShown: false,
 	cloudScannerUrl: `${MATHLIVE_ORIGIN}/ocr`,
 	websiteUrl: MATHLIVE_ORIGIN,

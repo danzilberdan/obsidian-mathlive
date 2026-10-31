@@ -23,6 +23,8 @@ import {
 	mathfieldScanTarget,
 	type ScanTarget,
 	scanScreenAreaInto,
+	scanPhotoInto,
+	CAN_SCAN_SCREEN,
 	createMathfield,
 	moveVirtualKeyboard,
 	showMenuBelow,
@@ -218,11 +220,15 @@ class MathLiveWidget extends WidgetType {
 				refocusMathfield();
 			},
 		});
+		// A box on the screen on desktop, a photo on phones and tablets.
 		const scanScreenArea = () => {
 			void scanScreenAreaInto(this.hooks.app, mathfieldScanTarget(scanOptions()), mfe.doc);
 		};
+		const scanPhoto = () => {
+			void scanPhotoInto(mathfieldScanTarget(scanOptions()), mfe.doc);
+		};
 		const scanClipboardImage = () => {
-			void appendLatexFromClipboardImage(scanOptions(), scanScreenArea);
+			void appendLatexFromClipboardImage(scanOptions(), CAN_SCAN_SCREEN ? scanScreenArea : undefined);
 		};
 		const drawFormula = () => this.hooks.drawFormula(mathfieldScanTarget(scanOptions()));
 		const findFormula = () => {
@@ -254,6 +260,12 @@ class MathLiveWidget extends WidgetType {
 		// Formula buttons: AI fill, conversion between inline and display math, and Expand. On full-line formulas they sit inside the
 		// input, beside MathLive's keyboard and ☰ buttons.
 		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
+		// Tabbing onto a button shows the buttons. Done here rather than with CSS :has(), which the
+		// community scorecard flags as slow.
+		buttons.addEventListener("focusin", (event) => {
+			buttons.toggleClass("mathlive-keyboard-focus", (event.target as HTMLElement).matches(":focus-visible"));
+		});
+		buttons.addEventListener("focusout", () => buttons.removeClass("mathlive-keyboard-focus"));
 		const addButton = (cls: string, icon: string, label: string, attr: Record<string, string> = {}) => {
 			const button = buttons.createEl("button", {
 				cls: `obsidian-mathlive-widget-button ${cls} clickable-icon`,
@@ -270,7 +282,7 @@ class MathLiveWidget extends WidgetType {
 		aiButton.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			this.showMenu(aiButton, magicEdit, scanClipboardImage, scanScreenArea, drawFormula, findFormula);
+			this.showMenu(aiButton, magicEdit, scanClipboardImage, CAN_SCAN_SCREEN ? scanScreenArea : scanPhoto, drawFormula, findFormula);
 		});
 		const convertButton = addButton(
 			"obsidian-mathlive-widget-convert-button",
@@ -351,6 +363,18 @@ class MathLiveWidget extends WidgetType {
 			mfe.blur();
 			event.preventDefault();
 			event.stopPropagation();
+		});
+
+		// On touch screens, where nothing hovers, an inline formula shows its buttons only while it
+		// is being edited (styles.css), so a note full of formulas isn't full of buttons. A tap on a
+		// button keeps the formula focused; the ✨ menu keeps them while it is open.
+		mfe.addEventListener("focus", () => wrapper.addClass("mathlive-editing"));
+		mfe.addEventListener("blur", () => {
+			window.setTimeout(() => {
+				if (mfe.doc.activeElement !== mfe) {
+					wrapper.removeClass("mathlive-editing");
+				}
+			}, 300);
 		});
 
 		mfe.addEventListener("focus", () => {
@@ -443,7 +467,7 @@ class MathLiveWidget extends WidgetType {
 		button: HTMLElement,
 		magicEdit: () => void,
 		scanClipboardImage: () => void,
-		scanScreenArea: () => void,
+		scanScreenOrPhoto: () => void,
 		drawFormula: () => void,
 		findFormula: () => void
 	) {
@@ -455,7 +479,9 @@ class MathLiveWidget extends WidgetType {
 			item.setTitle("Scan clipboard image").setIcon("image-plus").onClick(scanClipboardImage)
 		);
 		menu.addItem((item) =>
-			item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenArea)
+			CAN_SCAN_SCREEN
+				? item.setTitle("Scan from screen").setIcon("scan").onClick(scanScreenOrPhoto)
+				: item.setTitle("Scan a photo").setIcon("camera").onClick(scanScreenOrPhoto)
 		);
 		menu.addItem((item) => item.setTitle("Draw formula").setIcon("pencil-line").onClick(drawFormula));
 		menu.addSeparator();
