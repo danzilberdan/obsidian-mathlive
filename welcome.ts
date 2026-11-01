@@ -8,7 +8,8 @@ export class WelcomeModal extends Modal {
 		app: App,
 		private readonly account: CloudAccount,
 		private readonly tryEditor: () => void,
-		private readonly openGuide: () => void
+		private readonly openGuide: () => void,
+		private readonly openHelp: () => void
 	) {
 		super(app);
 	}
@@ -39,6 +40,15 @@ export class WelcomeModal extends Modal {
 			"Expand for more room.",
 			"The ⤢ button next to a formula opens a bigger editor with the math keyboard."
 		);
+		const help = list.createEl("li");
+		help.createEl("strong", { text: "New to LaTeX?" });
+		help.appendText(" The help button next to every formula shows how to type fractions, powers and Greek letters. ");
+		const link = help.createEl("a", { text: "Open help", href: "#" });
+		link.addEventListener("click", (event) => {
+			event.preventDefault();
+			this.close();
+			this.openHelp();
+		});
 		item(
 			"Turn PDFs into notes.",
 			"Open a PDF and click “Convert to notes” at its top right to turn its pages into Markdown with editable LaTeX."

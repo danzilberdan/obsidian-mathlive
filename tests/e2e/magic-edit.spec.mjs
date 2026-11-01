@@ -91,6 +91,9 @@ test.describe("Magic edit", () => {
 		await popover(page).locator("input").press("Enter");
 		await expect(status(page)).toContainText("I didn't hear anything");
 		expect(editRequests(scanner)).toHaveLength(0);
+		// Left open, the box would cover the next test's formula buttons.
+		await page.keyboard.press("Escape");
+		await expect(popover(page)).toHaveCount(0);
 	});
 
 	test("is in the ✨ menu of a full-line formula too", async ({ page }) => {
