@@ -15,7 +15,8 @@ export const test = base.extend({
 	obsidian: [
 		async ({}, use) => {
 			const obsidian = await launchObsidian();
-			const defaults = await obsidian.page.evaluate(() => ({ ...window.app.plugins.plugins.mathlive.settings }));
+			// The one-time help tip would cover other tests' notices; help.spec.mjs turns it back on.
+			const defaults = await obsidian.page.evaluate(() => ({ ...window.app.plugins.plugins.mathlive.settings, helpTipShown: true }));
 			await use({ ...obsidian, defaults });
 			await obsidian.close();
 		},

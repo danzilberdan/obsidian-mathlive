@@ -1,5 +1,10 @@
 import {
+	clickWidgetButton,
 	expect,
+	focusField,
+	inlineField,
+	notices,
+	setSettings,
 	inlineWidget,
 	menuItem,
 	openWidgetMenu,
@@ -79,5 +84,27 @@ test.describe("help", () => {
 		await page.keyboard.press("Escape");
 		await expect(help(page)).toHaveCount(0);
 		await expect(page.locator(".mathlive-modal-root")).toBeVisible();
+	});
+
+	test("every formula has a ? button that opens the help", async ({ page }) => {
+		await clickWidgetButton(inlineWidget(page), "Help: how to…");
+		await expect(help(page)).toBeVisible();
+		await expect(help(page).locator(".mathlive-help-heading")).toHaveText("Getting started");
+	});
+
+	test("the first formula someone edits shows a tip about help, once", async ({ page }) => {
+		await setSettings(page, { helpTipShown: false });
+		await focusField(inlineField(page, 0));
+		const tip = notices(page).filter({ hasText: "New to math typing?" });
+		await expect(tip).toBeVisible();
+		await expect(tip).toContainText("Type / for a fraction");
+		await tip.getByText("Open help").click();
+		await expect(help(page)).toBeVisible();
+		expect(await page.evaluate(() => window.app.plugins.plugins.mathlive.settings.helpTipShown)).toBe(true);
+		await page.keyboard.press("Escape");
+
+		await focusField(inlineField(page, 1));
+		await page.waitForTimeout(500);
+		await expect(notices(page).filter({ hasText: "New to math typing?" })).toHaveCount(0);
 	});
 });

@@ -123,7 +123,8 @@
   display: flex;
 }
 
-/* Two buttons after each formula: ✨ AI fill (with Magic edit and the other actions) and Expand. */
+/* Three buttons after each formula: ✨ AI fill (with Magic edit and the other actions), Expand and
+   ? Help. */
 .obsidian-mathlive-codemirror-wrapper .obsidian-mathlive-widget-button {
   flex: none;
   align-self: center;
@@ -243,7 +244,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
 /* Full-line formulas: inside the input, right of MathLive's keyboard and ☰ buttons and the same
    size, so they read as one row of controls. */
 .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field {
-  padding-right: 72px;
+  padding-right: 110px;
 }
 
 /* MathLive keeps its buttons 5px from the top, also on formulas several lines tall. */
@@ -288,7 +289,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   }
 
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(menu-toggle) {
-    margin-right: 128px;
+    margin-right: 192px;
   }
 
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-buttons {
@@ -1261,9 +1262,50 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
   border-top: 1px solid var(--background-modifier-border);
 }
 
-/* The ? in the editor window's title. */
-.mathlive-modal-title {
+/* Help beside the editor window's title. */
+.mathlive-modal-root .modal-header {
   display: flex;
   align-items: center;
   gap: var(--size-4-2);
+}
+
+.mathlive-modal-root .modal-header .modal-title {
+  flex: 1;
+  text-align: start;
+}
+
+/* Clear of the window's close button. */
+.mathlive-modal-root .modal-header .mathlive-modal-help {
+  margin-right: var(--size-4-6);
+}
+
+.mathlive-modal-help {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  width: auto;
+  padding: var(--size-2-1) var(--size-4-2);
+  border-radius: var(--radius-s, 4px);
+  color: var(--text-accent);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-normal);
+}
+
+.mathlive-modal-help-icon {
+  display: flex;
+}
+
+.mathlive-modal-help-icon svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* The one-time tip about help, the first time someone edits a formula. */
+.mathlive-help-tip-title {
+  font-weight: var(--font-semibold);
+}
+
+.mathlive-help-tip-link {
+  display: inline-block;
+  margin-top: var(--size-2-2);
 }

@@ -149,16 +149,16 @@ test("on a touch screen a full-line formula keeps its width, with the buttons in
 				].map(box),
 			};
 		});
-		// The formula has the whole width, not what four 60px buttons beside it would leave.
+		// The formula has the whole width, not what five 60px buttons beside it would leave.
 		expect(layout.content.width).toBeGreaterThan(layout.field.width - 10);
 		const { buttons } = layout;
-		expect(buttons).toHaveLength(4);
+		expect(buttons).toHaveLength(5);
 		for (const b of buttons) {
 			expect(b).toMatchObject({ top: buttons[0].top, width: 60, height: 60 });
 			expect(b.top).toBeGreaterThanOrEqual(layout.content.bottom);
 		}
 		const gaps = buttons.slice(1).map((b, i) => b.left - (buttons[i].left + buttons[i].width));
-		expect(gaps).toEqual([4, 4, 4]);
+		expect(gaps).toEqual([4, 4, 4, 4]);
 	} finally {
 		await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: false });
 		await cdp.detach();

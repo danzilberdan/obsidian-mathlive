@@ -294,6 +294,7 @@ export default class MathLivePlugin extends Plugin {
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
 				openHelp: () => this.openHelp(),
+				formulaFocused: () => this.showHelpTip(),
 				showsRawLatex: () => this.showRawLatex,
 				drawFormula: (target) => void openDrawWindow(this.app, { settings: this.settings, target, fallback: () => this.noteScanTarget() }),
 				findFormula: (insert) => this.openFormulaSearch(insert),
@@ -320,7 +321,13 @@ export default class MathLivePlugin extends Plugin {
 			if (!this.settings.welcomeShown) {
 				this.settings.welcomeShown = true;
 				void this.saveSettings();
-				new WelcomeModal(this.app, this.account, () => this.openEditorFromWelcome(), () => this.openGuide()).open();
+				new WelcomeModal(
+					this.app,
+					this.account,
+					() => this.openEditorFromWelcome(),
+					() => this.openGuide(),
+					() => this.openHelp()
+				).open();
 			}
 			void this.offerQuickLatexImport();
 		});
@@ -438,6 +445,27 @@ export default class MathLivePlugin extends Plugin {
 			},
 			query
 		).open();
+	}
+
+	// Once, the first time someone edits a formula: the basics, and where to find the rest.
+	showHelpTip() {
+		if (this.settings.helpTipShown) {
+			return;
+		}
+		this.settings.helpTipShown = true;
+		void this.saveSettings();
+		const tip = createFragment((fragment) => {
+			const el = fragment.createDiv({ cls: "mathlive-help-tip" });
+			el.createDiv({ cls: "mathlive-help-tip-title", text: "New to math typing?" });
+			el.createDiv({ text: "Type / for a fraction, ^ for a power, _ for an index, and a name like alpha for α." });
+			el.createDiv({ text: "The help button next to every formula has the rest." });
+			const link = el.createEl("a", { cls: "mathlive-help-tip-link", text: "Open help", href: "#" });
+			link.addEventListener("click", (event) => {
+				event.preventDefault();
+				this.openHelp();
+			});
+		});
+		new Notice(tip, 15000);
 	}
 
 	openSettings() {
@@ -1273,11 +1301,13 @@ class MathLiveModal extends Modal {
 		this.setTitle(this.inline ? "Edit inline math" : "Edit math block");
 		this.titleEl.addClass("mathlive-modal-title");
 		// A div, not a button: a button here takes Obsidian's first focus away from the formula.
-		const help = this.titleEl.createDiv({
+		// Beside the title rather than in it, so the title stays just the title.
+		const help = (this.titleEl.parentElement ?? this.titleEl).createDiv({
 			cls: "clickable-icon mathlive-modal-help",
 			attr: { "aria-label": "Help: how to…", role: "button", tabindex: "0" },
 		});
-		setIcon(help, "circle-help");
+		setIcon(help.createSpan({ cls: "mathlive-modal-help-icon" }), "circle-help");
+		help.createSpan({ text: "Help" });
 		help.addEventListener("click", () => this.plugin.openHelp());
 		help.addEventListener("keydown", (event) => {
 			if (event.key === "Enter" || event.key === " ") {

@@ -28,6 +28,8 @@ export interface PluginSettings {
 	quickLatexImportOffered: boolean;
 	// The welcome window shows once, on a fresh install.
 	welcomeShown: boolean;
+	// The tip pointing at help shows once, the first time someone edits a formula.
+	helpTipShown: boolean;
 	// Not in the settings tab: where the cloud scanner and website are, so tests can point the
 	// plugin at stand-ins.
 	cloudScannerUrl: string;
@@ -53,6 +55,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	shorthandsInSource: "auto",
 	quickLatexImportOffered: false,
 	welcomeShown: false,
+	helpTipShown: false,
 	cloudScannerUrl: `${MATHLIVE_ORIGIN}/ocr`,
 	websiteUrl: MATHLIVE_ORIGIN,
 };
