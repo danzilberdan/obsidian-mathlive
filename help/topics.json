@@ -1,0 +1,365 @@
+{
+	"about": "Hand-written help topics: how MathLive works inside Obsidian, and the questions people starting with LaTeX ask most. Each one answers in a sentence and links to the exact section of the MathLive docs, or runs the plugin feature it is about. 'basic' topics are the getting-started list shown before anything is typed. scripts/build-help-index.mjs makes the rest of the index from the docs themselves.",
+	"entries": [
+		{
+			"id": "start-formula",
+			"basic": true,
+			"title": "Start a formula",
+			"answer": "Type $…$ for a formula inside a sentence, or $$…$$ on its own line, and click it to edit. Or run “Add inline math” or “Add full-line math” from the command palette.",
+			"keywords": "new add create insert write math equation formula inline block display dollar sign start begin how use",
+			"action": "add-inline",
+			"actionText": "Add a formula"
+		},
+		{
+			"id": "fraction",
+			"basic": true,
+			"title": "Write a fraction",
+			"answer": "Type / and the part before it becomes the numerator. Type the denominator, then → to leave it.",
+			"latex": "\\frac{a}{b}",
+			"keys": [
+				"/"
+			],
+			"keywords": "fraction divide division over numerator denominator ratio slash frac half",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"id": "power",
+			"basic": true,
+			"title": "Write a power or superscript",
+			"answer": "Type ^ then the exponent, like x^2. Press → or Space to come back down.",
+			"latex": "x^{2}",
+			"keys": [
+				"^"
+			],
+			"keywords": "power exponent superscript squared cubed raise to the power upper index ^ e to the x exponential e^x",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"id": "subscript",
+			"basic": true,
+			"title": "Write a subscript or index",
+			"answer": "Type _ then the index, like x_1. Press → or Space to come back up.",
+			"latex": "x_{1}",
+			"keys": [
+				"_"
+			],
+			"keywords": "subscript index lower underscore indices x sub n",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"id": "sqrt",
+			"basic": true,
+			"title": "Write a square root",
+			"answer": "Type sqrt, or press Alt+V (⌥V on a Mac). For an nth root press Alt+Shift+V.",
+			"latex": "\\sqrt{x}",
+			"keys": [
+				"sqrt",
+				"Alt+V"
+			],
+			"keywords": "square root radical sqrt root cube nth",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"id": "greek",
+			"basic": true,
+			"title": "Type Greek letters",
+			"answer": "Type the letter's name: alpha, beta, theta, pi, Sigma. Capitalize it for the capital letter.",
+			"latex": "\\alpha\\ \\beta\\ \\theta\\ \\pi\\ \\Sigma",
+			"keywords": "greek letter alpha beta gamma delta theta lambda mu pi sigma omega symbol",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"id": "move",
+			"basic": true,
+			"title": "Move around a formula",
+			"answer": "Use the arrow keys to move in and out of fractions, powers and roots. Tab jumps to the next empty box, and Space leaves the part you are in.",
+			"keys": [
+				"←",
+				"→",
+				"Tab",
+				"Space"
+			],
+			"keywords": "move navigate cursor arrow keys tab next placeholder empty box get out exit leave escape go back jump",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"id": "symbols",
+			"basic": true,
+			"title": "Type symbols with shortcuts",
+			"answer": "Many symbols come from what you would write in plain text: >= gives ≥, != gives ≠, -> gives →, oo gives ∞, xx gives ×, +- gives ±. Ctrl+Z undoes one you didn't want.",
+			"latex": "\\ge\\ \\ne\\ \\to\\ \\infty\\ \\times\\ \\pm",
+			"keywords": "inline shortcuts symbols ascii type special characters operators arrows not equal less greater infinity times plus minus",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#inline-shortcuts"
+		},
+		{
+			"id": "latex-mode",
+			"basic": true,
+			"title": "Type LaTeX commands directly",
+			"answer": "Type \\ and a command name, like \\vec or \\mathbb, then Enter. MathLive suggests commands as you type. Your note always keeps plain LaTeX.",
+			"keys": [
+				"\\"
+			],
+			"keywords": "latex mode command backslash raw code tex suggestions type latex directly enter latex",
+			"url": "https://mathlive.io/mathfield/reference/commands/"
+		},
+		{
+			"id": "math-keyboard",
+			"basic": true,
+			"title": "Use the math keyboard",
+			"answer": "Click the keyboard icon on a full-line formula or in the editor window. Switch layouts for numbers, symbols, letters and Greek, press Shift for more, and long-press a key for related symbols.",
+			"keywords": "virtual keyboard on screen math keyboard buttons tablet phone touch layouts greek symbols numbers",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/"
+		},
+		{
+			"id": "menu",
+			"basic": true,
+			"title": "Find a command in the ☰ menu",
+			"answer": "Click ☰ on a formula, or right-click inside it, for matrices, colors, text, font styles and more. Alt+Space opens it from the keyboard.",
+			"keys": [
+				"Alt+Space"
+			],
+			"keywords": "menu context menu right click hamburger options insert matrix color style variant",
+			"url": "https://mathlive.io/mathfield/matrix/#using-the-context-menu"
+		},
+		{
+			"id": "matrix",
+			"title": "Make a matrix",
+			"answer": "Pick Insert Matrix in the ☰ menu (or right-click in the formula) and choose its size. From the keyboard: type ( or [, the first entry, then Alt+Tab for a new column and Alt+Enter for a new row (⌥Tab and ⌥Return on a Mac).",
+			"latex": "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}",
+			"keys": [
+				"Alt+Tab",
+				"Alt+Enter"
+			],
+			"keywords": "matrix matrices table array grid rows columns vector determinant pmatrix bmatrix",
+			"url": "https://mathlive.io/mathfield/matrix/#creating-a-matrix"
+		},
+		{
+			"id": "matrix-shape",
+			"title": "Add or remove matrix rows and columns",
+			"answer": "Right-click a cell of the matrix and choose to add or remove a row or column next to it.",
+			"keywords": "add row column remove delete resize shape",
+			"url": "https://mathlive.io/mathfield/matrix/#changing-the-shape-of-a-matrix"
+		},
+		{
+			"id": "multiline",
+			"title": "Write several lines or align equations",
+			"answer": "In a full-line formula, press Enter for a new line. MathLive keeps the lines in one aligned block.",
+			"keys": [
+				"Enter"
+			],
+			"keywords": "new line multiple lines align equations system break line several rows aligned gather",
+			"url": "https://mathlive.io/mathfield/reference/commands/#other-environments"
+		},
+		{
+			"id": "cases",
+			"title": "Write a piecewise function",
+			"answer": "Use the cases environment: type \\begin{cases} in LaTeX mode, or start with { and add rows with Alt+Enter.",
+			"latex": "f(x)=\\begin{cases} x & x\\ge 0 \\\\ -x & x<0 \\end{cases}",
+			"keywords": "piecewise cases brace conditions function defined by parts if otherwise",
+			"url": "https://mathlive.io/mathfield/reference/commands/#other-environments"
+		},
+		{
+			"id": "text",
+			"title": "Write words inside a formula",
+			"answer": "Type \" (Shift+') to switch to text, and again to switch back. Spaces work as normal in text.",
+			"keys": [
+				"\"",
+				"Shift+Alt+T"
+			],
+			"keywords": "text words space spaces sentence plain text mode label units \\text write words",
+			"url": "https://mathlive.io/mathfield/reference/commands/#text-zone"
+		},
+		{
+			"id": "integral",
+			"title": "Write an integral, sum or limit",
+			"answer": "Type int, sum or lim. Fill in the bounds with the boxes, and Tab moves to the next one.",
+			"latex": "\\int_{0}^{1} f(x)\\,dx",
+			"keywords": "integral sum summation sigma limit lim product bounds calculus integrate series",
+			"url": "https://mathlive.io/mathfield/reference/commands/#large-operators"
+		},
+		{
+			"id": "derivative",
+			"title": "Write a derivative",
+			"answer": "Write d/dx as a fraction: d, /, then dx. Type del for ∂ in partial derivatives, and dx after an integral comes out upright on its own.",
+			"latex": "\\frac{\\mathrm{d}y}{\\mathrm{d}x}\\ \\frac{\\partial f}{\\partial x}",
+			"keywords": "derivative differentiate partial d/dx dy dx prime calculus del nabla gradient",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"id": "vector",
+			"title": "Write a vector arrow or hat",
+			"answer": "Type \\vec, \\hat, \\bar or \\overline in LaTeX mode, then the letter.",
+			"latex": "\\vec{v}\\ \\hat{x}\\ \\bar{x}",
+			"keywords": "vector arrow hat bar overline accent dot tilde above letter mean average unit vector",
+			"url": "https://mathlive.io/mathfield/reference/commands/#accents"
+		},
+		{
+			"id": "sets",
+			"title": "Write ℝ, ℕ and other number sets",
+			"answer": "Type RR for ℝ, NN for ℕ, ZZ for ℤ, QQ for ℚ and CC for ℂ. Type in for ∈.",
+			"latex": "\\R\\ \\N\\ \\Z\\ \\Q\\ \\C",
+			"keywords": "real numbers natural integers rational complex blackboard bold set element of in mathbb",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"id": "brackets",
+			"title": "Write brackets that grow",
+			"answer": "Type ( [ { or | and the closing one appears and grows with what is inside.",
+			"latex": "\\left(\\frac{a}{b}\\right)",
+			"keywords": "brackets parentheses braces absolute value delimiters big left right grow fence abs",
+			"url": "https://mathlive.io/mathfield/reference/commands/#delimiters"
+		},
+		{
+			"id": "color",
+			"title": "Color part of a formula",
+			"answer": "Select it, then pick a color in the ☰ menu. In LaTeX it is \\textcolor{red}{…}.",
+			"keywords": "color colour highlight red blue background textcolor",
+			"url": "https://mathlive.io/mathfield/reference/commands/#colors"
+		},
+		{
+			"id": "bold",
+			"title": "Make letters bold, upright or script",
+			"answer": "Select them and pick a style in the ☰ menu, or use \\mathbf, \\mathrm, \\mathcal in LaTeX mode.",
+			"latex": "\\mathbf{v}\\ \\mathrm{d}\\ \\mathcal{L}",
+			"keywords": "bold upright roman italic font style calligraphic script fraktur mathbf mathrm mathcal",
+			"url": "https://mathlive.io/mathfield/reference/commands/#font-styling"
+		},
+		{
+			"id": "chemistry",
+			"title": "Write chemistry formulas",
+			"answer": "Use \\ce in LaTeX mode: \\ce{H2O} or \\ce{2H2 + O2 -> 2H2O}.",
+			"latex": "\\ce{2H2 + O2 -> 2H2O}",
+			"keywords": "chemistry chemical equation reaction molecule mhchem ce h2o",
+			"url": "https://mathlive.io/mathfield/reference/commands/#chemistry-mhchem-package"
+		},
+		{
+			"id": "undo",
+			"title": "Undo a change",
+			"answer": "Ctrl+Z (⌘Z on a Mac) undoes the last change in the formula, Ctrl+Y redoes it. Ctrl+Z also turns a shortcut back into the letters you typed.",
+			"keys": [
+				"Ctrl+Z",
+				"Ctrl+Y"
+			],
+			"keywords": "undo redo mistake revert go back ctrl z wrong symbol",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"id": "select",
+			"title": "Select part of a formula",
+			"answer": "Hold Shift and use the arrow keys, or drag with the mouse. Ctrl+A selects the whole formula.",
+			"keys": [
+				"Shift+←",
+				"Shift+→",
+				"Ctrl+A"
+			],
+			"keywords": "select selection highlight mark part copy shift arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"id": "leave",
+			"title": "Leave the formula",
+			"answer": "Click outside it, or press → at its end (← at its start) to go back to your text.",
+			"keywords": "leave exit get out of formula back to text done finish stop editing escape",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"id": "raw-latex",
+			"title": "See the LaTeX behind a formula",
+			"answer": "Run “Show raw LaTeX in notes, or editors again” from the command palette or the ⋮ menu of a note. Run it again to get the editors back.",
+			"keywords": "raw latex source code see latex show latex source mode edit latex text plain",
+			"action": "raw-latex",
+			"actionText": "Show raw LaTeX"
+		},
+		{
+			"id": "editor-window",
+			"title": "Edit a long formula in a bigger window",
+			"answer": "Click ⤢ next to the formula. The editor window has the math keyboard and the ✨ tools, and Ctrl+Enter puts the formula back.",
+			"keys": [
+				"Ctrl+Enter"
+			],
+			"keywords": "bigger window expand modal editor window long formula full screen popup larger"
+		},
+		{
+			"id": "find-formula",
+			"title": "Find a well-known formula",
+			"answer": "Search thousands of formulas by name, by what they do, in your language, or by a bit of LaTeX, and put one in your note. Free.",
+			"keywords": "find formula library search known formula equation law theorem physics chemistry statistics quadratic pythagoras look up",
+			"action": "find-formula",
+			"actionText": "Find a formula"
+		},
+		{
+			"id": "scan",
+			"title": "Scan a formula instead of typing it",
+			"answer": "Click ✨ next to a formula and scan a screenshot, an area of your screen, or a photo. The LaTeX lands in your formula, ready to edit.",
+			"keywords": "scan image screenshot photo picture ocr convert picture to latex copy formula from pdf website video handwriting camera",
+			"action": "scan",
+			"actionText": "Scan a formula"
+		},
+		{
+			"id": "draw",
+			"title": "Draw a formula by hand",
+			"answer": "Write it with your mouse or pen, or scan the QR code and draw it on your phone. You see the formula as you draw.",
+			"keywords": "draw handwriting handwrite pen stylus tablet mouse sketch write by hand phone qr",
+			"action": "draw",
+			"actionText": "Draw a formula"
+		},
+		{
+			"id": "magic-edit",
+			"title": "Change a formula by describing it",
+			"answer": "Pick Magic edit in the ✨ menu next to a formula and type or say what to change, like “square the denominator”. Undo puts it back.",
+			"keywords": "magic edit ai change rewrite describe voice speak modify transform simplify"
+		},
+		{
+			"id": "pdf",
+			"title": "Turn a PDF into notes",
+			"answer": "Open a PDF and click “Convert to notes” at its top right. Every formula becomes editable LaTeX in a Markdown note.",
+			"keywords": "pdf convert notes lecture slides paper document import markdown",
+			"action": "pdf",
+			"actionText": "Convert a PDF"
+		},
+		{
+			"id": "shorthands",
+			"title": "Use Quick Latex style shorthands",
+			"answer": "Turn on Quick Latex shorthands in Settings → MathLive: type al and Space for α, sq and Space for a root. You can add your own or import Quick Latex's.",
+			"keywords": "shorthands quick latex snippets abbreviations custom shortcuts own shortcuts al space latex suite import",
+			"action": "settings",
+			"actionText": "Open settings"
+		},
+		{
+			"id": "turn-off",
+			"title": "Show formulas the normal Obsidian way",
+			"answer": "In Settings → MathLive turn on “Edit only the formula at the cursor”, or turn off the inline or block widgets.",
+			"keywords": "turn off disable widgets normal rendering obsidian mathjax only at cursor stop editor preview",
+			"action": "settings",
+			"actionText": "Open settings"
+		},
+		{
+			"id": "hotkey",
+			"title": "Add a formula with a hotkey",
+			"answer": "Open Settings → Hotkeys, search MathLive, and give “Add inline math” or “Add full-line math” a key.",
+			"keywords": "hotkey shortcut keyboard shortcut bind key command palette add formula quickly"
+		},
+		{
+			"id": "all-shortcuts",
+			"title": "See every keyboard shortcut",
+			"answer": "The MathLive docs list every key combination and every typed shortcut.",
+			"keywords": "all keyboard shortcuts keybindings list reference cheat sheet keys",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/"
+		},
+		{
+			"id": "all-commands",
+			"title": "See every LaTeX command MathLive knows",
+			"answer": "MathLive supports over 800 LaTeX commands, listed by topic with what each looks like.",
+			"keywords": "all latex commands list reference symbols supported cheat sheet",
+			"url": "https://mathlive.io/mathfield/reference/commands/"
+		},
+		{
+			"id": "features",
+			"title": "Everything MathLive can do in Obsidian",
+			"answer": "Scanning, drawing, the formula library, Magic edit and PDF to notes, each with a button to try it.",
+			"keywords": "features guide what can it do overview tour help plugin",
+			"action": "guide",
+			"actionText": "Open the guide"
+		}
+	]
+}

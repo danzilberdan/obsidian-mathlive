@@ -61,6 +61,7 @@ export interface WidgetHooks {
 	accountAction: () => { title: string; run: () => void } | undefined;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 	openGuide: () => void;
+	openHelp: () => void;
 	// True while the note shows formulas as LaTeX instead of editors.
 	showsRawLatex: () => boolean;
 	// Opens Draw formula for this target.
@@ -451,6 +452,7 @@ class MathLiveWidget extends WidgetType {
 		menu.addItem((item) =>
 			item.setTitle("What MathLive can do").setIcon("compass").onClick(() => this.hooks.openGuide())
 		);
+		menu.addItem((item) => item.setTitle("Help: how to…").setIcon("circle-help").onClick(() => this.hooks.openHelp()));
 		if (accountItem) {
 			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("log-in").onClick(accountItem.run));
 		}

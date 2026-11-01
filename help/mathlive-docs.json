@@ -1,0 +1,5721 @@
+{
+	"site": "https://mathlive.io",
+	"entries": [
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/keybindings/keybindings",
+			"kind": "section",
+			"title": "Keybindings",
+			"text": "Commands to edit and modify a formula can be invoked by pressing some key combinations. The keybindings below are applicable to a US QWERTY keyboard. Some of the keybindings may not be available with other keyboard layouts.",
+			"keywords": "Keyboard Shortcuts",
+			"page": "Keyboard Shortcuts",
+			"section": "Keybindings",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#keybindings"
+		},
+		{
+			"source": "docs",
+			"id": "key-1",
+			"kind": "key",
+			"title": "Move backward",
+			"keys": [
+				"←"
+			],
+			"macKeys": [
+				"←",
+				"⌃B"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-2",
+			"kind": "key",
+			"title": "Move forward",
+			"keys": [
+				"→"
+			],
+			"macKeys": [
+				"→",
+				"⌃F"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-3",
+			"kind": "key",
+			"title": "Move up",
+			"keys": [
+				"↑"
+			],
+			"macKeys": [
+				"↑",
+				"⌃P"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-4",
+			"kind": "key",
+			"title": "Move down",
+			"keys": [
+				"↓"
+			],
+			"macKeys": [
+				"↓",
+				"⌃N"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-5",
+			"kind": "key",
+			"title": "Extend selection backward",
+			"keys": [
+				"Shift+←"
+			],
+			"macKeys": [
+				"⇧←",
+				"⇧⌃B"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-6",
+			"kind": "key",
+			"title": "Extend selection forward",
+			"keys": [
+				"Shift+→"
+			],
+			"macKeys": [
+				"⇧→",
+				"⇧⌃F"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-7",
+			"kind": "key",
+			"title": "Extend selection upward",
+			"keys": [
+				"Shift+↑"
+			],
+			"macKeys": [
+				"⇧↑",
+				"⇧⌃P"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-8",
+			"kind": "key",
+			"title": "Extend selection downward",
+			"keys": [
+				"Shift+↓"
+			],
+			"macKeys": [
+				"⇧↓",
+				"⇧⌃N"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-9",
+			"kind": "key",
+			"title": "Move to next placeholder",
+			"keys": [
+				"Tab"
+			],
+			"macKeys": [
+				"⇥"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-10",
+			"kind": "key",
+			"title": "Move to previous placeholder",
+			"keys": [
+				"Shift+Tab"
+			],
+			"macKeys": [
+				"⇧⇥"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-11",
+			"kind": "key",
+			"title": "Delete backward",
+			"keys": [
+				"Backspace",
+				"Alt+Delete"
+			],
+			"macKeys": [
+				"⌫",
+				"⌥⌦",
+				"⌃H"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-12",
+			"kind": "key",
+			"title": "Delete forward",
+			"keys": [
+				"Delete",
+				"Alt+Backspace"
+			],
+			"macKeys": [
+				"⌦",
+				"⌥⌫",
+				"⌃D"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-13",
+			"kind": "key",
+			"title": "Move to previous word",
+			"keys": [
+				"Alt+←"
+			],
+			"macKeys": [
+				"⌥←",
+				"⌥⌃B"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-14",
+			"kind": "key",
+			"title": "Move to next word",
+			"keys": [
+				"Alt+→"
+			],
+			"macKeys": [
+				"⌥→",
+				"⌥⌃F"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-15",
+			"kind": "key",
+			"title": "Extend selection to previous word",
+			"keys": [
+				"Shift+Alt+←"
+			],
+			"macKeys": [
+				"⇧⌥←",
+				"⇧⌥⌃B"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-16",
+			"kind": "key",
+			"title": "Extend selection to next word",
+			"keys": [
+				"Shift+Alt+→"
+			],
+			"macKeys": [
+				"⇧⌥→",
+				"⇧⌥⌃F"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-17",
+			"kind": "key",
+			"title": "Move to group start",
+			"keys": [
+				"Page Up",
+				"Ctrl+←"
+			],
+			"macKeys": [
+				"⇞",
+				"⌃←"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-18",
+			"kind": "key",
+			"title": "Move to group end",
+			"keys": [
+				"Page Down",
+				"Ctrl+→"
+			],
+			"macKeys": [
+				"⇟",
+				"⌃→"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-19",
+			"kind": "key",
+			"title": "Extend selection to group start",
+			"keys": [
+				"Shift+Ctrl+←"
+			],
+			"macKeys": [
+				"⇧⌃←"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-20",
+			"kind": "key",
+			"title": "Extend selection to group end",
+			"keys": [
+				"Shift+Ctrl+→"
+			],
+			"macKeys": [
+				"⇧⌃→"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-21",
+			"kind": "key",
+			"title": "Move after parent",
+			"keys": [
+				"Space"
+			],
+			"macKeys": [
+				"Space"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-22",
+			"kind": "key",
+			"title": "Move before parent",
+			"keys": [
+				"Shift+Space"
+			],
+			"macKeys": [
+				"⇧Space"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-23",
+			"kind": "key",
+			"title": "Move to mathfield start",
+			"keys": [
+				"Home+Ctrl+←"
+			],
+			"macKeys": [
+				"⤒⌘←",
+				"⌃A"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-24",
+			"kind": "key",
+			"title": "Extend selection to mathfield start",
+			"keys": [
+				"Shift+Home",
+				"Shift+Ctrl+←"
+			],
+			"macKeys": [
+				"⇧⤒",
+				"⇧⌘←",
+				"⇧⌃A"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-25",
+			"kind": "key",
+			"title": "Move to mathfield end",
+			"keys": [
+				"End",
+				"Ctrl+→"
+			],
+			"macKeys": [
+				"⤓",
+				"⌘→",
+				"⌃E"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-26",
+			"kind": "key",
+			"title": "Extend selection to mathfield end",
+			"keys": [
+				"Shift+End",
+				"Shift+Ctrl+→"
+			],
+			"macKeys": [
+				"⇧⤓",
+				"⇧⌘→",
+				"⇧⌃E"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-27",
+			"kind": "key",
+			"title": "Move to opposite superscript/subscript, upper/lower",
+			"keys": [
+				"Ctrl+5"
+			],
+			"macKeys": [
+				"⌃5"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-28",
+			"kind": "key",
+			"title": "Move to superscript/upper",
+			"keys": [
+				"Ctrl+6"
+			],
+			"macKeys": [
+				"⌃6"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-29",
+			"kind": "key",
+			"title": "Move to subscript/lower",
+			"keys": [
+				"Ctrl+-"
+			],
+			"macKeys": [
+				"⌃-"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-30",
+			"kind": "key",
+			"title": "Finish",
+			"keys": [
+				"Esc"
+			],
+			"macKeys": [
+				"Esc"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-31",
+			"kind": "key",
+			"title": "Reject",
+			"keys": [
+				"Shift+Esc"
+			],
+			"macKeys": [
+				"⇧Esc"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-32",
+			"kind": "key",
+			"title": "Accept suggestion",
+			"keys": [
+				"Tab"
+			],
+			"macKeys": [
+				"⇥"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-33",
+			"kind": "key",
+			"title": "Complete",
+			"keys": [
+				"Enter",
+				"Enter"
+			],
+			"macKeys": [
+				"⏎",
+				"⌤"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-34",
+			"kind": "key",
+			"title": "Select all",
+			"keys": [
+				"Ctrl+A"
+			],
+			"macKeys": [
+				"⌘A",
+				"⌃A"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-35",
+			"kind": "key",
+			"title": "Undo",
+			"keys": [
+				"Ctrl+Z"
+			],
+			"macKeys": [
+				"⌘Z",
+				"⌃Z"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-36",
+			"kind": "key",
+			"title": "Redo",
+			"keys": [
+				"Ctrl+Y",
+				"Ctrl+Y",
+				"Shift+Ctrl+Z"
+			],
+			"macKeys": [
+				"⌘Y",
+				"⌃Y",
+				"⇧⌃Z"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-37",
+			"kind": "key",
+			"title": "Scroll into view",
+			"keys": [
+				"Ctrl+L"
+			],
+			"macKeys": [
+				"⌃L"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-38",
+			"kind": "key",
+			"title": "Toggle keystroke caption",
+			"keys": [
+				"Shift+Alt+K"
+			],
+			"macKeys": [
+				"⇧⌥K"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-39",
+			"kind": "key",
+			"title": "Toggle virtual keyboard",
+			"keys": [
+				"Shift+Alt+Space"
+			],
+			"macKeys": [
+				"⇧⌥Space"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-40",
+			"kind": "key",
+			"title": "Show context menu",
+			"keys": [
+				"Alt+Space"
+			],
+			"macKeys": [
+				"⌥Space"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-41",
+			"kind": "key",
+			"title": "Apply text mode",
+			"keys": [
+				"Alt+="
+			],
+			"macKeys": [
+				"⌥="
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-42",
+			"kind": "key",
+			"title": "Toggle math/text mode",
+			"keys": [
+				"Shift+Alt+T"
+			],
+			"macKeys": [
+				"⇧⌥T"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-43",
+			"kind": "key",
+			"title": "Enter/exit LaTeX mode",
+			"keys": [
+				"Esc"
+			],
+			"macKeys": [
+				"Esc"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-44",
+			"kind": "key",
+			"title": "Enter LaTeX mode",
+			"keys": [
+				"\\"
+			],
+			"macKeys": [
+				"\\"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-45",
+			"kind": "key",
+			"title": "Speak parent",
+			"keys": [
+				"Alt+Ctrl+↑"
+			],
+			"macKeys": [
+				"⌥⌃↑"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-46",
+			"kind": "key",
+			"title": "Speak all",
+			"keys": [
+				"Alt+Ctrl+↓"
+			],
+			"macKeys": [
+				"⌥⌃↓"
+			],
+			"keywords": "Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-47",
+			"kind": "key",
+			"title": "Insert fraction",
+			"keys": [
+				"/"
+			],
+			"macKeys": [
+				"/"
+			],
+			"latex": "\\frac{}{}",
+			"keywords": "Math Symbols \\frac{}{} fraction divide over",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-48",
+			"kind": "key",
+			"title": "Insert square root",
+			"keys": [
+				"Ctrl+2"
+			],
+			"macKeys": [
+				"⌃2"
+			],
+			"latex": "\\sqrt{}",
+			"keywords": "Math Symbols \\sqrt{} square root radical",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-49",
+			"kind": "key",
+			"title": "Insert square root",
+			"keys": [
+				"Alt+V"
+			],
+			"macKeys": [
+				"⌥V"
+			],
+			"latex": "\\sqrt{}",
+			"keywords": "Math Symbols \\sqrt{} square root radical",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-50",
+			"kind": "key",
+			"title": "Insert nth root",
+			"keys": [
+				"Alt+Shift+V"
+			],
+			"macKeys": [
+				"⌥⇧V"
+			],
+			"latex": "\\sqrt[n]{}",
+			"keywords": "Math Symbols \\sqrt[n]{} nth root cube root radical",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-51",
+			"kind": "key",
+			"title": "Insert pi",
+			"keys": [
+				"Alt+P"
+			],
+			"macKeys": [
+				"⌥P"
+			],
+			"latex": "\\pi",
+			"keywords": "Math Symbols \\pi pi",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-52",
+			"kind": "key",
+			"title": "Insert empty set",
+			"keys": [
+				"Alt+O"
+			],
+			"macKeys": [
+				"⌥O"
+			],
+			"latex": "\\emptyset",
+			"keywords": "Math Symbols \\emptyset empty set",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-53",
+			"kind": "key",
+			"title": "Insert differential d",
+			"keys": [
+				"Alt+D"
+			],
+			"macKeys": [
+				"⌥D"
+			],
+			"latex": "\\differentialD",
+			"keywords": "Math Symbols \\differentialD differential d derivative",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-54",
+			"kind": "key",
+			"title": "Insert empty set",
+			"keys": [
+				"Shift+Alt+O"
+			],
+			"macKeys": [
+				"⇧⌥O"
+			],
+			"latex": "\\varnothing",
+			"keywords": "Math Symbols \\varnothing empty set",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-55",
+			"kind": "key",
+			"title": "Insert partial derivative",
+			"keys": [
+				"Shift+Alt+D"
+			],
+			"macKeys": [
+				"⇧⌥D"
+			],
+			"latex": "\\partial",
+			"keywords": "Math Symbols \\partial partial derivative",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-56",
+			"kind": "key",
+			"title": "Insert product",
+			"keys": [
+				"Shift+Alt+P"
+			],
+			"macKeys": [
+				"⇧⌥P"
+			],
+			"latex": "\\prod_{i=}^{}",
+			"keywords": "Math Symbols \\prod_{i=}^{} product",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-57",
+			"kind": "key",
+			"title": "Insert infinity",
+			"keys": [
+				"Alt+5"
+			],
+			"macKeys": [
+				"⌥5"
+			],
+			"latex": "\\infty",
+			"keywords": "Math Symbols \\infty infinity",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-58",
+			"kind": "key",
+			"title": "Insert (",
+			"keys": [
+				"Alt+9"
+			],
+			"macKeys": [
+				"⌥9"
+			],
+			"latex": "(",
+			"keywords": "Math Symbols (",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-59",
+			"kind": "key",
+			"title": "Insert )",
+			"keys": [
+				"Alt+0"
+			],
+			"macKeys": [
+				"⌥0"
+			],
+			"latex": ")",
+			"keywords": "Math Symbols )",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-60",
+			"kind": "key",
+			"title": "Insert norm",
+			"keys": [
+				"Alt+|"
+			],
+			"macKeys": [
+				"⌥|"
+			],
+			"latex": "\\|",
+			"keywords": "Math Symbols \\| norm double bar",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-61",
+			"kind": "key",
+			"title": "Insert backslash",
+			"keys": [
+				"Alt+\\"
+			],
+			"macKeys": [
+				"⌥\\"
+			],
+			"latex": "\\backslash",
+			"keywords": "Math Symbols \\backslash backslash set minus",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-62",
+			"kind": "key",
+			"title": "Insert tilde",
+			"keys": [
+				"Shift+`"
+			],
+			"macKeys": [
+				"⇧`"
+			],
+			"latex": "\\~",
+			"keywords": "Math Symbols \\~ tilde",
+			"page": "Keyboard Shortcuts",
+			"section": "Math Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#math-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "key-63",
+			"kind": "key",
+			"title": "Insert square bracket matrix",
+			"keys": [
+				"Alt+["
+			],
+			"macKeys": [
+				"⌥["
+			],
+			"keywords": "Matrix Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Matrix Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#matrix-editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-64",
+			"kind": "key",
+			"title": "Insert braces matrix",
+			"keys": [
+				"Alt+Shift+("
+			],
+			"macKeys": [
+				"⌥⇧("
+			],
+			"keywords": "Matrix Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Matrix Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#matrix-editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-65",
+			"kind": "key",
+			"title": "Insert row",
+			"keys": [
+				"Shift+Enter",
+				"Ctrl+Enter"
+			],
+			"macKeys": [
+				"⇧⏎",
+				"⌘⏎"
+			],
+			"keywords": "Matrix Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Matrix Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#matrix-editing"
+		},
+		{
+			"source": "docs",
+			"id": "key-66",
+			"kind": "key",
+			"title": "Insert column",
+			"keys": [
+				"Ctrl+,",
+				"Ctrl+Enter"
+			],
+			"macKeys": [
+				"⌃,",
+				"⌘⏎"
+			],
+			"keywords": "Matrix Editing",
+			"page": "Keyboard Shortcuts",
+			"section": "Matrix Editing",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#matrix-editing"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/keybindings/inline-shortcuts",
+			"kind": "section",
+			"title": "Inline Shortcuts",
+			"text": "Some sequence of characters are automatically translated to symbols. For example, typing P followed by I will result in \"π\". Many of the ASCIIMath symbols are supported.",
+			"keywords": "Keyboard Shortcuts",
+			"page": "Keyboard Shortcuts",
+			"section": "Inline Shortcuts",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#inline-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-68",
+			"kind": "shortcut",
+			"title": "Infinity",
+			"typed": [
+				"∞",
+				"infty",
+				"oo"
+			],
+			"latex": "\\infty",
+			"keywords": "Letter-Like Symbols \\infty infinity",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-69",
+			"kind": "shortcut",
+			"title": "Imaginary unit i",
+			"typed": [
+				"ii"
+			],
+			"latex": "\\imaginaryI",
+			"keywords": "Letter-Like Symbols \\imaginaryI imaginary unit i",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-70",
+			"kind": "shortcut",
+			"title": "Imaginary unit j",
+			"typed": [
+				"jj"
+			],
+			"latex": "\\imaginaryJ",
+			"keywords": "Letter-Like Symbols \\imaginaryJ imaginary unit j",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-71",
+			"kind": "shortcut",
+			"title": "Euler's number e",
+			"typed": [
+				"ee"
+			],
+			"latex": "\\exponentialE",
+			"keywords": "Letter-Like Symbols \\exponentialE Euler's number e exponential",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-72",
+			"kind": "shortcut",
+			"title": "Natural numbers",
+			"typed": [
+				"NN"
+			],
+			"latex": "\\N",
+			"keywords": "Letter-Like Symbols \\N natural numbers",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-73",
+			"kind": "shortcut",
+			"title": "Integers",
+			"typed": [
+				"ZZ"
+			],
+			"latex": "\\Z",
+			"keywords": "Letter-Like Symbols \\Z integers",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-74",
+			"kind": "shortcut",
+			"title": "Rational numbers",
+			"typed": [
+				"QQ"
+			],
+			"latex": "\\Q",
+			"keywords": "Letter-Like Symbols \\Q rational numbers",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-75",
+			"kind": "shortcut",
+			"title": "Real numbers",
+			"typed": [
+				"RR"
+			],
+			"latex": "\\R",
+			"keywords": "Letter-Like Symbols \\R real numbers",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-76",
+			"kind": "shortcut",
+			"title": "Complex numbers",
+			"typed": [
+				"CC"
+			],
+			"latex": "\\C",
+			"keywords": "Letter-Like Symbols \\C complex numbers",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-77",
+			"kind": "shortcut",
+			"title": "Prime numbers",
+			"typed": [
+				"PP"
+			],
+			"latex": "\\P",
+			"keywords": "Letter-Like Symbols \\P prime numbers",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-78",
+			"kind": "shortcut",
+			"title": "For all",
+			"typed": [
+				"forall",
+				"AA"
+			],
+			"latex": "\\forall",
+			"keywords": "Letter-Like Symbols \\forall for all",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-79",
+			"kind": "shortcut",
+			"title": "There exists",
+			"typed": [
+				"exists",
+				"EE"
+			],
+			"latex": "\\exists",
+			"keywords": "Letter-Like Symbols \\exists there exists",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-80",
+			"kind": "shortcut",
+			"title": "There does not exist",
+			"typed": [
+				"!exists",
+				"!EE"
+			],
+			"latex": "\\nexists",
+			"keywords": "Letter-Like Symbols \\nexists there does not exist",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-81",
+			"kind": "shortcut",
+			"title": "char",
+			"typed": [
+				"$"
+			],
+			"latex": "\\char\"24",
+			"keywords": "Letter-Like Symbols \\char\"24 char",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-82",
+			"kind": "shortcut",
+			"title": "Percent",
+			"typed": [
+				"%"
+			],
+			"latex": "\\%",
+			"keywords": "Letter-Like Symbols \\% percent",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-83",
+			"kind": "shortcut",
+			"title": "#",
+			"typed": [
+				"#"
+			],
+			"latex": "\\#",
+			"keywords": "Letter-Like Symbols \\# #",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-84",
+			"kind": "shortcut",
+			"title": "Backslash",
+			"typed": [
+				"\\"
+			],
+			"latex": "\\backslash",
+			"keywords": "Letter-Like Symbols \\backslash backslash set minus",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-85",
+			"kind": "shortcut",
+			"title": "Diamond",
+			"typed": [
+				"diamond"
+			],
+			"latex": "\\diamond",
+			"keywords": "Letter-Like Symbols \\diamond diamond",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-86",
+			"kind": "shortcut",
+			"title": "Square",
+			"typed": [
+				"square"
+			],
+			"latex": "\\square",
+			"keywords": "Letter-Like Symbols \\square square",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-87",
+			"kind": "shortcut",
+			"title": "Bottom",
+			"typed": [
+				"_|_"
+			],
+			"latex": "\\bot",
+			"keywords": "Letter-Like Symbols \\bot bottom perpendicular",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-88",
+			"kind": "shortcut",
+			"title": "top",
+			"typed": [
+				"TT"
+			],
+			"latex": "\\top",
+			"keywords": "Letter-Like Symbols \\top top",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-89",
+			"kind": "shortcut",
+			"title": "Nabla",
+			"typed": [
+				"nabla",
+				"grad"
+			],
+			"latex": "\\nabla",
+			"keywords": "Letter-Like Symbols \\nabla nabla gradient del",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-91",
+			"kind": "shortcut",
+			"title": "Partial derivative",
+			"typed": [
+				"del"
+			],
+			"latex": "\\partial",
+			"keywords": "Letter-Like Symbols \\partial partial derivative",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-92",
+			"kind": "shortcut",
+			"title": "Differential d",
+			"typed": [
+				"∆",
+				"∂",
+				"dx",
+				"dy",
+				"dt"
+			],
+			"latex": "\\differentialD",
+			"keywords": "Letter-Like Symbols \\differentialD differential d derivative",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-96",
+			"kind": "shortcut",
+			"title": "Aleph",
+			"typed": [
+				"aleph"
+			],
+			"latex": "\\aleph",
+			"keywords": "Letter-Like Symbols \\aleph aleph",
+			"page": "Keyboard Shortcuts",
+			"section": "Letter-Like Symbols",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#letter-like-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-97",
+			"kind": "shortcut",
+			"title": "Arcsin",
+			"typed": [
+				"arcsin"
+			],
+			"latex": "\\arcsin",
+			"keywords": "Functions \\arcsin arcsin",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-98",
+			"kind": "shortcut",
+			"title": "Arccos",
+			"typed": [
+				"arccos"
+			],
+			"latex": "\\arccos",
+			"keywords": "Functions \\arccos arccos",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-99",
+			"kind": "shortcut",
+			"title": "Arctan",
+			"typed": [
+				"arctan"
+			],
+			"latex": "\\arctan",
+			"keywords": "Functions \\arctan arctan",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-100",
+			"kind": "shortcut",
+			"title": "sine",
+			"typed": [
+				"sin"
+			],
+			"latex": "\\sin",
+			"keywords": "Functions \\sin sine trig",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-101",
+			"kind": "shortcut",
+			"title": "sinh",
+			"typed": [
+				"sinh"
+			],
+			"latex": "\\sinh",
+			"keywords": "Functions \\sinh sinh",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-102",
+			"kind": "shortcut",
+			"title": "Cosine",
+			"typed": [
+				"cos"
+			],
+			"latex": "\\cos",
+			"keywords": "Functions \\cos cosine trig",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-103",
+			"kind": "shortcut",
+			"title": "cosh",
+			"typed": [
+				"cosh"
+			],
+			"latex": "\\cosh",
+			"keywords": "Functions \\cosh cosh",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-104",
+			"kind": "shortcut",
+			"title": "Tangent",
+			"typed": [
+				"tan"
+			],
+			"latex": "\\tan",
+			"keywords": "Functions \\tan tangent trig",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-105",
+			"kind": "shortcut",
+			"title": "tanh",
+			"typed": [
+				"tanh"
+			],
+			"latex": "\\tanh",
+			"keywords": "Functions \\tanh tanh",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-106",
+			"kind": "shortcut",
+			"title": "sec",
+			"typed": [
+				"sec"
+			],
+			"latex": "\\sec",
+			"keywords": "Functions \\sec sec",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-107",
+			"kind": "shortcut",
+			"title": "csc",
+			"typed": [
+				"csc"
+			],
+			"latex": "\\csc",
+			"keywords": "Functions \\csc csc",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-108",
+			"kind": "shortcut",
+			"title": "cot",
+			"typed": [
+				"cot"
+			],
+			"latex": "\\cot",
+			"keywords": "Functions \\cot cot",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-109",
+			"kind": "shortcut",
+			"title": "Logarithm",
+			"typed": [
+				"log"
+			],
+			"latex": "\\log",
+			"keywords": "Functions \\log logarithm log",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-110",
+			"kind": "shortcut",
+			"title": "Natural logarithm",
+			"typed": [
+				"ln"
+			],
+			"latex": "\\ln",
+			"keywords": "Functions \\ln natural logarithm log",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-111",
+			"kind": "shortcut",
+			"title": "Exponential",
+			"typed": [
+				"exp"
+			],
+			"latex": "\\exp",
+			"keywords": "Functions \\exp exponential",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-112",
+			"kind": "shortcut",
+			"title": "Limit",
+			"typed": [
+				"lim"
+			],
+			"latex": "\\lim_{\\char\"2B1A}",
+			"keywords": "Functions \\lim_{\\char\"2B1A} limit",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-113",
+			"kind": "shortcut",
+			"title": "Determinant",
+			"typed": [
+				"det"
+			],
+			"latex": "\\det",
+			"keywords": "Functions \\det determinant",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-114",
+			"kind": "shortcut",
+			"title": "Modulo",
+			"typed": [
+				"mod"
+			],
+			"latex": "\\mod",
+			"keywords": "Functions \\mod modulo",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-115",
+			"kind": "shortcut",
+			"title": "Maximum",
+			"typed": [
+				"max"
+			],
+			"latex": "\\max",
+			"keywords": "Functions \\max maximum",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-116",
+			"kind": "shortcut",
+			"title": "Minimum",
+			"typed": [
+				"min"
+			],
+			"latex": "\\min",
+			"keywords": "Functions \\min minimum",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-117",
+			"kind": "shortcut",
+			"title": "erf",
+			"typed": [
+				"erf"
+			],
+			"latex": "\\operatorname{erf}",
+			"keywords": "Functions \\operatorname{erf} erf",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-118",
+			"kind": "shortcut",
+			"title": "erfc",
+			"typed": [
+				"erfc"
+			],
+			"latex": "\\operatorname{erfc}",
+			"keywords": "Functions \\operatorname{erfc} erfc",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-119",
+			"kind": "shortcut",
+			"title": "Bessel",
+			"typed": [
+				"bessel"
+			],
+			"latex": "\\operatorname{bessel}",
+			"keywords": "Functions \\operatorname{bessel} bessel",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-120",
+			"kind": "shortcut",
+			"title": "mean",
+			"typed": [
+				"mean"
+			],
+			"latex": "\\operatorname{mean}",
+			"keywords": "Functions \\operatorname{mean} mean",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-121",
+			"kind": "shortcut",
+			"title": "Median",
+			"typed": [
+				"median"
+			],
+			"latex": "\\operatorname{median}",
+			"keywords": "Functions \\operatorname{median} median",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-122",
+			"kind": "shortcut",
+			"title": "fft",
+			"typed": [
+				"fft"
+			],
+			"latex": "\\operatorname{fft}",
+			"keywords": "Functions \\operatorname{fft} fft",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-123",
+			"kind": "shortcut",
+			"title": "lcm",
+			"typed": [
+				"lcm"
+			],
+			"latex": "\\operatorname{lcm}",
+			"keywords": "Functions \\operatorname{lcm} lcm",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-124",
+			"kind": "shortcut",
+			"title": "gcd",
+			"typed": [
+				"gcd"
+			],
+			"latex": "\\operatorname{gcd}",
+			"keywords": "Functions \\operatorname{gcd} gcd",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-125",
+			"kind": "shortcut",
+			"title": "RandomReal",
+			"typed": [
+				"randomReal"
+			],
+			"latex": "\\operatorname{randomReal}",
+			"keywords": "Functions \\operatorname{randomReal} randomReal",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-126",
+			"kind": "shortcut",
+			"title": "RandomInteger",
+			"typed": [
+				"randomInteger"
+			],
+			"latex": "\\operatorname{randomInteger}",
+			"keywords": "Functions \\operatorname{randomInteger} randomInteger",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-127",
+			"kind": "shortcut",
+			"title": "Re",
+			"typed": [
+				"Re"
+			],
+			"latex": "\\operatorname{Re}",
+			"keywords": "Functions \\operatorname{Re} Re",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-128",
+			"kind": "shortcut",
+			"title": "Im",
+			"typed": [
+				"Im"
+			],
+			"latex": "\\operatorname{Im}",
+			"keywords": "Functions \\operatorname{Im} Im",
+			"page": "Keyboard Shortcuts",
+			"section": "Functions",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-129",
+			"kind": "shortcut",
+			"title": "Not equal",
+			"typed": [
+				"!="
+			],
+			"latex": "\\ne",
+			"keywords": "Relational Operators \\ne not equal",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-130",
+			"kind": "shortcut",
+			"title": "Greater than or equal",
+			"typed": [
+				">=",
+				"gt="
+			],
+			"latex": "\\ge",
+			"keywords": "Relational Operators \\ge greater than or equal",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-131",
+			"kind": "shortcut",
+			"title": "Less than or equal",
+			"typed": [
+				"<=",
+				"lt="
+			],
+			"latex": "\\le",
+			"keywords": "Relational Operators \\le less than or equal",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-132",
+			"kind": "shortcut",
+			"title": "Much less than",
+			"typed": [
+				"<<"
+			],
+			"latex": "\\ll",
+			"keywords": "Relational Operators \\ll much less than",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-133",
+			"kind": "shortcut",
+			"title": "Much greater than",
+			"typed": [
+				">>"
+			],
+			"latex": "\\gg",
+			"keywords": "Relational Operators \\gg much greater than",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-134",
+			"kind": "shortcut",
+			"title": "Approximately equal",
+			"typed": [
+				"~~",
+				"≈"
+			],
+			"latex": "\\approx",
+			"keywords": "Relational Operators \\approx approximately equal",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-135",
+			"kind": "shortcut",
+			"title": "Questioned equal",
+			"typed": [
+				"?="
+			],
+			"latex": "\\questeq",
+			"keywords": "Relational Operators \\questeq questioned equal",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-136",
+			"kind": "shortcut",
+			"title": "Defined as",
+			"typed": [
+				":="
+			],
+			"latex": "\\coloneq",
+			"keywords": "Relational Operators \\coloneq defined as assign",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-137",
+			"kind": "shortcut",
+			"title": "Double colon",
+			"typed": [
+				"::"
+			],
+			"latex": "\\Colon",
+			"keywords": "Relational Operators \\Colon double colon",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-138",
+			"kind": "shortcut",
+			"title": "Equivalent",
+			"typed": [
+				"-="
+			],
+			"latex": "\\equiv",
+			"keywords": "Relational Operators \\equiv equivalent congruent identical",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-139",
+			"kind": "shortcut",
+			"title": "Congruent",
+			"typed": [
+				"~="
+			],
+			"latex": "\\cong",
+			"keywords": "Relational Operators \\cong congruent isomorphic",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-140",
+			"kind": "shortcut",
+			"title": "Less than",
+			"typed": [
+				"lt"
+			],
+			"latex": "<",
+			"keywords": "Relational Operators < less than",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-142",
+			"kind": "shortcut",
+			"title": "Greater than",
+			"typed": [
+				"gt"
+			],
+			"latex": ">",
+			"keywords": "Relational Operators > greater than",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-144",
+			"kind": "shortcut",
+			"title": "prec",
+			"typed": [
+				"-lt",
+				"-<"
+			],
+			"latex": "\\prec",
+			"keywords": "Relational Operators \\prec prec",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-145",
+			"kind": "shortcut",
+			"title": "Preceq",
+			"typed": [
+				"-<="
+			],
+			"latex": "\\preceq",
+			"keywords": "Relational Operators \\preceq preceq",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-146",
+			"kind": "shortcut",
+			"title": "Succeq",
+			"typed": [
+				"->="
+			],
+			"latex": "\\succeq",
+			"keywords": "Relational Operators \\succeq succeq",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-147",
+			"kind": "shortcut",
+			"title": "Proportional to",
+			"typed": [
+				"prop"
+			],
+			"latex": "\\propto",
+			"keywords": "Relational Operators \\propto proportional to",
+			"page": "Keyboard Shortcuts",
+			"section": "Relational Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-148",
+			"kind": "shortcut",
+			"title": "Multiplication dot",
+			"typed": [
+				"*"
+			],
+			"latex": "\\cdot",
+			"keywords": "Other Operators \\cdot multiplication dot times product",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-149",
+			"kind": "shortcut",
+			"title": "Asterisk",
+			"typed": [
+				"**"
+			],
+			"latex": "\\ast",
+			"keywords": "Other Operators \\ast asterisk",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-150",
+			"kind": "shortcut",
+			"title": "star",
+			"typed": [
+				"***"
+			],
+			"latex": "\\star",
+			"keywords": "Other Operators \\star star",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-151",
+			"kind": "shortcut",
+			"title": "Logical and",
+			"typed": [
+				"&&",
+				"and"
+			],
+			"latex": "\\land",
+			"keywords": "Other Operators \\land logical and",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-152",
+			"kind": "shortcut",
+			"title": "X element of",
+			"typed": [
+				"xin"
+			],
+			"latex": "x \\in",
+			"keywords": "Other Operators x \\in x element of in",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-153",
+			"kind": "shortcut",
+			"title": "Element of",
+			"typed": [
+				"in"
+			],
+			"latex": "\\in",
+			"keywords": "Other Operators \\in element of in set",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-154",
+			"kind": "shortcut",
+			"title": "Not an element of",
+			"typed": [
+				"!in"
+			],
+			"latex": "\\notin",
+			"keywords": "Other Operators \\notin not an element of",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-155",
+			"kind": "shortcut",
+			"title": "Times",
+			"typed": [
+				"xx"
+			],
+			"latex": "\\times",
+			"keywords": "Other Operators \\times times multiply cross product",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-156",
+			"kind": "shortcut",
+			"title": "Plus or minus",
+			"typed": [
+				"+-"
+			],
+			"latex": "\\pm",
+			"keywords": "Other Operators \\pm plus or minus",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-157",
+			"kind": "shortcut",
+			"title": "Division sign",
+			"typed": [
+				"÷",
+				"-:",
+				"divide"
+			],
+			"latex": "\\div",
+			"keywords": "Other Operators \\div division sign divide",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-158",
+			"kind": "shortcut",
+			"title": "Circled dot",
+			"typed": [
+				"(-)"
+			],
+			"latex": "\\odot",
+			"keywords": "Other Operators \\odot circled dot",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-159",
+			"kind": "shortcut",
+			"title": "Direct sum",
+			"typed": [
+				"(+)"
+			],
+			"latex": "\\oplus",
+			"keywords": "Other Operators \\oplus direct sum xor",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-160",
+			"kind": "shortcut",
+			"title": "Oslash",
+			"typed": [
+				"(/)"
+			],
+			"latex": "\\oslash",
+			"keywords": "Other Operators \\oslash oslash",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-161",
+			"kind": "shortcut",
+			"title": "Tensor product",
+			"typed": [
+				"ox",
+				"(x)"
+			],
+			"latex": "\\otimes",
+			"keywords": "Other Operators \\otimes tensor product",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-162",
+			"kind": "shortcut",
+			"title": "Circled minus",
+			"typed": [
+				"(-)"
+			],
+			"latex": "\\ominus",
+			"keywords": "Other Operators \\ominus circled minus",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-163",
+			"kind": "shortcut",
+			"title": "Composition",
+			"typed": [
+				"@"
+			],
+			"latex": "\\circ",
+			"keywords": "Other Operators \\circ composition compose degree",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-164",
+			"kind": "shortcut",
+			"title": "Ltimes",
+			"typed": [
+				"|><"
+			],
+			"latex": "\\ltimes",
+			"keywords": "Other Operators \\ltimes ltimes",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-165",
+			"kind": "shortcut",
+			"title": "Rtimes",
+			"typed": [
+				"><|"
+			],
+			"latex": "\\rtimes",
+			"keywords": "Other Operators \\rtimes rtimes",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-166",
+			"kind": "shortcut",
+			"title": "Bowtie",
+			"typed": [
+				"|><|"
+			],
+			"latex": "\\bowtie",
+			"keywords": "Other Operators \\bowtie bowtie",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-168",
+			"kind": "shortcut",
+			"title": "Wedge",
+			"typed": [
+				"^^"
+			],
+			"latex": "\\wedge",
+			"keywords": "Other Operators \\wedge wedge and",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-169",
+			"kind": "shortcut",
+			"title": "Bigwedge",
+			"typed": [
+				"^^^"
+			],
+			"latex": "\\bigwedge",
+			"keywords": "Other Operators \\bigwedge bigwedge",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-170",
+			"kind": "shortcut",
+			"title": "vee",
+			"typed": [
+				"vv"
+			],
+			"latex": "\\vee",
+			"keywords": "Other Operators \\vee vee or",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-171",
+			"kind": "shortcut",
+			"title": "Bigvee",
+			"typed": [
+				"vvv"
+			],
+			"latex": "\\bigvee",
+			"keywords": "Other Operators \\bigvee bigvee",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-172",
+			"kind": "shortcut",
+			"title": "Intersection",
+			"typed": [
+				"nn"
+			],
+			"latex": "\\cap",
+			"keywords": "Other Operators \\cap intersection",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-173",
+			"kind": "shortcut",
+			"title": "Big intersection",
+			"typed": [
+				"nnn"
+			],
+			"latex": "\\bigcap",
+			"keywords": "Other Operators \\bigcap big intersection",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-174",
+			"kind": "shortcut",
+			"title": "Union",
+			"typed": [
+				"uu"
+			],
+			"latex": "\\cup",
+			"keywords": "Other Operators \\cup union",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-175",
+			"kind": "shortcut",
+			"title": "Big union",
+			"typed": [
+				"uuu"
+			],
+			"latex": "\\bigcup",
+			"keywords": "Other Operators \\bigcup big union",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-176",
+			"kind": "shortcut",
+			"title": "Backslash",
+			"typed": [
+				"setminus"
+			],
+			"latex": "\\backslash",
+			"keywords": "Other Operators \\backslash backslash set minus",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-177",
+			"kind": "shortcut",
+			"title": "Subset",
+			"typed": [
+				"sub"
+			],
+			"latex": "\\subset",
+			"keywords": "Other Operators \\subset subset",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-178",
+			"kind": "shortcut",
+			"title": "Superset",
+			"typed": [
+				"sup"
+			],
+			"latex": "\\supset",
+			"keywords": "Other Operators \\supset superset",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-179",
+			"kind": "shortcut",
+			"title": "Subset or equal",
+			"typed": [
+				"sube"
+			],
+			"latex": "\\subseteq",
+			"keywords": "Other Operators \\subseteq subset or equal",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-180",
+			"kind": "shortcut",
+			"title": "Superset or equal",
+			"typed": [
+				"supe"
+			],
+			"latex": "\\supseteq",
+			"keywords": "Other Operators \\supseteq superset or equal",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-182",
+			"kind": "shortcut",
+			"title": "Logical or",
+			"typed": [
+				"or"
+			],
+			"latex": "\\lor",
+			"keywords": "Other Operators \\lor logical or",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-183",
+			"kind": "shortcut",
+			"title": "Logical not",
+			"typed": [
+				"not"
+			],
+			"latex": "\\neg",
+			"keywords": "Other Operators \\neg logical not negation",
+			"page": "Keyboard Shortcuts",
+			"section": "Other Operators",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#other-operators"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-184",
+			"kind": "shortcut",
+			"title": "Floor",
+			"typed": [
+				"|__",
+				"__|"
+			],
+			"latex": "\\lfloor",
+			"keywords": "Delimiters \\lfloor floor",
+			"page": "Keyboard Shortcuts",
+			"section": "Delimiters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#delimiters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-186",
+			"kind": "shortcut",
+			"title": "Ceiling",
+			"typed": [
+				"|~",
+				"~|"
+			],
+			"latex": "\\lceil",
+			"keywords": "Delimiters \\lceil ceiling",
+			"page": "Keyboard Shortcuts",
+			"section": "Delimiters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#delimiters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-188",
+			"kind": "shortcut",
+			"title": "norm",
+			"typed": [
+				"||"
+			],
+			"latex": "\\Vert",
+			"keywords": "Delimiters \\Vert norm double bar",
+			"page": "Keyboard Shortcuts",
+			"section": "Delimiters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#delimiters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-189",
+			"kind": "shortcut",
+			"title": "{",
+			"typed": [
+				"{"
+			],
+			"latex": "\\{",
+			"keywords": "Delimiters \\{ {",
+			"page": "Keyboard Shortcuts",
+			"section": "Delimiters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#delimiters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-190",
+			"kind": "shortcut",
+			"title": "}",
+			"typed": [
+				"}"
+			],
+			"latex": "\\}",
+			"keywords": "Delimiters \\} }",
+			"page": "Keyboard Shortcuts",
+			"section": "Delimiters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#delimiters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-191",
+			"kind": "shortcut",
+			"title": "Angle bracket",
+			"typed": [
+				"(:",
+				":)"
+			],
+			"latex": "\\langle",
+			"keywords": "Delimiters \\langle angle bracket inner product",
+			"page": "Keyboard Shortcuts",
+			"section": "Delimiters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#delimiters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-193",
+			"kind": "shortcut",
+			"title": "mm",
+			"typed": [
+				"mm"
+			],
+			"latex": "\\operatorname{mm}",
+			"keywords": "Units \\operatorname{mm} mm",
+			"page": "Keyboard Shortcuts",
+			"section": "Units",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#units"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-194",
+			"kind": "shortcut",
+			"title": "cm",
+			"typed": [
+				"cm"
+			],
+			"latex": "\\operatorname{cm}",
+			"keywords": "Units \\operatorname{cm} cm",
+			"page": "Keyboard Shortcuts",
+			"section": "Units",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#units"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-195",
+			"kind": "shortcut",
+			"title": "km",
+			"typed": [
+				"km"
+			],
+			"latex": "\\operatorname{km}",
+			"keywords": "Units \\operatorname{km} km",
+			"page": "Keyboard Shortcuts",
+			"section": "Units",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#units"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-196",
+			"kind": "shortcut",
+			"title": "kg",
+			"typed": [
+				"kg"
+			],
+			"latex": "\\operatorname{kg}",
+			"keywords": "Units \\operatorname{kg} kg",
+			"page": "Keyboard Shortcuts",
+			"section": "Units",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#units"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-197",
+			"kind": "shortcut",
+			"title": "If and only if",
+			"typed": [
+				"iff",
+				"<=>",
+				"hArr"
+			],
+			"latex": "iff",
+			"keywords": "Arrows iff if and only if iff",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-198",
+			"kind": "shortcut",
+			"title": "Rightarrowtail",
+			"typed": [
+				">->"
+			],
+			"latex": "\\rightarrowtail",
+			"keywords": "Arrows \\rightarrowtail rightarrowtail",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-199",
+			"kind": "shortcut",
+			"title": "Twoheadrightarrow",
+			"typed": [
+				"->>"
+			],
+			"latex": "\\twoheadrightarrow",
+			"keywords": "Arrows \\twoheadrightarrow twoheadrightarrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-200",
+			"kind": "shortcut",
+			"title": "Twoheadrightarrowtail",
+			"typed": [
+				">->>"
+			],
+			"latex": "\\twoheadrightarrowtail",
+			"keywords": "Arrows \\twoheadrightarrowtail twoheadrightarrowtail",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-201",
+			"kind": "shortcut",
+			"title": "Arrow",
+			"typed": [
+				"->",
+				"->..."
+			],
+			"latex": "\\to",
+			"keywords": "Arrows \\to arrow to tends to limit",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-203",
+			"kind": "shortcut",
+			"title": "Maps to",
+			"typed": [
+				"|->"
+			],
+			"latex": "\\mapsto",
+			"keywords": "Arrows \\mapsto maps to",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-204",
+			"kind": "shortcut",
+			"title": "Longrightarrow",
+			"typed": [
+				"-->"
+			],
+			"latex": "\\longrightarrow",
+			"keywords": "Arrows \\longrightarrow longrightarrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-205",
+			"kind": "shortcut",
+			"title": "Longleftarrow",
+			"typed": [
+				"<--"
+			],
+			"latex": "\\longleftarrow",
+			"keywords": "Arrows \\longleftarrow longleftarrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-206",
+			"kind": "shortcut",
+			"title": "Implies",
+			"typed": [
+				"=>",
+				"rArr"
+			],
+			"latex": "\\Rightarrow",
+			"keywords": "Arrows \\Rightarrow implies double arrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-207",
+			"kind": "shortcut",
+			"title": "Long implies",
+			"typed": [
+				"==>"
+			],
+			"latex": "\\Longrightarrow",
+			"keywords": "Arrows \\Longrightarrow long implies arrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-209",
+			"kind": "shortcut",
+			"title": "Left right arrow",
+			"typed": [
+				"<->",
+				"harr"
+			],
+			"latex": "\\leftrightarrow",
+			"keywords": "Arrows \\leftrightarrow left right arrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-210",
+			"kind": "shortcut",
+			"title": "Up arrow",
+			"typed": [
+				"uarr"
+			],
+			"latex": "\\uparrow",
+			"keywords": "Arrows \\uparrow up arrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-211",
+			"kind": "shortcut",
+			"title": "Down arrow",
+			"typed": [
+				"darr"
+			],
+			"latex": "\\downarrow",
+			"keywords": "Arrows \\downarrow down arrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-212",
+			"kind": "shortcut",
+			"title": "Right arrow",
+			"typed": [
+				"rarr"
+			],
+			"latex": "\\rightarrow",
+			"keywords": "Arrows \\rightarrow right arrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-214",
+			"kind": "shortcut",
+			"title": "Left arrow",
+			"typed": [
+				"larr"
+			],
+			"latex": "\\leftarrow",
+			"keywords": "Arrows \\leftarrow left arrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-215",
+			"kind": "shortcut",
+			"title": "Leftarrow",
+			"typed": [
+				"lArr"
+			],
+			"latex": "\\Leftarrow",
+			"keywords": "Arrows \\Leftarrow Leftarrow",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-218",
+			"kind": "shortcut",
+			"title": "Turnstile",
+			"typed": [
+				"|--"
+			],
+			"latex": "\\vdash",
+			"keywords": "Arrows \\vdash turnstile proves",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-219",
+			"kind": "shortcut",
+			"title": "Models",
+			"typed": [
+				"|=="
+			],
+			"latex": "\\models",
+			"keywords": "Arrows \\models models entails",
+			"page": "Keyboard Shortcuts",
+			"section": "Arrows",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-220",
+			"kind": "shortcut",
+			"title": "Alpha",
+			"typed": [
+				"alpha"
+			],
+			"latex": "\\alpha",
+			"keywords": "Greek Letters \\alpha alpha",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-221",
+			"kind": "shortcut",
+			"title": "beta",
+			"typed": [
+				"beta"
+			],
+			"latex": "\\beta",
+			"keywords": "Greek Letters \\beta beta",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-222",
+			"kind": "shortcut",
+			"title": "Gamma",
+			"typed": [
+				"gamma",
+				"Gamma"
+			],
+			"latex": "\\gamma",
+			"keywords": "Greek Letters \\gamma gamma",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-224",
+			"kind": "shortcut",
+			"title": "Delta",
+			"typed": [
+				"delta",
+				"Delta"
+			],
+			"latex": "\\delta",
+			"keywords": "Greek Letters \\delta delta",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-226",
+			"kind": "shortcut",
+			"title": "Epsilon",
+			"typed": [
+				"epsilon"
+			],
+			"latex": "\\epsilon",
+			"keywords": "Greek Letters \\epsilon epsilon",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-227",
+			"kind": "shortcut",
+			"title": "Varepsilon",
+			"typed": [
+				"varepsilon"
+			],
+			"latex": "\\varepsilon",
+			"keywords": "Greek Letters \\varepsilon varepsilon",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-228",
+			"kind": "shortcut",
+			"title": "zeta",
+			"typed": [
+				"zeta"
+			],
+			"latex": "\\zeta",
+			"keywords": "Greek Letters \\zeta zeta",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-229",
+			"kind": "shortcut",
+			"title": "eta",
+			"typed": [
+				"eta"
+			],
+			"latex": "\\eta",
+			"keywords": "Greek Letters \\eta eta",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-230",
+			"kind": "shortcut",
+			"title": "Theta",
+			"typed": [
+				"theta",
+				"Theta"
+			],
+			"latex": "\\theta",
+			"keywords": "Greek Letters \\theta theta",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-231",
+			"kind": "shortcut",
+			"title": "Vartheta",
+			"typed": [
+				"vartheta"
+			],
+			"latex": "\\vartheta",
+			"keywords": "Greek Letters \\vartheta vartheta",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-233",
+			"kind": "shortcut",
+			"title": "iota",
+			"typed": [
+				"iota"
+			],
+			"latex": "\\iota",
+			"keywords": "Greek Letters \\iota iota",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-234",
+			"kind": "shortcut",
+			"title": "Kappa",
+			"typed": [
+				"kappa"
+			],
+			"latex": "\\kappa",
+			"keywords": "Greek Letters \\kappa kappa",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-235",
+			"kind": "shortcut",
+			"title": "Lambda",
+			"typed": [
+				"lambda",
+				"Lambda"
+			],
+			"latex": "\\lambda",
+			"keywords": "Greek Letters \\lambda lambda",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-237",
+			"kind": "shortcut",
+			"title": "mu",
+			"typed": [
+				"mu",
+				"µ"
+			],
+			"latex": "\\mu",
+			"keywords": "Greek Letters \\mu mu",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-238",
+			"kind": "shortcut",
+			"title": "nu",
+			"typed": [
+				"nu"
+			],
+			"latex": "\\nu",
+			"keywords": "Greek Letters \\nu nu",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-239",
+			"kind": "shortcut",
+			"title": "xi",
+			"typed": [
+				"xi"
+			],
+			"latex": "\\xi",
+			"keywords": "Greek Letters \\xi xi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-240",
+			"kind": "shortcut",
+			"title": "Xi",
+			"typed": [
+				"Xi"
+			],
+			"latex": "\\Xi",
+			"keywords": "Greek Letters \\Xi Xi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-241",
+			"kind": "shortcut",
+			"title": "pi",
+			"typed": [
+				"pi"
+			],
+			"latex": "\\pi",
+			"keywords": "Greek Letters \\pi pi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-242",
+			"kind": "shortcut",
+			"title": "Pi",
+			"typed": [
+				"Pi"
+			],
+			"latex": "\\Pi",
+			"keywords": "Greek Letters \\Pi Pi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-243",
+			"kind": "shortcut",
+			"title": "rho",
+			"typed": [
+				"rho"
+			],
+			"latex": "\\rho",
+			"keywords": "Greek Letters \\rho rho",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-244",
+			"kind": "shortcut",
+			"title": "Sigma",
+			"typed": [
+				"sigma",
+				"Sigma"
+			],
+			"latex": "\\sigma",
+			"keywords": "Greek Letters \\sigma sigma",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-246",
+			"kind": "shortcut",
+			"title": "tau",
+			"typed": [
+				"tau"
+			],
+			"latex": "\\tau",
+			"keywords": "Greek Letters \\tau tau",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-247",
+			"kind": "shortcut",
+			"title": "Upsilon",
+			"typed": [
+				"upsilon"
+			],
+			"latex": "\\upsilon",
+			"keywords": "Greek Letters \\upsilon upsilon",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-248",
+			"kind": "shortcut",
+			"title": "phi",
+			"typed": [
+				"phi"
+			],
+			"latex": "\\phi",
+			"keywords": "Greek Letters \\phi phi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-249",
+			"kind": "shortcut",
+			"title": "Varphi",
+			"typed": [
+				"varphi"
+			],
+			"latex": "\\varphi",
+			"keywords": "Greek Letters \\varphi varphi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-250",
+			"kind": "shortcut",
+			"title": "Phi",
+			"typed": [
+				"Phi"
+			],
+			"latex": "\\Phi",
+			"keywords": "Greek Letters \\Phi Phi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-251",
+			"kind": "shortcut",
+			"title": "chi",
+			"typed": [
+				"chi"
+			],
+			"latex": "\\chi",
+			"keywords": "Greek Letters \\chi chi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-252",
+			"kind": "shortcut",
+			"title": "psi",
+			"typed": [
+				"psi"
+			],
+			"latex": "\\psi",
+			"keywords": "Greek Letters \\psi psi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-253",
+			"kind": "shortcut",
+			"title": "Psi",
+			"typed": [
+				"Psi"
+			],
+			"latex": "\\Psi",
+			"keywords": "Greek Letters \\Psi Psi",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-254",
+			"kind": "shortcut",
+			"title": "Omega",
+			"typed": [
+				"Ω",
+				"Omega"
+			],
+			"latex": "\\omega",
+			"keywords": "Greek Letters \\omega omega",
+			"page": "Keyboard Shortcuts",
+			"section": "Greek Letters",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#greek-letters"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-256",
+			"kind": "shortcut",
+			"title": "Percent",
+			"typed": [
+				"%"
+			],
+			"latex": "\\%",
+			"keywords": "Miscellaneous \\% percent",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-257",
+			"kind": "shortcut",
+			"title": "Double prime",
+			"typed": [
+				"''"
+			],
+			"latex": "^{\\doubleprime}",
+			"keywords": "Miscellaneous ^{\\doubleprime} double prime second derivative",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-258",
+			"kind": "shortcut",
+			"title": "sum",
+			"typed": [
+				"∑",
+				"sum"
+			],
+			"latex": "\\sum",
+			"keywords": "Miscellaneous \\sum sum sigma summation",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-260",
+			"kind": "shortcut",
+			"title": "Integral",
+			"typed": [
+				"int"
+			],
+			"latex": "\\int_{}^{}",
+			"keywords": "Miscellaneous \\int_{}^{} integral",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-261",
+			"kind": "shortcut",
+			"title": "Product",
+			"typed": [
+				"prod"
+			],
+			"latex": "\\prod_{}^{}",
+			"keywords": "Miscellaneous \\prod_{}^{} product",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-262",
+			"kind": "shortcut",
+			"title": "Square root",
+			"typed": [
+				"sqrt"
+			],
+			"latex": "\\sqrt{}",
+			"keywords": "Miscellaneous \\sqrt{} square root radical",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-263",
+			"kind": "shortcut",
+			"title": "Logical not",
+			"typed": [
+				"neg"
+			],
+			"latex": "\\neg",
+			"keywords": "Miscellaneous \\neg logical not negation",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-264",
+			"kind": "shortcut",
+			"title": "Lim inf",
+			"typed": [
+				"liminf"
+			],
+			"latex": "\\operatorname*{lim~inf}_{}",
+			"keywords": "Miscellaneous \\operatorname*{lim~inf}_{} lim inf",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-265",
+			"kind": "shortcut",
+			"title": "Lim sup",
+			"typed": [
+				"limsup"
+			],
+			"latex": "\\operatorname*{lim~sup}_{}",
+			"keywords": "Miscellaneous \\operatorname*{lim~sup}_{} lim sup",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-266",
+			"kind": "shortcut",
+			"title": "Arg min",
+			"typed": [
+				"argmin"
+			],
+			"latex": "\\operatorname*{arg~min}_{}",
+			"keywords": "Miscellaneous \\operatorname*{arg~min}_{} arg min",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-267",
+			"kind": "shortcut",
+			"title": "Arg max",
+			"typed": [
+				"argmax"
+			],
+			"latex": "\\operatorname*{arg~max}_{}",
+			"keywords": "Miscellaneous \\operatorname*{arg~max}_{} arg max",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-268",
+			"kind": "shortcut",
+			"title": "dots",
+			"typed": [
+				"..."
+			],
+			"latex": "\\ldots",
+			"keywords": "Miscellaneous \\ldots dots ellipsis",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-269",
+			"kind": "shortcut",
+			"title": "+\\cdots",
+			"typed": [
+				"+..."
+			],
+			"latex": "+\\cdots",
+			"keywords": "Miscellaneous +\\cdots",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-270",
+			"kind": "shortcut",
+			"title": "-\\cdots",
+			"typed": [
+				"-..."
+			],
+			"latex": "-\\cdots",
+			"keywords": "Miscellaneous -\\cdots",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "shortcut-271",
+			"kind": "shortcut",
+			"title": "Therefore",
+			"typed": [
+				":."
+			],
+			"latex": "\\therefore",
+			"keywords": "Miscellaneous \\therefore therefore",
+			"page": "Keyboard Shortcuts",
+			"section": "Miscellaneous",
+			"url": "https://mathlive.io/mathfield/reference/keybindings/#miscellaneous"
+		},
+		{
+			"source": "docs",
+			"id": "basic-fraction",
+			"kind": "key",
+			"title": "Fraction",
+			"keys": [
+				"/"
+			],
+			"macKeys": [
+				"/"
+			],
+			"latex": "\\frac{\\placeholder{}}{\\placeholder{}}",
+			"keywords": "\\frac{\\blacksquare}{\\blacksquare} fraction divide over keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-superscript-power",
+			"kind": "key",
+			"title": "Superscript, Power",
+			"keys": [
+				"^",
+				"Shift+6"
+			],
+			"macKeys": [
+				"^",
+				"⇧6"
+			],
+			"latex": "\\placeholder{}^\\placeholder{}",
+			"keywords": "\\square^\\blacksquare square keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-subscript",
+			"kind": "key",
+			"title": "Subscript",
+			"keys": [
+				"_"
+			],
+			"macKeys": [
+				"_"
+			],
+			"latex": "\\placeholder{}_\\placeholder{}",
+			"keywords": "\\square_\\blacksquare square keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-square-root",
+			"kind": "key",
+			"title": "Square root",
+			"keys": [
+				"Alt+V"
+			],
+			"macKeys": [
+				"⌥V"
+			],
+			"latex": "\\sqrt{\\placeholder{}}",
+			"keywords": "\\sqrt{\\blacksquare} square root radical keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-integral",
+			"kind": "key",
+			"title": "Integral",
+			"keys": [
+				"Alt+B"
+			],
+			"macKeys": [
+				"⌥B"
+			],
+			"latex": "\\int^{\\placeholder{}}_{\\placeholder{}}",
+			"keywords": "\\int^{\\blacksquare}_{\\blacksquare} integral keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-sum",
+			"kind": "key",
+			"title": "Sum",
+			"keys": [
+				"Alt+W"
+			],
+			"macKeys": [
+				"⌥W"
+			],
+			"latex": "\\sum",
+			"keywords": "\\sum sum sigma summation keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-product",
+			"kind": "key",
+			"title": "Product",
+			"keys": [
+				"Alt+Shift+P"
+			],
+			"macKeys": [
+				"⌥⇧P"
+			],
+			"latex": "\\prod^\\placeholder{}_\\placeholder{}",
+			"keywords": "\\prod^\\blacksquare_\\blacksquare product keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-pi",
+			"kind": "key",
+			"title": "Pi",
+			"keys": [
+				"PI"
+			],
+			"macKeys": [
+				"PI"
+			],
+			"latex": "\\pi",
+			"keywords": "\\pi pi keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-infinity",
+			"kind": "key",
+			"title": "Infinity",
+			"keys": [
+				"OO"
+			],
+			"macKeys": [
+				"OO"
+			],
+			"latex": "\\infty",
+			"keywords": "\\infty infinity keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-plus-or-minus",
+			"kind": "key",
+			"title": "Plus or minus",
+			"keys": [
+				"+-"
+			],
+			"macKeys": [
+				"+-"
+			],
+			"latex": "\\pm",
+			"keywords": "\\pm plus or minus keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-blackboard-r",
+			"kind": "key",
+			"title": "Blackboard R",
+			"keys": [
+				"Shift+RSHIFT+R"
+			],
+			"macKeys": [
+				"⇧RSHIFT+R"
+			],
+			"latex": "\\mathbb{R}",
+			"keywords": "\\mathbb{R} blackboard bold double struck keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-enter-exit-latex-mode",
+			"kind": "key",
+			"title": "Enter/exit LaTeX mode",
+			"keys": [
+				"ESC"
+			],
+			"macKeys": [
+				"ESC"
+			],
+			"keywords": "keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "basic-enter-exit-text-mode",
+			"kind": "key",
+			"title": "Enter/exit text mode",
+			"keys": [
+				"\"",
+				"Shift+'"
+			],
+			"macKeys": [
+				"\"",
+				"⇧'"
+			],
+			"keywords": "keyboard shortcut",
+			"page": "Mathfield demo",
+			"section": "Keyboard shortcuts",
+			"url": "https://mathlive.io/mathfield/demo/#keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "page-/mathfield/virtual-keyboard/",
+			"kind": "section",
+			"title": "Math Virtual Keyboard",
+			"text": "Typing math requires access to many special symbols. While keyboard shortcuts and inline shortcuts can help when a physical keyboard is available, touch-enabled devices without a physical keyboard attached need another solution.",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/layout-selector",
+			"kind": "section",
+			"title": "Layout Selector",
+			"text": "The math keyboard includes multiple layouts which can be chosen with the layout selector. The default layouts include the most common math symbols. They are: numeric, symbols, alphabetic and greek letters.",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#layout-selector"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/undoredopaste",
+			"kind": "section",
+			"title": "Undo/Redo/Paste",
+			"text": "The Editing Toolbar display icons for common editing functions: Undo, Redo, Paste, Cut and Copy. If you have a physical keyboard attached, these commands can be invoked with their corresponding keybindings: Ctrl/Command+Z,",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#undoredopaste"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/shift-key",
+			"kind": "section",
+			"title": "Shift Key",
+			"text": "Press the Shift Key ⇧ to access alternative symbols. The keyboard updates when the key is pressed to reveal the symbols. If a physical keyboard is available, the SHIFT or",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#shift-key"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/variants",
+			"kind": "section",
+			"title": "Variants",
+			"text": "A key variant is a symbol that can be accessed by a long press on a keycap. The variant is often related to the original symbol. To display variants related to a keycap, press and hold the keycap.",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#variants"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/numeric-layout",
+			"kind": "section",
+			"title": "Numeric Layout",
+			"text": "",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#numeric-layout"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/symbols-layout",
+			"kind": "section",
+			"title": "Symbols Layout",
+			"text": "",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#symbols-layout"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/alphabetic-layout",
+			"kind": "section",
+			"title": "Alphabetic Layout",
+			"text": "",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#alphabetic-layout"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/virtual-keyboard/greek-layout",
+			"kind": "section",
+			"title": "Greek Layout",
+			"text": "",
+			"commands": [],
+			"keywords": "Math Virtual Keyboard",
+			"page": "Math Virtual Keyboard",
+			"url": "https://mathlive.io/mathfield/virtual-keyboard/#greek-layout"
+		},
+		{
+			"source": "docs",
+			"id": "page-/mathfield/matrix/",
+			"kind": "section",
+			"title": "Matrix Editor",
+			"text": "A matrix is a useful way to represent and manipulate linear transformations. They are also used to represent systems of linear equations and many other mathematical structures.",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/creating-a-matrix",
+			"kind": "section",
+			"title": "Creating a Matrix",
+			"text": "There are several methods to create a matrix in a mathfield.",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#creating-a-matrix"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/using-keyboard-shortcuts",
+			"kind": "section",
+			"title": "Creating a Matrix: Using Keyboard Shortcuts",
+			"text": "To create a matrix using the keyboard: 1. Type a parenthesis, square bracket, or curly brace. 2. Type the first element of the matrix. 3. Type the ALT/OPTION+TAB key to move to the next column:",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#using-keyboard-shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/using-the-context-menu",
+			"kind": "section",
+			"title": "Creating a Matrix: Using the Context Menu",
+			"text": "The mathfield context menu provides a convenient way to create a matrix. To access the context menu right click (or CTRL+click) on the mathfield.",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#using-the-context-menu"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/matrix-borders",
+			"kind": "section",
+			"title": "Matrix Borders",
+			"text": "The borders of a matrix are parentheses by default. They can be changed to square brackets, curly braces, vertical bars, or none.",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#matrix-borders"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/changing-the-shape-of-a-matrix",
+			"kind": "section",
+			"title": "Changing the Shape of a Matrix",
+			"text": "To add or remove rows or columns right click (or CTRL+click) on the matrix, then select the desired action from the menu. Rows and columns get added or removed relative to the cell the cursor is in.",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#changing-the-shape-of-a-matrix"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/spacing",
+			"kind": "section",
+			"title": "Spacing",
+			"text": "",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#spacing"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/changing-the-spacing-of-an-individual-row",
+			"kind": "section",
+			"title": "Spacing: Changing the spacing of an individual row",
+			"text": "The spacing between rows can be adjusted by setting an optional argument to the \\\\ command. The argument is a length, and can be positive or negative.",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#changing-the-spacing-of-an-individual-row"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/matrix/changing-the-spacing-of-all-rows",
+			"kind": "section",
+			"title": "Spacing: Changing the spacing of all rows",
+			"text": "The spacing between rows can be controlled by setting the arraystretch register. The default value is 1.0. The value of a register can also be modified by using the \\renewcommand command.",
+			"commands": [],
+			"keywords": "Matrix Editor",
+			"page": "Matrix Editor",
+			"url": "https://mathlive.io/mathfield/matrix/#changing-the-spacing-of-all-rows"
+		},
+		{
+			"source": "docs",
+			"id": "page-/mathfield/reference/commands/",
+			"kind": "section",
+			"title": "LaTeX Commands",
+			"text": "Mathfields support over 800 LaTeX commands.",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/text-zone-math-zone-and-math-style",
+			"kind": "section",
+			"title": "Text Zone, Math Zone and Math Style",
+			"text": "",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#text-zone-math-zone-and-math-style"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/math-zone",
+			"kind": "section",
+			"title": "Text Zone, Math Zone and Math Style: Math Zone",
+			"text": "When in a Math Zone, the content is laid out using typesetting rules specific to math. For example, variables such as $x$ are displayed in italics, an appropriate amount of space is inserted around some letters such as $ f $ to improve…",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#math-zone"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/text-zone",
+			"kind": "section",
+			"title": "Text Zone, Math Zone and Math Style: Text Zone",
+			"text": "To include some textual content, use the \\text{} or \\textrm{} commands to switch to a Text Zone. Inside a Text Zone, white spaces are preserved and the spacing of characters is not adjusted.",
+			"commands": [
+				"\\textrm",
+				"\\text",
+				"\\mbox",
+				"\\textnormal"
+			],
+			"keywords": "LaTeX Commands textrm text mbox textnormal",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#text-zone"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/fractions-and-binomials",
+			"kind": "section",
+			"title": "Fractions and Binomials",
+			"text": "The \\frac command is used to represent a fraction. The first argument is the numerator, the second argument is the denominator. It will size itself according to the current math style (display, text (inline), script, scriptscript).",
+			"commands": [
+				"\\frac",
+				"\\dfrac",
+				"\\tfrac",
+				"\\cfrac",
+				"\\pdiff",
+				"\\binom",
+				"\\dbinom",
+				"\\tbinom",
+				"\\over",
+				"\\atop",
+				"\\choose",
+				"\\overwithdelims",
+				"\\atopwithdelims"
+			],
+			"keywords": "LaTeX Commands fraction divide over dfrac tfrac cfrac pdiff binomial coefficient choose dbinom tbinom over atop choose overwithdelims atopwithdelims",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#fractions-and-binomials"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/binary-operators",
+			"kind": "section",
+			"title": "Binary Operators",
+			"text": "Some binary operators can also be used as a unary operator: +, -, etc... Their spacing is adjusted accordingly. For example in -1-2 there is less space between - and 1 than there is between - and 2.",
+			"commands": [
+				"\\pm",
+				"\\mp",
+				"\\nicefrac",
+				"\\div",
+				"\\divides",
+				"\\sqrt",
+				"\\surd",
+				"\\intercal",
+				"\\dotplus",
+				"\\doublebarwedge",
+				"\\divideontimes",
+				"\\times",
+				"\\cdot",
+				"\\ast",
+				"\\star",
+				"\\ltimes",
+				"\\rtimes",
+				"\\leftthreetimes",
+				"\\rightthreetimes",
+				"\\circ",
+				"\\bullet",
+				"\\centerdot",
+				"\\boxminus",
+				"\\boxplus",
+				"\\boxtimes",
+				"\\boxdot",
+				"\\ominus",
+				"\\oplus",
+				"\\otimes",
+				"\\odot",
+				"\\circleddash",
+				"\\circledast",
+				"\\circledcirc",
+				"\\oslash"
+			],
+			"keywords": "LaTeX Commands plus or minus mp nicefrac division sign divide divides square root radical surd intercal dotplus doublebarwedge divideontimes times multiply cross product multiplication dot times product asterisk star ltimes rtimes leftthreetimes rightthreetimes composition compose degree bullet centerdot boxminus boxplus boxtimes boxdot circled minus direct sum xor tensor product circled dot circleddash circledast circledcirc oslash",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#binary-operators"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/functions",
+			"kind": "section",
+			"title": "Functions",
+			"text": "",
+			"commands": [
+				"\\exp",
+				"\\ln",
+				"\\log",
+				"\\lg",
+				"\\lb",
+				"\\ker",
+				"\\det",
+				"\\arg",
+				"\\dim",
+				"\\gcd",
+				"\\argmin",
+				"\\argmax",
+				"\\plim"
+			],
+			"keywords": "LaTeX Commands exponential natural logarithm log logarithm log lg lb ker determinant arg dim gcd argmin argmax plim",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#functions"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/trigonometry",
+			"kind": "section",
+			"title": "Functions: Trigonometry",
+			"text": "",
+			"commands": [
+				"\\degree",
+				"\\circ",
+				"\\ang",
+				"\\arccos",
+				"\\arcsin",
+				"\\arctan",
+				"\\cos",
+				"\\cosh",
+				"\\cot",
+				"\\coth",
+				"\\csc",
+				"\\sec",
+				"\\sin",
+				"\\sinh",
+				"\\tan",
+				"\\tanh"
+			],
+			"keywords": "LaTeX Commands degree composition compose degree ang arccos arcsin arctan cosine trig cosh cot coth csc sec sine trig sinh tangent trig tanh",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#trigonometry"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/non-standard-trig-functions",
+			"kind": "section",
+			"title": "Non-Standard Trig Functions",
+			"text": "The commands in this section are not part of the standard LaTeX distribution but are available in some packages. Use them with caution as they may not be supported by all LaTeX engines. Consider using \\operatorname{} instead.",
+			"commands": [
+				"\\arctg",
+				"\\arcctg",
+				"\\ch",
+				"\\ctg",
+				"\\cth",
+				"\\cotg",
+				"\\cosec",
+				"\\sh",
+				"\\tg",
+				"\\th"
+			],
+			"keywords": "LaTeX Commands arctg arcctg ch ctg cth cotg cosec sh tg th",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#non-standard-trig-functions"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/bounds",
+			"kind": "section",
+			"title": "Functions: Bounds",
+			"text": "",
+			"commands": [
+				"\\max",
+				"\\min",
+				"\\sup",
+				"\\inf",
+				"\\lim",
+				"\\liminf",
+				"\\limsup",
+				"\\injlim",
+				"\\varlimsup",
+				"\\varliminf",
+				"\\varinjlim"
+			],
+			"keywords": "LaTeX Commands maximum minimum sup inf limit liminf limsup injlim varlimsup varliminf varinjlim",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#bounds"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/projections",
+			"kind": "section",
+			"title": "Functions: Projections",
+			"text": "",
+			"commands": [
+				"\\Pr",
+				"\\hom",
+				"\\varprojlim",
+				"\\projlim"
+			],
+			"keywords": "LaTeX Commands Pr hom varprojlim projlim",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#projections"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/modulo",
+			"kind": "section",
+			"title": "Functions: Modulo",
+			"text": "",
+			"commands": [
+				"\\pmod",
+				"\\mod",
+				"\\bmod"
+			],
+			"keywords": "LaTeX Commands pmod modulo bmod",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#modulo"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/custom-functions",
+			"kind": "section",
+			"title": "Custom Functions",
+			"text": "To define a custom function use the \\operatorname{} command: the name of the function will be displayed in upright font and with the appropriate spacing.",
+			"commands": [
+				"\\operatorname"
+			],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#custom-functions"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/unicode",
+			"kind": "section",
+			"title": "Unicode",
+			"text": "If a symbol is not available as a LaTeX command, you can use the Unicode codepoint of the character. The commands below can be used to insert a Unicode character in a mathfield.",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#unicode"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/large-operators",
+			"kind": "section",
+			"title": "Large Operators",
+			"text": "Large operators display their limits above and below or adjacent to the operator, depending on the math style (Display Style or Text Style) and on the operator.",
+			"commands": [
+				"\\sum",
+				"\\prod",
+				"\\coprod",
+				"\\int",
+				"\\intop",
+				"\\iint",
+				"\\iiint",
+				"\\oint",
+				"\\smallint",
+				"\\bigcup",
+				"\\bigcap",
+				"\\bigvee",
+				"\\bigwedge",
+				"\\biguplus",
+				"\\bigotimes",
+				"\\bigoplus",
+				"\\bigodot",
+				"\\bigsqcup",
+				"\\oiint",
+				"\\oiiint",
+				"\\intclockwise",
+				"\\varointclockwise",
+				"\\ointctrclockwise",
+				"\\intctrclockwise",
+				"\\Cap",
+				"\\Cup",
+				"\\doublecap",
+				"\\doublecup",
+				"\\sqcup",
+				"\\sqcap",
+				"\\uplus",
+				"\\wr",
+				"\\amalg",
+				"\\forall",
+				"\\exists",
+				"\\nexists",
+				"\\land",
+				"\\wedge",
+				"\\lor",
+				"\\vee",
+				"\\barwedge",
+				"\\veebar",
+				"\\nor",
+				"\\curlywedge",
+				"\\curlyvee",
+				"\\lnot",
+				"\\neg",
+				"\\to",
+				"\\gets",
+				"\\implies",
+				"\\impliedby",
+				"\\biconditional",
+				"\\therefore",
+				"\\because",
+				"\\leftrightarrow",
+				"\\Leftrightarrow",
+				"\\roundimplies",
+				"\\models",
+				"\\vdash",
+				"\\dashv"
+			],
+			"keywords": "LaTeX Commands sum sigma summation product coprod integral intop iint iiint oint smallint big union big intersection bigvee bigwedge biguplus bigotimes bigoplus bigodot bigsqcup oiint oiiint intclockwise varointclockwise ointctrclockwise intctrclockwise Cap Cup doublecap doublecup sqcup sqcap uplus wr amalg for all there exists there does not exist logical and wedge and logical or vee or barwedge veebar nor curlywedge curlyvee lnot logical not negation arrow to tends to limit gets implies impliedby biconditional therefore because left right arrow if and only if iff equivalent arrow roundimplies models entails turnstile proves dashv",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#large-operators"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/arrows",
+			"kind": "section",
+			"title": "Arrows",
+			"text": "",
+			"commands": [
+				"\\rightarrow",
+				"\\leftarrow",
+				"\\twoheadrightarrow",
+				"\\twoheadleftarrow",
+				"\\rightarrowtail",
+				"\\leftarrowtail",
+				"\\dashrightarrow",
+				"\\dashleftarrow",
+				"\\longrightarrow",
+				"\\longleftarrow",
+				"\\longleftrightarrow",
+				"\\Rightarrow",
+				"\\Leftarrow",
+				"\\Longrightarrow",
+				"\\Longleftarrow",
+				"\\Longleftrightarrow",
+				"\\mapsto",
+				"\\longmapsto",
+				"\\multimap",
+				"\\uparrow",
+				"\\downarrow",
+				"\\updownarrow",
+				"\\Uparrow",
+				"\\Downarrow",
+				"\\Updownarrow",
+				"\\rightharpoonup",
+				"\\leftharpoonup",
+				"\\rightharpoondown",
+				"\\leftharpoondown",
+				"\\rightleftharpoons",
+				"\\leftrightharpoons",
+				"\\searrow",
+				"\\nearrow",
+				"\\swarrow",
+				"\\nwarrow",
+				"\\Rrightarrow",
+				"\\Lleftarrow",
+				"\\leftrightarrows",
+				"\\rightleftarrows",
+				"\\curvearrowright",
+				"\\curvearrowleft",
+				"\\hookrightarrow",
+				"\\hookleftarrow",
+				"\\looparrowright",
+				"\\looparrowleft",
+				"\\circlearrowright",
+				"\\circlearrowleft",
+				"\\rightrightarrows",
+				"\\leftleftarrows",
+				"\\upuparrows",
+				"\\downdownarrows",
+				"\\Rsh",
+				"\\Lsh",
+				"\\upharpoonright",
+				"\\upharpoonleft",
+				"\\downharpoonright",
+				"\\downharpoonleft",
+				"\\restriction",
+				"\\rightsquigarrow",
+				"\\leftrightsquigarrow"
+			],
+			"keywords": "LaTeX Commands right arrow left arrow twoheadrightarrow twoheadleftarrow rightarrowtail leftarrowtail dashrightarrow dashleftarrow longrightarrow longleftarrow longleftrightarrow implies double arrow Leftarrow long implies arrow Longleftarrow Longleftrightarrow maps to longmapsto multimap up arrow down arrow updownarrow Uparrow Downarrow Updownarrow rightharpoonup leftharpoonup rightharpoondown leftharpoondown rightleftharpoons leftrightharpoons searrow nearrow swarrow nwarrow Rrightarrow Lleftarrow leftrightarrows rightleftarrows curvearrowright curvearrowleft hookrightarrow hookleftarrow looparrowright looparrowleft circlearrowright circlearrowleft rightrightarrows leftleftarrows upuparrows downdownarrows Rsh Lsh upharpoonright upharpoonleft downharpoonright downharpoonleft restriction rightsquigarrow leftrightsquigarrow leadsto",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#arrows"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/negated-arrows",
+			"kind": "section",
+			"title": "Negated Arrows",
+			"text": "",
+			"commands": [
+				"\\nrightarrow",
+				"\\nleftarrow",
+				"\\nleftrightarrow",
+				"\\nRightarrow",
+				"\\nLeftarrow",
+				"\\nLeftrightarrow"
+			],
+			"keywords": "LaTeX Commands nrightarrow nleftarrow nleftrightarrow nRightarrow nLeftarrow nLeftrightarrow",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#negated-arrows"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/extensible-arrows",
+			"kind": "section",
+			"title": "Extensible Arrows",
+			"text": "The length of the arrow commands above is fixed. The length of the commands in this section is determined by the length of the content above and below the arrows, which is specified as an argument (and optional argument):",
+			"commands": [
+				"\\xrightarrow",
+				"\\xlongequal",
+				"\\xleftarrow",
+				"\\xleftrightarrow",
+				"\\xtwoheadrightarrow",
+				"\\xtwoheadleftarrow",
+				"\\xRightarrow",
+				"\\xLeftarrow",
+				"\\xrightharpoonup",
+				"\\xleftharpoonup",
+				"\\xrightharpoondown",
+				"\\xleftharpoondown",
+				"\\xrightleftharpoons",
+				"\\xleftrightharpoons",
+				"\\xhookrightarrow",
+				"\\xhookleftarrow",
+				"\\xmapsto",
+				"\\xtofrom"
+			],
+			"keywords": "LaTeX Commands xrightarrow xlongequal xleftarrow xleftrightarrow xtwoheadrightarrow xtwoheadleftarrow xRightarrow xLeftarrow xrightharpoonup xleftharpoonup xrightharpoondown xleftharpoondown xrightleftharpoons xleftrightharpoons xhookrightarrow xhookleftarrow xmapsto xtofrom",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#extensible-arrows"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/accents",
+			"kind": "section",
+			"title": "Accents",
+			"text": "",
+			"commands": [
+				"\\dot",
+				"\\ddot",
+				"\\dddot",
+				"\\ddddot",
+				"\\mathring",
+				"\\tilde",
+				"\\bar",
+				"\\breve",
+				"\\check",
+				"\\hat",
+				"\\vec"
+			],
+			"keywords": "LaTeX Commands dot ddot dddot ddddot mathring tilde bar breve check hat unit vector vector arrow",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#accents"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/deprecated-accents",
+			"kind": "section",
+			"title": "Deprecated Accents",
+			"text": "The following commands are supported for compatibility with existing content, but their use is generally discouraged when creating new LaTeX content when an equivalent Unicode character is available.",
+			"commands": [
+				"\\acute",
+				"\\grave",
+				"\\c"
+			],
+			"keywords": "LaTeX Commands acute grave c",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#deprecated-accents"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/extensible-accents",
+			"kind": "section",
+			"title": "Extensible Accents",
+			"text": "Regular accents have a fixed width and do not stretch. For example, compare:",
+			"commands": [
+				"\\vec",
+				"\\overrightarrow",
+				"\\overline",
+				"\\overgroup",
+				"\\overbrace",
+				"\\overlinesegment",
+				"\\overleftarrow",
+				"\\overleftrightarrow",
+				"\\overarc",
+				"\\overparen",
+				"\\wideparen",
+				"\\widetilde",
+				"\\widehat",
+				"\\widecheck",
+				"\\Overrightarrow",
+				"\\overleftharpoon",
+				"\\overrightharpoon",
+				"\\underline",
+				"\\undergroup",
+				"\\underbrace",
+				"\\underlinesegment",
+				"\\underrightarrow",
+				"\\underleftarrow",
+				"\\underleftrightarrow",
+				"\\underarc",
+				"\\underparen",
+				"\\utilde"
+			],
+			"keywords": "LaTeX Commands vector arrow overrightarrow overline conjugate mean bar overgroup overbrace overlinesegment overleftarrow overleftrightarrow overarc overparen wideparen widetilde widehat widecheck Overrightarrow overleftharpoon overrightharpoon underline undergroup underbrace underlinesegment underrightarrow underleftarrow underleftrightarrow underarc underparen utilde",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#extensible-accents"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/relational-operators",
+			"kind": "section",
+			"title": "Relational Operators",
+			"text": "To display a vertical \"stack\" of two symbols as a relational operator, use the \\stackrel command: $$a\\stackrel{?}{=}b $$ a\\stackrel{?}{=}b.",
+			"commands": [
+				"\\lt",
+				"\\gt",
+				"\\le",
+				"\\leq",
+				"\\ge",
+				"\\geq",
+				"\\shortparallel",
+				"\\leqslant",
+				"\\geqslant",
+				"\\gtrsim",
+				"\\approxeq",
+				"\\thickapprox",
+				"\\lessapprox",
+				"\\gtrapprox",
+				"\\precapprox",
+				"\\succapprox",
+				"\\thicksim",
+				"\\succsim",
+				"\\precsim",
+				"\\backsim",
+				"\\eqsim",
+				"\\backsimeq",
+				"\\lesssim",
+				"\\smallsmile",
+				"\\smallfrown",
+				"\\leqq",
+				"\\eqslantless",
+				"\\lll",
+				"\\lessgtr",
+				"\\lesseqgtr",
+				"\\lesseqqgtr",
+				"\\risingdotseq",
+				"\\fallingdotseq",
+				"\\preccurlyeq",
+				"\\curlyeqprec",
+				"\\vDash",
+				"\\Vvdash",
+				"\\bumpeq",
+				"\\Bumpeq",
+				"\\geqq",
+				"\\eqslantgtr",
+				"\\ggg",
+				"\\gtrless",
+				"\\gtreqless",
+				"\\gtreqqless",
+				"\\succcurlyeq",
+				"\\curlyeqsucc",
+				"\\Vdash",
+				"\\shortmid",
+				"\\between",
+				"\\pitchfork",
+				"\\varpropto",
+				"\\llless",
+				"\\gggtr",
+				"\\doteqdot",
+				"\\Doteq",
+				"\\eqcirc",
+				"\\circeq",
+				"\\lhd",
+				"\\rhd"
+			],
+			"keywords": "LaTeX Commands lt gt less than or equal less than or equal greater than or equal greater than or equal shortparallel leqslant geqslant gtrsim approxeq thickapprox lessapprox gtrapprox precapprox succapprox thicksim succsim precsim backsim eqsim backsimeq lesssim smallsmile smallfrown leqq eqslantless lll lessgtr lesseqgtr lesseqqgtr risingdotseq fallingdotseq preccurlyeq curlyeqprec vDash Vvdash bumpeq Bumpeq geqq eqslantgtr ggg gtrless gtreqless gtreqqless succcurlyeq curlyeqsucc Vdash shortmid between pitchfork varpropto llless gggtr doteqdot Doteq eqcirc circeq lhd rhd lessdot gtrdot much less than much greater than defined as assign measeq eqdef questioned equal congruent isomorphic equivalent congruent identical prec preceq succ succeq perp proportional to smile frown sim doteq bowtie Join asymp approximately equal parallel simeq ratio coloncolon colonequals coloncolonequals equalscolon equalscoloncolon colonminus coloncolonminus minuscolon minuscoloncolon coloncolonapprox coloncolonsim simcolon simcoloncolon approxcoloncolon notni ordinarycolon vcentcolon dblcolon coloneqq Coloneqq Coloneq eqqcolon Eqqcolon eqcolon Eqcolon colonapprox Colonapprox colonsim Colonsim",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/negated-relational-operators",
+			"kind": "section",
+			"title": "Negated Relational Operators",
+			"text": "To negate other relational operators, use the \\not command, e.g.",
+			"commands": [
+				"\\ne",
+				"\\neq",
+				"\\not",
+				"\\nless",
+				"\\nleq",
+				"\\lneq",
+				"\\lneqq",
+				"\\nleqq",
+				"\\nleqslant",
+				"\\ngeq",
+				"\\lvertneqq",
+				"\\lnsim",
+				"\\lnapprox",
+				"\\nprec",
+				"\\npreceq",
+				"\\precnsim",
+				"\\precnapprox",
+				"\\nsim",
+				"\\nshortmid",
+				"\\nmid",
+				"\\nvdash",
+				"\\nvDash",
+				"\\ngtr",
+				"\\ngeqslant",
+				"\\ngeqq",
+				"\\gneq",
+				"\\gneqq",
+				"\\gvertneqq",
+				"\\gnsim",
+				"\\gnapprox",
+				"\\nsucc",
+				"\\nsucceq",
+				"\\succnsim",
+				"\\succnapprox",
+				"\\ncong",
+				"\\nshortparallel",
+				"\\nparallel",
+				"\\nVDash",
+				"\\nVdash",
+				"\\precneqq",
+				"\\succneqq",
+				"\\unlhd",
+				"\\unrhd"
+			],
+			"keywords": "LaTeX Commands not equal neq not nless nleq lneq lneqq nleqq nleqslant ngeq lvertneqq lnsim lnapprox nprec npreceq precnsim precnapprox nsim nshortmid nmid nvdash nvDash ngtr ngeqslant ngeqq gneq gneqq gvertneqq gnsim gnapprox nsucc nsucceq succnsim succnapprox ncong nshortparallel nparallel nVDash nVdash precneqq succneqq unlhd unrhd",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#negated-relational-operators"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/sets",
+			"kind": "section",
+			"title": "Sets",
+			"text": "To represent sets such as the natural numbers, integers, real numbers, etc., use the \\mathbb command for best compatibility, e.g. \\mathbb{N} $ \\mathbb{N} $ or \\mathbb{C} $ \\mathbb{C} $, etc...",
+			"commands": [
+				"\\emptyset",
+				"\\varnothing",
+				"\\N",
+				"\\R",
+				"\\Q",
+				"\\C",
+				"\\Z",
+				"\\P",
+				"\\doubleStruckCapitalN",
+				"\\doubleStruckCapitalR",
+				"\\doubleStruckCapitalQ",
+				"\\doubleStruckCapitalZ",
+				"\\doubleStruckCapitalP"
+			],
+			"keywords": "LaTeX Commands empty set empty set natural numbers real numbers rational numbers complex numbers integers prime numbers doubleStruckCapitalN doubleStruckCapitalR doubleStruckCapitalQ doubleStruckCapitalZ doubleStruckCapitalP",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#sets"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/set-operators",
+			"kind": "section",
+			"title": "Sets: Set Operators",
+			"text": "",
+			"commands": [
+				"\\cap",
+				"\\cup",
+				"\\setminus",
+				"\\smallsetminus",
+				"\\complement"
+			],
+			"keywords": "LaTeX Commands intersection union setminus smallsetminus complement",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#set-operators"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/relational-set-operators",
+			"kind": "section",
+			"title": "Sets: Relational Set Operators",
+			"text": "",
+			"commands": [
+				"\\nsupseteqq",
+				"\\supsetneq",
+				"\\varsupsetneq",
+				"\\supsetneqq",
+				"\\varsupsetneqq",
+				"\\nsubseteqq",
+				"\\subseteqq",
+				"\\Subset",
+				"\\sqsubset",
+				"\\supseteqq",
+				"\\Supset",
+				"\\sqsupset",
+				"\\sqsubseteq",
+				"\\sqsupseteq",
+				"\\in",
+				"\\notin",
+				"\\ni",
+				"\\owns",
+				"\\backepsilon",
+				"\\subset",
+				"\\supset",
+				"\\subseteq",
+				"\\supseteq",
+				"\\subsetneq",
+				"\\varsubsetneq",
+				"\\subsetneqq",
+				"\\varsubsetneqq",
+				"\\nsubset",
+				"\\nsupset",
+				"\\nsubseteq",
+				"\\nsupseteq"
+			],
+			"keywords": "LaTeX Commands nsupseteqq supsetneq varsupsetneq supsetneqq varsupsetneqq nsubseteqq subseteqq Subset sqsubset supseteqq Supset sqsupset sqsubseteq sqsupseteq element of in set not an element of ni owns backepsilon subset superset subset or equal superset or equal subsetneq varsubsetneq subsetneqq varsubsetneqq nsubset nsupset nsubseteq nsupseteq",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#relational-set-operators"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/greek",
+			"kind": "section",
+			"title": "Greek",
+			"text": "",
+			"commands": [
+				"\\alpha",
+				"\\beta",
+				"\\gamma",
+				"\\delta",
+				"\\epsilon",
+				"\\varepsilon",
+				"\\zeta",
+				"\\eta",
+				"\\theta",
+				"\\vartheta",
+				"\\iota",
+				"\\kappa",
+				"\\varkappa",
+				"\\lambda",
+				"\\mu",
+				"\\nu",
+				"\\xi",
+				"\\omicron",
+				"\\pi",
+				"\\varpi",
+				"\\rho",
+				"\\varrho",
+				"\\sigma",
+				"\\varsigma",
+				"\\tau",
+				"\\phi",
+				"\\varphi",
+				"\\upsilon",
+				"\\chi",
+				"\\psi",
+				"\\omega",
+				"\\digamma",
+				"\\Alpha",
+				"\\Beta",
+				"\\Gamma",
+				"\\varGamma",
+				"\\Delta",
+				"\\varDelta",
+				"\\Epsilon",
+				"\\Zeta",
+				"\\Eta",
+				"\\Theta",
+				"\\varTheta",
+				"\\Iota",
+				"\\Kappa",
+				"\\Lambda",
+				"\\varLambda",
+				"\\Mu",
+				"\\Nu",
+				"\\Xi",
+				"\\varXi",
+				"\\Omicron",
+				"\\Pi",
+				"\\varPi",
+				"\\Rho",
+				"\\Sigma",
+				"\\varSigma",
+				"\\Tau",
+				"\\Phi",
+				"\\varPhi"
+			],
+			"keywords": "LaTeX Commands alpha beta gamma delta epsilon varepsilon zeta eta theta vartheta iota kappa varkappa lambda mu nu xi omicron pi varpi rho varrho sigma varsigma tau phi varphi upsilon chi psi omega digamma Alpha Beta Gamma varGamma Delta varDelta Epsilon Zeta Eta Theta varTheta Iota Kappa Lambda varLambda Mu Nu Xi varXi Omicron Pi varPi Rho Sigma varSigma Tau Phi varPhi Upsilon varUpsilon Chi Psi varPsi Omega varOmega",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#greek"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/hebrew",
+			"kind": "section",
+			"title": "Hebrew",
+			"text": "",
+			"commands": [
+				"\\aleph",
+				"\\beth",
+				"\\gimel",
+				"\\daleth"
+			],
+			"keywords": "LaTeX Commands aleph beth gimel daleth",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#hebrew"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/letterlike-symbols",
+			"kind": "section",
+			"title": "Letterlike Symbols",
+			"text": "",
+			"commands": [
+				"\\mid",
+				"\\top",
+				"\\bot",
+				"\\nabla",
+				"\\partial",
+				"\\ell",
+				"\\hbar",
+				"\\pounds",
+				"\\euro",
+				"\\And",
+				"\\differencedelta",
+				"\\wp",
+				"\\hslash",
+				"\\Finv",
+				"\\Game",
+				"\\eth",
+				"\\mho",
+				"\\Bbbk",
+				"\\yen",
+				"\\imath",
+				"\\jmath",
+				"\\degree",
+				"\\Re",
+				"\\Im"
+			],
+			"keywords": "LaTeX Commands mid top bottom perpendicular nabla gradient del partial derivative ell hbar pounds euro And differencedelta wp hslash Finv Game eth mho Bbbk yen imath jmath degree Re Im",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#letterlike-symbols"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/delimiters",
+			"kind": "section",
+			"title": "Delimiters",
+			"text": "A delimiter, also called a fence, is a symbol used to group some symbols, for example parentheses, brackets, braces, etc... To grow delimiters based on their content, use \\left...\\right.",
+			"commands": [
+				"\\lparen",
+				"\\rparen",
+				"\\lbrace",
+				"\\rbrace",
+				"\\langle",
+				"\\rangle",
+				"\\lfloor",
+				"\\rfloor",
+				"\\lceil",
+				"\\rceil",
+				"\\vert",
+				"\\lvert",
+				"\\rvert",
+				"\\Vert",
+				"\\mVert",
+				"\\lVert",
+				"\\rVert",
+				"\\lbrack",
+				"\\rbrack",
+				"\\ulcorner",
+				"\\urcorner",
+				"\\llcorner",
+				"\\lrcorner",
+				"\\lgroup",
+				"\\rgroup",
+				"\\lmoustache",
+				"\\rmoustache",
+				"\\mvert"
+			],
+			"keywords": "LaTeX Commands lparen rparen lbrace rbrace angle bracket inner product angle bracket inner product floor floor ceiling ceiling vert lvert rvert norm double bar mVert lVert rVert lbrack rbrack ulcorner urcorner llcorner lrcorner lgroup rgroup lmoustache rmoustache mvert",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#delimiters"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/punctuation",
+			"kind": "section",
+			"title": "Punctuation",
+			"text": "",
+			"commands": [
+				"\\Colon",
+				"\\colon"
+			],
+			"keywords": "LaTeX Commands double colon colon",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#punctuation"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/dots",
+			"kind": "section",
+			"title": "Punctuation: Dots",
+			"text": "",
+			"commands": [
+				"\\cdotp",
+				"\\ldotp",
+				"\\vdots",
+				"\\cdots",
+				"\\ddots",
+				"\\ldots",
+				"\\mathellipsis"
+			],
+			"keywords": "LaTeX Commands cdotp ldotp vdots cdots ddots dots ellipsis mathellipsis",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#dots"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/shapes",
+			"kind": "section",
+			"title": "Shapes",
+			"text": "",
+			"commands": [
+				"\\square",
+				"\\Box",
+				"\\blacksquare",
+				"\\bigcirc",
+				"\\circledS",
+				"\\circledR",
+				"\\diamond",
+				"\\Diamond",
+				"\\lozenge",
+				"\\blacklozenge",
+				"\\triangleleft",
+				"\\triangleright",
+				"\\triangle",
+				"\\triangledown",
+				"\\blacktriangleleft",
+				"\\blacktriangleright",
+				"\\blacktriangle",
+				"\\blacktriangledown",
+				"\\vartriangle",
+				"\\vartriangleleft",
+				"\\vartriangleright",
+				"\\triangleq",
+				"\\trianglelefteq",
+				"\\trianglerighteq",
+				"\\ntriangleleft",
+				"\\ntriangleright",
+				"\\ntrianglelefteq",
+				"\\ntrianglerighteq",
+				"\\bigtriangleup",
+				"\\bigtriangledown",
+				"\\dagger",
+				"\\dag",
+				"\\ddag",
+				"\\ddagger",
+				"\\maltese"
+			],
+			"keywords": "LaTeX Commands square Box blacksquare bigcirc circledS circledR diamond Diamond lozenge blacklozenge triangleleft triangleright triangle triangledown blacktriangleleft blacktriangleright blacktriangle blacktriangledown vartriangle vartriangleleft vartriangleright triangleq trianglelefteq trianglerighteq ntriangleleft ntriangleright ntrianglelefteq ntrianglerighteq bigtriangleup bigtriangledown dagger dag ddag ddagger maltese",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#shapes"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/st-marys-road-symbols-for-theoretical-computer-science",
+			"kind": "section",
+			"title": "St Mary's Road Symbols for Theoretical Computer Science",
+			"text": "",
+			"commands": [
+				"\\mapsfrom",
+				"\\Mapsfrom",
+				"\\MapsTo",
+				"\\Yup",
+				"\\lightning",
+				"\\leftarrowtriangle",
+				"\\rightarrowtriangle",
+				"\\leftrightarrowtriangle",
+				"\\boxdot",
+				"\\bigtriangleup",
+				"\\bigtriangledown",
+				"\\boxbar",
+				"\\Lbag",
+				"\\Rbag",
+				"\\llbracket",
+				"\\rrbracket",
+				"\\longmapsfrom",
+				"\\Longmapsfrom",
+				"\\Longmapsto",
+				"\\boxslash",
+				"\\boxbslash",
+				"\\boxast",
+				"\\boxcircle",
+				"\\boxbox",
+				"\\fatsemi",
+				"\\leftslice",
+				"\\rightslice",
+				"\\interleave",
+				"\\biginterleave",
+				"\\sslash",
+				"\\talloblong"
+			],
+			"keywords": "LaTeX Commands mapsfrom Mapsfrom MapsTo Yup lightning leftarrowtriangle rightarrowtriangle leftrightarrowtriangle boxdot bigtriangleup bigtriangledown boxbar Lbag Rbag llbracket rrbracket longmapsfrom Longmapsfrom Longmapsto boxslash boxbslash boxast boxcircle boxbox fatsemi leftslice rightslice interleave biginterleave sslash talloblong",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#st-marys-road-symbols-for-theoretical-computer-science"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/layout",
+			"kind": "section",
+			"title": "Layout",
+			"text": "These commands change the amount of space around a symbol: \\mathop{} treats its argument as if it was a large operator, \\mathrel{} a relational operator, \\mathbin{} a binary operator, \\mathopen{} and \\mathclose{} an opening and closing…",
+			"commands": [
+				"\\mathop",
+				"\\mathbin",
+				"\\mathrel",
+				"\\mathopen",
+				"\\mathclose",
+				"\\mathpunct",
+				"\\mathinner",
+				"\\mathord",
+				"\\overset",
+				"\\underset",
+				"\\overunderset",
+				"\\stackrel",
+				"\\stackbin",
+				"\\rlap",
+				"\\llap",
+				"\\mathllap",
+				"\\mathrlap"
+			],
+			"keywords": "LaTeX Commands mathop mathbin mathrel mathopen mathclose mathpunct mathinner mathord overset underset overunderset stackrel stackbin rlap llap mathllap mathrlap",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#layout"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/spacing",
+			"kind": "section",
+			"title": "Spacing",
+			"text": "",
+			"commands": [
+				"\\hspace",
+				"\\unicode"
+			],
+			"keywords": "LaTeX Commands hspace unicode",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#spacing"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/decorations",
+			"kind": "section",
+			"title": "Decorations",
+			"text": "",
+			"commands": [
+				"\\textcolor",
+				"\\color",
+				"\\colorbox",
+				"\\fcolorbox",
+				"\\boxed",
+				"\\bbox",
+				"\\rule"
+			],
+			"keywords": "LaTeX Commands textcolor color colorbox fcolorbox box boxed frame bbox rule",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#decorations"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/notations",
+			"kind": "section",
+			"title": "Decorations: Notations",
+			"text": "\\enclose The \\enclose command is very flexible. It accepts three arguments, two of which are required: - a list of whitespace-delimited values: They can be combined:",
+			"commands": [
+				"\\enclose",
+				"\\cancel",
+				"\\bcancel",
+				"\\xcancel"
+			],
+			"keywords": "LaTeX Commands enclose cancel strike out bcancel xcancel",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#notations"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/shortcuts",
+			"kind": "section",
+			"title": "Decorations: Shortcuts",
+			"text": "Some commands are shortcuts for common notations:",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#shortcuts"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/colors",
+			"kind": "section",
+			"title": "Decorations: Colors",
+			"text": "To change the foreground color, use the \\textcolor{}{} command. To change the background, use the \\colorbox{}{} command. The first argument of these commands is a color specified as:",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#colors"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/font-styling",
+			"kind": "section",
+			"title": "Font Styling",
+			"text": "",
+			"commands": [
+				"\\selectfont"
+			],
+			"keywords": "LaTeX Commands selectfont",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#font-styling"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/bold",
+			"kind": "section",
+			"title": "Font Styling: Bold",
+			"text": "",
+			"commands": [
+				"\\fontseries",
+				"\\boldsymbol",
+				"\\bfseries",
+				"\\mdseries",
+				"\\bm",
+				"\\bold",
+				"\\textbf",
+				"\\textmd",
+				"\\mathbf",
+				"\\mathbfit"
+			],
+			"keywords": "LaTeX Commands fontseries boldsymbol bfseries mdseries bm bold textbf textmd mathbf mathbfit",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#bold"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/italic",
+			"kind": "section",
+			"title": "Font Styling: Italic",
+			"text": "",
+			"commands": [
+				"\\upshape",
+				"\\slshape",
+				"\\textup",
+				"\\textsl",
+				"\\textit",
+				"\\mathit"
+			],
+			"keywords": "LaTeX Commands upshape slshape textup textsl textit mathit",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#italic"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/font-family",
+			"kind": "section",
+			"title": "Font Styling: Font Family",
+			"text": "Typewriter / Monospace Sans-Serif Math Variants",
+			"commands": [
+				"\\fontfamily",
+				"\\texttt",
+				"\\mathtt",
+				"\\ttfamily",
+				"\\textsf",
+				"\\mathsf",
+				"\\sffamily",
+				"\\mathfrak",
+				"\\mathcal",
+				"\\mathscr",
+				"\\mathbb",
+				"\\Bbb",
+				"\\frak",
+				"\\text"
+			],
+			"keywords": "LaTeX Commands fontfamily texttt mathtt ttfamily textsf mathsf sffamily mathfrak mathcal mathscr blackboard bold double struck Bbb frak text",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#font-family"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/mathjax-html-extension",
+			"kind": "section",
+			"title": "Font Styling: MathJax HTML Extension",
+			"text": "Mathfields support some commands from the MathJax HTML extension. \\class{className}{expression} When used in a component, the class names should refer to a stylesheet defined with a tag inside the element.",
+			"commands": [
+				"\\class",
+				"\\cssId",
+				"\\htmlData"
+			],
+			"keywords": "LaTeX Commands class cssId htmlData",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#mathjax-html-extension"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/other-extensions",
+			"kind": "section",
+			"title": "Font Styling: Other Extensions",
+			"text": "\\error{content} The argument of this command is a string that will be rendered with a red background and a red underline. \\texttip{expression}{hover text}",
+			"commands": [
+				"\\text",
+				"\\texttip",
+				"\\mathtip"
+			],
+			"keywords": "LaTeX Commands text texttip mathtip",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#other-extensions"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/others",
+			"kind": "section",
+			"title": "Font Styling: Others",
+			"text": "The following commands are supported for compatibility with existing content, but their use is generally discouraged when creating new LaTeX content",
+			"commands": [
+				"\\text",
+				"\\scshape",
+				"\\textsc",
+				"\\textrm",
+				"\\mathrm",
+				"\\bf",
+				"\\it"
+			],
+			"keywords": "LaTeX Commands text scshape textsc textrm mathrm bf it",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#others"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/sizing",
+			"kind": "section",
+			"title": "Sizing",
+			"text": "In LaTeX using the sizing commands below may not always achieve the expected result. In mathfields, the sizing commands are applied consistently to text and math mode.",
+			"commands": [
+				"\\tiny",
+				"\\scriptsize",
+				"\\footnotesize",
+				"\\small",
+				"\\normalsize",
+				"\\large",
+				"\\Large",
+				"\\LARGE",
+				"\\huge",
+				"\\Huge",
+				"\\bigl",
+				"\\Bigl",
+				"\\biggl",
+				"\\Biggl"
+			],
+			"keywords": "LaTeX Commands tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge bigl Bigl biggl Biggl",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#sizing"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/various",
+			"kind": "section",
+			"title": "Various",
+			"text": "",
+			"commands": [
+				"\\infty",
+				"\\prime",
+				"\\doubleprime",
+				"\\backslash",
+				"\\diagup",
+				"\\sharp",
+				"\\flat",
+				"\\natural",
+				"\\clubsuit",
+				"\\heartsuit",
+				"\\spadesuit",
+				"\\diamondsuit",
+				"\\angle",
+				"\\checkmark",
+				"\\measuredangle",
+				"\\sphericalangle",
+				"\\backprime",
+				"\\backdoubleprime",
+				"\\originalof",
+				"\\laplace",
+				"\\imageof",
+				"\\Laplace",
+				"\\space",
+				"\\smash",
+				"\\vphantom",
+				"\\hphantom",
+				"\\phantom"
+			],
+			"keywords": "LaTeX Commands infinity prime double prime second derivative backslash set minus diagup sharp flat natural clubsuit heartsuit spadesuit diamondsuit angle checkmark measuredangle sphericalangle backprime backdoubleprime originalof laplace imageof Laplace space smash vphantom hphantom phantom",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#various"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/mediawiki-texvcsty-package",
+			"kind": "section",
+			"title": "MediaWiki (texvc.sty package)",
+			"text": "Mathfields support the commands used by MediaWiki pages, except for the deprecated ones.",
+			"commands": [
+				"\\darr",
+				"\\dArr",
+				"\\Darr",
+				"\\lang",
+				"\\rang",
+				"\\uarr",
+				"\\uArr",
+				"\\Uarr",
+				"\\N",
+				"\\R",
+				"\\Z",
+				"\\alef",
+				"\\alefsym",
+				"\\Alpha",
+				"\\Beta",
+				"\\bull",
+				"\\Chi",
+				"\\clubs",
+				"\\cnums",
+				"\\Complex",
+				"\\Dagger",
+				"\\diamonds",
+				"\\empty",
+				"\\Epsilon",
+				"\\Eta",
+				"\\exist",
+				"\\harr",
+				"\\hArr",
+				"\\Harr",
+				"\\hearts",
+				"\\image",
+				"\\infin",
+				"\\Iota",
+				"\\isin",
+				"\\Kappa",
+				"\\larr",
+				"\\lArr",
+				"\\Larr",
+				"\\lrarr",
+				"\\lrArr",
+				"\\Lrarr",
+				"\\Mu",
+				"\\natnums",
+				"\\Nu",
+				"\\Omicron",
+				"\\plusmn",
+				"\\rarr",
+				"\\rArr",
+				"\\Rarr",
+				"\\real",
+				"\\reals",
+				"\\Reals",
+				"\\Rho",
+				"\\sdot",
+				"\\sect",
+				"\\spades",
+				"\\sub",
+				"\\sube",
+				"\\supe",
+				"\\Tau"
+			],
+			"keywords": "LaTeX Commands darr dArr Darr lang rang uarr uArr Uarr natural numbers real numbers integers alef alefsym Alpha Beta bull Chi clubs cnums Complex Dagger diamonds empty Epsilon Eta exist harr hArr Harr hearts image infin Iota isin Kappa larr lArr Larr lrarr lrArr Lrarr Mu natnums Nu Omicron plusmn rarr rArr Rarr real reals Reals Rho sdot sect spades sub sube supe Tau thetasym weierp Zeta",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#mediawiki-texvcsty-package"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/physics",
+			"kind": "section",
+			"title": "Physics",
+			"text": "",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#physics"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/braket-notation",
+			"kind": "section",
+			"title": "Physics: Braket Notation",
+			"text": "Mathfields support the commands of the braket package",
+			"commands": [
+				"\\bra",
+				"\\ket",
+				"\\braket",
+				"\\Bra",
+				"\\Ket",
+				"\\Braket"
+			],
+			"keywords": "LaTeX Commands bra ket braket Bra Ket Braket",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#braket-notation"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/chemistry-mhchem-package",
+			"kind": "section",
+			"title": "Chemistry (mhchem package)",
+			"text": "Mathfields support the commands of the mhchem package.",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#chemistry-mhchem-package"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/chemical-formulas",
+			"kind": "section",
+			"title": "Chemistry (mhchem package): Chemical Formulas",
+			"text": "",
+			"commands": [
+				"\\ce"
+			],
+			"keywords": "LaTeX Commands ce",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#chemical-formulas"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/charges",
+			"kind": "section",
+			"title": "Chemistry (mhchem package): Charges",
+			"text": "",
+			"commands": [
+				"\\ce"
+			],
+			"keywords": "LaTeX Commands ce",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#charges"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/stoichiometric-numbers",
+			"kind": "section",
+			"title": "Chemistry (mhchem package): Stoichiometric numbers",
+			"text": "",
+			"commands": [
+				"\\ce"
+			],
+			"keywords": "LaTeX Commands ce",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#stoichiometric-numbers"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/isotopes",
+			"kind": "section",
+			"title": "Chemistry (mhchem package): Isotopes",
+			"text": "",
+			"commands": [
+				"\\ce"
+			],
+			"keywords": "LaTeX Commands ce",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#isotopes"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/complex-examples",
+			"kind": "section",
+			"title": "Chemistry (mhchem package): Complex Examples",
+			"text": "",
+			"commands": [
+				"\\ce"
+			],
+			"keywords": "LaTeX Commands ce",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#complex-examples"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/macros",
+			"kind": "section",
+			"title": "Macros",
+			"text": "",
+			"commands": [
+				"\\iff",
+				"\\set",
+				"\\rd",
+				"\\rD",
+				"\\scriptCapitalE",
+				"\\scriptCapitalH",
+				"\\scriptCapitalL",
+				"\\gothicCapitalC",
+				"\\gothicCapitalH",
+				"\\gothicCapitalI",
+				"\\gothicCapitalR",
+				"\\imaginaryI",
+				"\\imaginaryJ",
+				"\\exponentialE",
+				"\\differentialD",
+				"\\capitalDifferentialD",
+				"\\Set"
+			],
+			"keywords": "LaTeX Commands iff set rd rD scriptCapitalE scriptCapitalH scriptCapitalL gothicCapitalC gothicCapitalH gothicCapitalI gothicCapitalR imaginary unit i imaginary unit j Euler's number e exponential differential d derivative capitalDifferentialD Set",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#macros"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/environments--matrixes",
+			"kind": "section",
+			"title": "Environments / Matrixes",
+			"text": "Environments are used to typeset a set of related items, for example cells in a matrix, or multi-line equations. Each row in a tabular environment is separated by a \\ command.",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#environments--matrixes"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/matrixes",
+			"kind": "section",
+			"title": "Environments / Matrixes: Matrixes",
+			"text": "array A simple table with no delimiters. \\begin{array}{lc} a + 1 & b + 1 \\\\ c & \\frac{1}{d} \\end{array} `} The {lc} argument specifies how many columns there are and how they should be formated: * l: left-aligned * c: centered * r:",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#matrixes"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/other-environments",
+			"kind": "section",
+			"title": "Environments / Matrixes: Other Environments",
+			"text": "cases, dcases and rcases Use these environments to write piecewise functions: f(n) = \\begin{cases} 1 & \\text{if } n = 0 \\\\ f(n-1) + f(n-2) & \\text{if } n \\ge 2 \\end{cases} `}",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#other-environments"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/tex-registers",
+			"kind": "section",
+			"title": "TeX Registers",
+			"text": "The math typesetting is influenced by some \"constants\" that are stored in \"registers\". Those registers can be set globally on a mathfield using the mf.registers property.",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#tex-registers"
+		},
+		{
+			"source": "docs",
+			"id": "section-/mathfield/reference/commands/tex-primitives",
+			"kind": "section",
+			"title": "TeX Primitives",
+			"text": "The commands below are TeX primitives. Most are only useful when writing TeX packages or macros.",
+			"commands": [],
+			"keywords": "LaTeX Commands",
+			"page": "LaTeX Commands",
+			"url": "https://mathlive.io/mathfield/reference/commands/#tex-primitives"
+		}
+	]
+}

@@ -59,6 +59,7 @@ import { FormulaSearchModal } from "./formula-search";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
+import { HelpModal } from "./help";
 import { WelcomeModal } from "./welcome";
 import {
 	LATEX_SUITE_ID,
@@ -160,6 +161,11 @@ export default class MathLivePlugin extends Plugin {
 			id: "open-guide",
 			name: "Open the guide",
 			callback: () => this.openGuide(),
+		});
+		this.addCommand({
+			id: "open-help",
+			name: "Help: how to type math, search the docs",
+			callback: () => this.openHelp(),
 		});
 		this.addCommand({
 			id: "toggle-raw-latex",
@@ -265,6 +271,8 @@ export default class MathLivePlugin extends Plugin {
 			menu.addItem((item) =>
 				item.setTitle("Convert a PDF to notes").setIcon("file-text").onClick(() => this.convertPdf())
 			);
+			menu.addSeparator();
+			menu.addItem((item) => item.setTitle("Help: how to…").setIcon("circle-help").onClick(() => this.openHelp()));
 			menu.showAtMouseEvent(event);
 		});
 		// Every open PDF gets a button in its header, where people look when they have a PDF open.
@@ -285,6 +293,7 @@ export default class MathLivePlugin extends Plugin {
 				accountAction: () => this.account.menuAction(),
 				openEditorWindow: (view, position, inline) => this.openEditorWindowAt(view, position, inline),
 				openGuide: () => this.openGuide(),
+				openHelp: () => this.openHelp(),
 				showsRawLatex: () => this.showRawLatex,
 				drawFormula: (target) => void openDrawWindow(this.app, { settings: this.settings, target, fallback: () => this.noteScanTarget() }),
 				findFormula: (insert) => this.openFormulaSearch(insert),
@@ -397,7 +406,44 @@ export default class MathLivePlugin extends Plugin {
 			drawFormula: () => void this.drawFormulaIntoNote(),
 			convertPdf: () => this.convertPdf(),
 			findFormula: () => this.findFormula(),
+			openHelp: () => this.openHelp(),
 		}).open();
+	}
+
+	// "How do I…": getting started with typing math, and a search over the MathLive docs.
+	openHelp(query = "") {
+		new HelpModal(
+			this.app,
+			{
+				run: (action) => {
+					switch (action) {
+						case "guide":
+							return this.openGuide();
+						case "add-inline":
+							return this.openEditorFromWelcome();
+						case "find-formula":
+							return this.findFormula();
+						case "scan":
+							return void (CAN_SCAN_SCREEN ? this.scanScreenAreaIntoNote() : this.scanPhotoIntoNote());
+						case "draw":
+							return void this.drawFormulaIntoNote();
+						case "pdf":
+							return this.convertPdf();
+						case "raw-latex":
+							return this.toggleRawLatex();
+						case "settings":
+							return this.openSettings();
+					}
+				},
+			},
+			query
+		).open();
+	}
+
+	openSettings() {
+		const setting = (this.app as unknown as { setting?: { open(): void; openTabById(id: string): void } }).setting;
+		setting?.open();
+		setting?.openTabById(this.manifest.id);
 	}
 
 	// Find a formula in the library and put it at the cursor of the open note, or of `editor`.
@@ -843,6 +889,13 @@ export class MathliveSettingTab extends PluginSettingTab {
 						setting.addButton((button) => button.setButtonText("Open the guide").onClick(() => this.plugin.openGuide()));
 					},
 				},
+				{
+					name: "Help",
+					desc: "How to type fractions, powers, Greek letters and more, with a search over the MathLive docs.",
+					addControl: setting => {
+						setting.addButton((button) => button.setButtonText("Open help").onClick(() => this.plugin.openHelp()));
+					},
+				},
 			],
 		},
 		{
@@ -1219,6 +1272,19 @@ class MathLiveModal extends Modal {
 	initHeader() {
 		this.setTitle(this.inline ? "Edit inline math" : "Edit math block");
 		this.titleEl.addClass("mathlive-modal-title");
+		// A div, not a button: a button here takes Obsidian's first focus away from the formula.
+		const help = this.titleEl.createDiv({
+			cls: "clickable-icon mathlive-modal-help",
+			attr: { "aria-label": "Help: how to…", role: "button", tabindex: "0" },
+		});
+		setIcon(help, "circle-help");
+		help.addEventListener("click", () => this.plugin.openHelp());
+		help.addEventListener("keydown", (event) => {
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				this.plugin.openHelp();
+			}
+		});
 	}
 
 	// Under the buttons: the scans left with a way to get more, and the guide.

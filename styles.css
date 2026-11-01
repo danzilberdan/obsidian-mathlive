@@ -1121,3 +1121,149 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 .mathlive-upgrade-modal .setting-item {
   border-top: none;
 }
+
+/* Help: getting started with typing math, and "How do I…" over the MathLive docs. */
+.mathlive-help-modal .modal {
+  max-width: 680px;
+}
+
+.mathlive-help-search {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: 0 var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m, 8px);
+  background: var(--background-primary);
+}
+
+.mathlive-help-search:focus-within {
+  border-color: var(--interactive-accent);
+}
+
+.mathlive-help-search-icon {
+  display: flex;
+  color: var(--text-muted);
+}
+
+.mathlive-help-search input[type="search"] {
+  flex: 1;
+  height: 2.5rem;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--font-ui-medium);
+}
+
+.mathlive-help-results {
+  max-height: 60vh;
+  margin-top: var(--size-4-2);
+  overflow-y: auto;
+}
+
+.mathlive-help-heading {
+  padding: var(--size-4-2) var(--size-4-3) var(--size-4-1);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mathlive-help-empty {
+  padding: var(--size-4-4) var(--size-4-3);
+  color: var(--text-muted);
+}
+
+.mathlive-help-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-radius: var(--radius-s, 4px);
+  cursor: var(--cursor);
+}
+
+.mathlive-help-item.is-selected {
+  background: var(--background-modifier-hover);
+}
+
+.mathlive-help-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-3);
+}
+
+.mathlive-help-item-title {
+  font-weight: var(--font-semibold);
+}
+
+.mathlive-help-preview {
+  flex: none;
+  max-width: 50%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: var(--text-normal);
+}
+
+.mathlive-help-how,
+.mathlive-help-answer {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  line-height: var(--line-height-normal);
+}
+
+.mathlive-help-how kbd {
+  margin: 0 0.1em;
+}
+
+.mathlive-help-item-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-3);
+}
+
+.mathlive-help-item-foot:empty {
+  display: none;
+}
+
+.mathlive-help-item-foot button {
+  height: auto;
+  padding: var(--size-2-2) var(--size-4-3);
+  font-size: var(--font-ui-small);
+}
+
+.mathlive-help-docs-link,
+.mathlive-help-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  font-size: var(--font-ui-smaller);
+}
+
+.mathlive-help-link-icon {
+  display: flex;
+}
+
+.mathlive-help-link-icon svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.mathlive-help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2) var(--size-4-5);
+  padding-top: var(--size-4-3);
+  margin-top: var(--size-4-2);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* The ? in the editor window's title. */
+.mathlive-modal-title {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
