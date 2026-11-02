@@ -11,6 +11,7 @@ export interface GuideActions {
 	drawFormula(): void;
 	convertPdf(): void;
 	findFormula(): void;
+	openHelp(): void;
 }
 
 // Everything MathLive does, one section each, with a button to try it. Opens from the welcome
@@ -104,6 +105,12 @@ export class GuideModal extends Modal {
 			"Turn a PDF into notes",
 			"Lecture slides, papers or handwritten pages become a Markdown note with every formula as editable LaTeX. Open a PDF and click “Convert to notes” at its top right, or use ✨ in the left ribbon.",
 			{ text: "Convert a PDF", run: () => this.actions.convertPdf() }
+		);
+		section(
+			"circle-help",
+			"New to LaTeX? Help with typing math",
+			"How to type fractions, powers, roots, Greek letters and matrices, and a search over the MathLive docs that opens the right section.",
+			{ text: "Open help", run: () => this.actions.openHelp() }
 		);
 
 		const plan = section("gem", "Your scans", this.actions.account.planDetail());

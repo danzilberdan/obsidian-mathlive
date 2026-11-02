@@ -20,7 +20,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: "20.x"
+          node-version: "22.x"
           cache: npm
 
       - name: Install dependencies
@@ -28,6 +28,9 @@ jobs:
 
       - name: Lint and type check
         run: npm run lint
+
+      - name: Check the help search answers common questions
+        run: npm run eval:help
 
       - name: Build
         run: npm run build

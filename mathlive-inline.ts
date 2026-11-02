@@ -61,6 +61,9 @@ export interface WidgetHooks {
 	accountAction: () => { title: string; run: () => void } | undefined;
 	openEditorWindow: (view: EditorView, position: number, inline: boolean) => void;
 	openGuide: () => void;
+	openHelp: () => void;
+	// The first formula someone edits shows where help is, once.
+	formulaFocused: () => void;
 	// True while the note shows formulas as LaTeX instead of editors.
 	showsRawLatex: () => boolean;
 	// Opens Draw formula for this target.
@@ -257,7 +260,7 @@ class MathLiveWidget extends WidgetType {
 			});
 		};
 
-		// Formula buttons: AI fill, conversion between inline and display math, and Expand. On full-line formulas they sit inside the
+		// Formula actions: AI fill, inline/display conversion, Expand, and Help sit inside the
 		// input, beside MathLive's keyboard and ☰ buttons.
 		const buttons = wrapper.createDiv({ cls: "obsidian-mathlive-widget-buttons" });
 		// Tabbing onto a button shows the buttons. Done here rather than with CSS :has(), which the
@@ -329,6 +332,12 @@ class MathLiveWidget extends WidgetType {
 			const from = Number.parseInt(mfe.dataset.from ?? `${this.config.from}`, 10);
 			this.hooks.openEditorWindow(view, from, this.isInline);
 		});
+		const helpButton = addButton("obsidian-mathlive-widget-help-button", "circle-help", "Help: how to…");
+		helpButton.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			this.hooks.openHelp();
+		});
 
 		if (this.hooks.getSettings().immediateInlineUpdate) {
 			mfe.addEventListener("input", () => {
@@ -368,7 +377,10 @@ class MathLiveWidget extends WidgetType {
 		// On touch screens, where nothing hovers, an inline formula shows its buttons only while it
 		// is being edited (styles.css), so a note full of formulas isn't full of buttons. A tap on a
 		// button keeps the formula focused; the ✨ menu keeps them while it is open.
-		mfe.addEventListener("focus", () => wrapper.addClass("mathlive-editing"));
+		mfe.addEventListener("focus", () => {
+			wrapper.addClass("mathlive-editing");
+			this.hooks.formulaFocused();
+		});
 		mfe.addEventListener("blur", () => {
 			window.setTimeout(() => {
 				if (mfe.doc.activeElement !== mfe) {
@@ -488,6 +500,7 @@ class MathLiveWidget extends WidgetType {
 		menu.addItem((item) =>
 			item.setTitle("What MathLive can do").setIcon("compass").onClick(() => this.hooks.openGuide())
 		);
+		menu.addItem((item) => item.setTitle("Help: how to…").setIcon("circle-help").onClick(() => this.hooks.openHelp()));
 		if (accountItem) {
 			menu.addItem((item) => item.setTitle(accountItem.title).setIcon("log-in").onClick(accountItem.run));
 		}

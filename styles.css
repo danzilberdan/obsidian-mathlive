@@ -123,7 +123,7 @@
   display: flex;
 }
 
-/* Two buttons after each formula: ✨ AI fill (with Magic edit and the other actions) and Expand. */
+/* Formula actions: AI fill, inline/display conversion, Expand, and Help. */
 .obsidian-mathlive-codemirror-wrapper .obsidian-mathlive-widget-button {
   flex: none;
   align-self: center;
@@ -243,7 +243,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
 /* Full-line formulas: inside the input, right of MathLive's keyboard and ☰ buttons and the same
    size, so they read as one row of controls. */
 .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field {
-  padding-right: 110px;
+  padding-right: 148px;
 }
 
 /* MathLive keeps its buttons 5px from the top, also on formulas several lines tall. */
@@ -270,7 +270,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   height: 20px;
 }
 
-/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. Five of
+/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. Six of
    those leave a phone-width formula little room, so the buttons get a row of their own under the
    formula: MathLive's wrap onto it at the right, and ours sit after them. */
 @media (pointer: coarse) {
@@ -288,7 +288,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   }
 
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(menu-toggle) {
-    margin-right: 192px;
+    margin-right: 256px;
   }
 
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-buttons {
@@ -1120,4 +1120,191 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
 }
 .mathlive-upgrade-modal .setting-item {
   border-top: none;
+}
+
+/* Help: getting started with typing math, and "How do I…" over the MathLive docs. */
+.mathlive-help-modal .modal {
+  max-width: 680px;
+}
+
+.mathlive-help-search {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: 0 var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m, 8px);
+  background: var(--background-primary);
+}
+
+.mathlive-help-search:focus-within {
+  border-color: var(--interactive-accent);
+}
+
+.mathlive-help-search-icon {
+  display: flex;
+  color: var(--text-muted);
+}
+
+.mathlive-help-search input[type="search"] {
+  flex: 1;
+  height: 2.5rem;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--font-ui-medium);
+}
+
+.mathlive-help-results {
+  max-height: 60vh;
+  margin-top: var(--size-4-2);
+  overflow-y: auto;
+}
+
+.mathlive-help-heading {
+  padding: var(--size-4-2) var(--size-4-3) var(--size-4-1);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mathlive-help-empty {
+  padding: var(--size-4-4) var(--size-4-3);
+  color: var(--text-muted);
+}
+
+.mathlive-help-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-radius: var(--radius-s, 4px);
+  cursor: var(--cursor);
+}
+
+.mathlive-help-item.is-selected {
+  background: var(--background-modifier-hover);
+}
+
+.mathlive-help-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-3);
+}
+
+.mathlive-help-item-title {
+  font-weight: var(--font-semibold);
+}
+
+.mathlive-help-preview {
+  flex: none;
+  max-width: 50%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: var(--text-normal);
+}
+
+.mathlive-help-how,
+.mathlive-help-answer {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  line-height: var(--line-height-normal);
+}
+
+.mathlive-help-how kbd {
+  margin: 0 0.1em;
+}
+
+.mathlive-help-item-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-3);
+}
+
+.mathlive-help-item-foot:empty {
+  display: none;
+}
+
+.mathlive-help-item-foot button {
+  height: auto;
+  padding: var(--size-2-2) var(--size-4-3);
+  font-size: var(--font-ui-small);
+}
+
+.mathlive-help-docs-link,
+.mathlive-help-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  font-size: var(--font-ui-smaller);
+}
+
+.mathlive-help-link-icon {
+  display: flex;
+}
+
+.mathlive-help-link-icon svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.mathlive-help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2) var(--size-4-5);
+  padding-top: var(--size-4-3);
+  margin-top: var(--size-4-2);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Help beside the editor window's title. */
+.mathlive-modal-root .modal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.mathlive-modal-root .modal-header .modal-title {
+  flex: 1;
+  text-align: start;
+}
+
+/* Clear of the window's close button. */
+.mathlive-modal-root .modal-header .mathlive-modal-help {
+  margin-right: var(--size-4-6);
+}
+
+.mathlive-modal-help {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  width: auto;
+  padding: var(--size-2-1) var(--size-4-2);
+  border-radius: var(--radius-s, 4px);
+  color: var(--text-accent);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-normal);
+}
+
+.mathlive-modal-help-icon {
+  display: flex;
+}
+
+.mathlive-modal-help-icon svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* The one-time tip about help, the first time someone edits a formula. */
+.mathlive-help-tip-title {
+  font-weight: var(--font-semibold);
+}
+
+.mathlive-help-tip-link {
+  display: inline-block;
+  margin-top: var(--size-2-2);
 }

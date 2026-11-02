@@ -34,7 +34,7 @@ test.describe("formulas in the note", () => {
 			bodyClasses: [...document.body.classList].filter((name) => name.startsWith("mathlive-")),
 			fonts: [...document.fonts].filter((font) => font.family.startsWith("KaTeX")).length,
 		}));
-		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:draw-formula", "mathlive:find-formula", "mathlive:open-guide", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-note-image", "mathlive:scan-photo", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
+		expect(state.commands.sort()).toEqual(["mathlive:convert-pdf-to-notes", "mathlive:draw-formula", "mathlive:find-formula", "mathlive:open-guide", "mathlive:open-help", "mathlive:open-modal", "mathlive:open-modal-inline", "mathlive:scan-note-image", "mathlive:scan-photo", "mathlive:scan-screen-area", "mathlive:toggle-raw-latex"]);
 		expect(state.bodyClasses).toEqual(
 			expect.arrayContaining(["mathlive-inline-widgets-active", "mathlive-block-widgets-active"])
 		);
@@ -275,6 +275,7 @@ test.describe("formulas in the note", () => {
 			"Scan from screen",
 			"Draw formula",
 			"What MathLive can do",
+			"Help: how to…",
 			"Connect",
 		]);
 		// Two sections: what ✨ does for this formula, then help and the account.
@@ -326,7 +327,7 @@ test.describe("formulas in the note", () => {
 		await openWidgetMenu(page, inlineWidget(page, 0));
 		await expect(menuItem(page, "What MathLive can do")).toBeVisible();
 		await expect(menuItem(page, "Connect")).toHaveCount(0);
-		await expect(page.locator(".menu .menu-item")).toHaveCount(6);
+		await expect(page.locator(".menu .menu-item")).toHaveCount(7);
 	});
 
 	test("block formulas show AI fill, conversion and Expand inside the input", async ({ page }) => {
@@ -419,6 +420,7 @@ test.describe("formulas in the note", () => {
 			"Expand for a bigger editor",
 			"Math keyboard",
 			"Turn a PDF into notes",
+			"New to LaTeX? Help with typing math",
 			"Your scans",
 		]);
 		await expect(guide).toContainText("Free accounts get 10 scans");

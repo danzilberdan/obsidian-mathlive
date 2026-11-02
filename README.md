@@ -63,6 +63,8 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 **Set a hotkey.** If you write math often, assign hotkeys to the commands in **Settings → Hotkeys**.
 
+**New to LaTeX?** Click **?** in the editor window, or **Help: how to…** in the ✨ menu, and ask things like "how do I write a fraction" or "make a matrix". You get the answer right there, with a link to the exact section of the [MathLive docs](https://mathlive.io/mathfield/). The search runs on your device, so it works offline and sends nothing anywhere.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danzilberdan/obsidian-mathlive/master/docs/images/editor-window-dark.png">
