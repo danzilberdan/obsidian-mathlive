@@ -57,6 +57,8 @@ Or open [MathLive in Obsidian](https://obsidian.md/plugins?id=mathlive) directly
 
 **Edit a formula in your note.** Write `$x^2$` or a `$$` block in Live Preview and click it. Type to edit, use the arrow keys to move in and out of the formula, click ✨ to fill it in from a screenshot, or ⤢ to expand it into the editor window. ✨ also opens the guide, which shows everything MathLive can do.
 
+**Convert a formula.** Hover over a formula in the note and click **Convert to display math** or **Convert to inline math**. Display formulas get `$$` on separate lines; inline formulas get `$` on one line. The conversion keeps your current edits.
+
 **Use the editor window.** Open the command palette (`Ctrl/Cmd + P`) and run **MathLive: Add inline math** or **MathLive: Add full-line math**. If you selected a formula first, the editor window opens with it. Click **Insert** or press `Ctrl/Cmd + Enter` to put it in your note.
 
 **Set a hotkey.** If you write math often, assign hotkeys to the commands in **Settings → Hotkeys**.

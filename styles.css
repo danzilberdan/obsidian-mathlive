@@ -123,8 +123,7 @@
   display: flex;
 }
 
-/* Three buttons after each formula: ✨ AI fill (with Magic edit and the other actions), Expand and
-   ? Help. */
+/* Formula actions: AI fill, inline/display conversion, Expand, and Help. */
 .obsidian-mathlive-codemirror-wrapper .obsidian-mathlive-widget-button {
   flex: none;
   align-self: center;
@@ -244,7 +243,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
 /* Full-line formulas: inside the input, right of MathLive's keyboard and ☰ buttons and the same
    size, so they read as one row of controls. */
 .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field {
-  padding-right: 110px;
+  padding-right: 148px;
 }
 
 /* MathLive keeps its buttons 5px from the top, also on formulas several lines tall. */
@@ -271,7 +270,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   height: 20px;
 }
 
-/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. Four of
+/* On touch screens MathLive makes its keyboard and ☰ buttons 60px, so ours match them. Six of
    those leave a phone-width formula little room, so the buttons get a row of their own under the
    formula: MathLive's wrap onto it at the right, and ours sit after them. */
 @media (pointer: coarse) {
@@ -289,7 +288,7 @@ body.mathlive-block-widgets-active .markdown-source-view.mod-cm6 .obsidian-mathl
   }
 
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .mathlive-field::part(menu-toggle) {
-    margin-right: 192px;
+    margin-right: 256px;
   }
 
   .obsidian-mathlive-codemirror-wrapper:not(.inline) .obsidian-mathlive-widget-buttons {
