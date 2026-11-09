@@ -914,6 +914,38 @@ export function insertIntoMathfield(mathfield: MathfieldElement, latex: string) 
 	mathfield.insert(latex, { insertionMode: "insertAfter", selectionMode: "after", format: "latex" });
 }
 
+// How to put a formula into each formula on screen, so a formula from the paired phone can go
+// into the one being edited.
+const formulaInserters = new WeakMap<MathfieldElement, (latex: string) => void>();
+
+export function registerFormulaInserter(mathfield: MathfieldElement, insert: (latex: string) => void) {
+	formulaInserters.set(mathfield, insert);
+}
+
+// The formula that has the focus in one of these windows, or kept it when the window lost focus,
+// such as while drawing on the phone.
+export function focusedFormulaTarget(settings: PluginSettings, docs: Document[]): ScanTarget | null {
+	for (const doc of docs) {
+		const active = doc.activeElement;
+		if (active?.tagName !== "MATH-FIELD") {
+			continue;
+		}
+		const mathfield = active as MathfieldElement;
+		const insert = formulaInserters.get(mathfield);
+		if (!insert || !mathfield.isConnected) {
+			continue;
+		}
+		return {
+			settings,
+			isOpen: () => mathfield.isConnected,
+			insert,
+			addedMessage: "Formula from your phone added",
+			closedMessage: "The formula was closed.",
+		};
+	}
+	return null;
+}
+
 export function mathfieldScanTarget(options: {
 	settings: PluginSettings;
 	mathfield: MathfieldElement;

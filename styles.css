@@ -991,6 +991,16 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
   font-size: var(--font-ui-small, 0.9em);
 }
 
+.mathlive-pair-modal .mathlive-draw-phone {
+  flex-basis: auto;
+  text-align: center;
+}
+
+.mathlive-pair-modal .mathlive-draw-phone-note {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
 @media (max-width: 640px) {
   .mathlive-draw-layout {
     flex-direction: column;
