@@ -1,5 +1,6 @@
 import type { MathfieldElement } from "mathlive";
 import { App, Modal, Notice, Platform, requestUrl, setIcon } from "obsidian";
+import type { PhoneLink, PhoneWindow } from "./phone-link";
 import qrcode from "qrcode-generator";
 import {
 	afterCloudScan,
@@ -17,11 +18,12 @@ import {
 } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
-// Draw formula: a window with a drawing pad, and beside it a QR code that opens the same drawing
-// on a phone (the website's /draw page). Each drawing is read by the scanner's handwriting models
-// as a free preview; inserting the formula costs one scan. The phone's previews and inserts reach
-// this window through a long poll with requestUrl, which stops when the session ends.
-// With Self-hosted scanner on, there's only the pad, read by the user's own scanner.
+// Draw formula: a window with a drawing pad, and beside it a QR code that pairs a phone or tablet
+// (the website's /draw page). Each drawing is read by the scanner's handwriting models as a free
+// preview; inserting the formula costs one scan. The pad reads through a short draw session that
+// ends with the window. The phone stays paired (phone-link.ts): while this window is open its
+// previews show here and its formula goes into this window's formula; otherwise into whichever
+// formula is open. With Self-hosted scanner on, there's only the pad, read by the user's own scanner.
 
 type Point = [number, number];
 type Stroke = { points: Point[]; width: number };
@@ -35,8 +37,6 @@ const MARGIN = 24;
 const MIN_SIDE = 300;
 const MAX_SIDE = 1024;
 const MAX_ASPECT = 2;
-// After a network error, wait this long before listening again.
-const RETRY_AFTER_MS = 2000;
 
 // Where the picture of the strokes comes from: cropped to them with a margin, at most twice as
 // wide as tall (or tall as wide), and 300 to 1024 pixels a side.
@@ -110,39 +110,22 @@ async function drawingPng(strokes: Stroke[]): Promise<Blob | null> {
 	return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-interface DrawEvent {
-	type: "phone_connected" | "preview" | "inserted" | "out_of_scans" | "closed";
-	latex?: string;
-	source?: "pad" | "phone" | "photo";
-}
-
-interface WaitReply {
-	events: DrawEvent[];
-	next: number;
-	closed: boolean;
-}
-
 interface Session {
 	id: string;
-	phoneUrl: string;
 }
 
-// Windows whose phone may still send formulas after the window closed, so unloading the plugin
-// can end them.
-const listening = new Set<DrawModal>();
+// Open windows, so unloading the plugin can end their sessions.
+const openWindows = new Set<DrawModal>();
 
 export function endDrawSessions() {
-	for (const modal of Array.from(listening)) {
+	for (const modal of Array.from(openWindows)) {
 		modal.endSession();
 	}
 }
 
 export interface DrawOptions {
 	settings: PluginSettings;
+	phoneLink: PhoneLink;
 	// Where the formula goes.
 	target: ScanTarget;
 	// Where formulas from the phone go once the target has closed, such as the note in use now.
@@ -162,7 +145,7 @@ export async function openDrawWindow(app: App, options: DrawOptions): Promise<vo
 	new DrawModal(app, options).open();
 }
 
-export class DrawModal extends Modal {
+export class DrawModal extends Modal implements PhoneWindow {
 	private strokes: Stroke[] = [];
 	private current: Stroke | null = null;
 	private pad?: HTMLCanvasElement;
@@ -172,14 +155,12 @@ export class DrawModal extends Modal {
 	private insertButton?: HTMLButtonElement;
 	private session: Session | null = null;
 	private opening: Promise<Session | null> | null = null;
-	// The session being listened to; listening stops when it changes.
-	private listeningTo: string | null = null;
 	private readTimer: number | null = null;
 	// Answers that arrive after the drawing changed again are dropped.
 	private readNumber = 0;
 	private shown = false;
-	private phoneInserted = false;
 	private inserting = false;
+	private stopWatchingPhone: (() => void) | null = null;
 	private readonly onResize = () => this.redraw();
 
 	constructor(app: App, private readonly options: DrawOptions) {
@@ -239,11 +220,15 @@ export class DrawModal extends Modal {
 			return false;
 		});
 
-		if (this.cloud && !Platform.isMobile) {
-			this.phoneEl = layout.createDiv({ cls: "mathlive-draw-phone" });
-		}
+		openWindows.add(this);
 		if (this.cloud) {
-			void this.ensureSession();
+			// The paired phone's previews and formulas come to this window while it's open.
+			this.options.phoneLink.window = this;
+			if (!Platform.isMobile) {
+				this.phoneEl = layout.createDiv({ cls: "mathlive-draw-phone" });
+				this.stopWatchingPhone = this.options.phoneLink.onChange(() => this.renderPhone());
+				this.renderPhone();
+			}
 		}
 
 		this.contentEl.win.addEventListener("resize", this.onResize);
@@ -258,19 +243,19 @@ export class DrawModal extends Modal {
 			window.clearTimeout(this.readTimer);
 			this.readTimer = null;
 		}
-		// After the phone inserted a formula, it may keep drawing: keep listening for it until the
-		// session ends. Otherwise closing the window ends the session.
-		if (!this.phoneInserted) {
-			this.endSession();
+		this.stopWatchingPhone?.();
+		this.stopWatchingPhone = null;
+		if (this.options.phoneLink.window === this) {
+			this.options.phoneLink.window = null;
 		}
+		openWindows.delete(this);
+		this.endSession();
 	}
 
-	// Stops listening and tells the server, which tells the phone.
+	// Ends the pad's session on the server.
 	endSession() {
-		listening.delete(this);
 		const session = this.session;
 		this.session = null;
-		this.listeningTo = null;
 		if (session) {
 			void requestUrl({
 				url: this.url(`/draw/sessions/${session.id}/close`),
@@ -471,11 +456,25 @@ export class DrawModal extends Modal {
 		}
 		target.insert(latex);
 		if (fromPhone) {
-			new Notice(
-				this.phoneInserted
-					? "Formula from your phone added."
-					: "Formula from your phone added. Keep drawing on your phone to add more."
-			);
+			new Notice("Formula from your phone added. Your phone stays paired: draw there any time.");
+		}
+	}
+
+	// --- The paired phone ---
+
+	phonePreview(latex: string) {
+		if (!this.shown) {
+			return;
+		}
+		this.cancelRead();
+		this.readNumber++;
+		this.showLatex(latex);
+	}
+
+	phoneInserted(latex: string) {
+		this.insertFormula(latex, true);
+		if (this.shown) {
+			this.close();
 		}
 	}
 
@@ -511,7 +510,6 @@ export class DrawModal extends Modal {
 					this.endSession();
 				}
 				this.session = null;
-				this.listeningTo = null;
 				this.insertFormula(latex, false);
 				this.close();
 				return;
@@ -545,167 +543,128 @@ export class DrawModal extends Modal {
 	}
 
 	private async openSession(): Promise<Session | null> {
-		this.renderPhone({ kind: "loading" });
 		let res;
 		try {
 			res = await requestUrl({ url: this.url("/draw/sessions"), method: "POST", headers: this.headers, throw: false });
 		} catch (error) {
 			console.error("MathLive: couldn't start drawing:", error);
-			this.renderPhone({ kind: "error", message: "Couldn't reach MathLive. Check your connection." });
 			throw new DrawError("Couldn't reach MathLive. Check your connection.");
 		}
 		const code = errorCode(res);
 		if (code === "no_scans_left" || code === "invalid_api_key" || code === "missing_api_key") {
-			this.renderPhone({ kind: "error", message: "Get more scans to keep drawing." });
 			askForAccount(this.settings, code === "no_scans_left" ? "no_scans_left" : "auth", () => {
 				if (this.shown) {
-					void this.ensureSession();
+					this.scheduleRead();
 				}
 			});
 			return null;
 		}
 		const reply = res.status === 200 ? (res.json as Partial<Session>) : null;
-		if (!reply || typeof reply.id !== "string" || typeof reply.phoneUrl !== "string") {
-			const message =
-				res.status === 404 ? "This scanner can't read drawings." : "Couldn't start drawing. Try again in a minute.";
-			this.renderPhone({ kind: "error", message });
-			throw new DrawError(message);
+		if (!reply || typeof reply.id !== "string") {
+			throw new DrawError(
+				res.status === 404 ? "This scanner can't read drawings." : "Couldn't start drawing. Try again in a minute."
+			);
 		}
+		this.session = { id: reply.id };
 		if (!this.shown) {
 			// The window closed while the session opened.
-			this.session = { id: reply.id, phoneUrl: reply.phoneUrl };
 			this.endSession();
 			return null;
 		}
-		this.session = { id: reply.id, phoneUrl: reply.phoneUrl };
-		this.renderPhone({ kind: "code", url: reply.phoneUrl });
-		void this.listen(this.session);
 		return this.session;
 	}
 
-	private async listen(session: Session) {
-		this.listeningTo = session.id;
-		listening.add(this);
-		let after = 0;
-		while (this.listeningTo === session.id) {
-			let res;
-			try {
-				res = await requestUrl({
-					url: this.url(`/draw/sessions/${session.id}/wait?after=${after}`),
-					headers: this.headers,
-					throw: false,
-				});
-			} catch {
-				await sleep(RETRY_AFTER_MS);
-				continue;
-			}
-			if (this.listeningTo !== session.id) {
-				return;
-			}
-			if (res.status === 410 || res.status === 403) {
-				this.sessionEnded(session.id);
-				return;
-			}
-			if (res.status !== 200) {
-				await sleep(RETRY_AFTER_MS);
-				continue;
-			}
-			const reply = res.json as WaitReply;
-			after = reply.next;
-			for (const event of reply.events) {
-				this.onEvent(event);
-			}
-			if (reply.closed) {
-				this.sessionEnded(session.id);
-				return;
-			}
-		}
-	}
-
-	private onEvent(event: DrawEvent) {
-		switch (event.type) {
-			case "phone_connected":
-				if (this.shown) {
-					this.renderPhone({ kind: "connected" });
-				}
-				break;
-			case "preview":
-				if (this.shown && event.latex) {
-					this.cancelRead();
-					this.readNumber++;
-					this.showLatex(event.latex);
-				}
-				break;
-			case "inserted":
-				if (event.source !== "pad" && event.latex) {
-					this.insertFormula(event.latex, true);
-					this.phoneInserted = true;
-					afterCloudScan(this.settings);
-					if (this.shown) {
-						this.close();
-					}
-				}
-				break;
-			case "out_of_scans":
-				askForAccount(this.settings, "no_scans_left", () => {});
-				break;
-			case "closed":
-				break;
-		}
-	}
-
 	private sessionEnded(id: string) {
-		if (this.session?.id !== id) {
-			return;
-		}
-		this.session = null;
-		this.listeningTo = null;
-		listening.delete(this);
-		if (this.shown) {
-			this.renderPhone({ kind: "ended" });
+		if (this.session?.id === id) {
+			this.session = null;
 		}
 	}
 
-	private renderPhone(
-		state:
-			| { kind: "loading" }
-			| { kind: "code"; url: string }
-			| { kind: "connected" }
-			| { kind: "ended" }
-			| { kind: "error"; message: string }
-	) {
+	private renderPhone() {
 		const el = this.phoneEl;
-		if (!el) {
-			return;
+		if (el) {
+			renderPhonePanel(el, this.options.phoneLink, "this formula");
 		}
-		el.empty();
-		el.createDiv({ cls: "mathlive-draw-phone-title", text: "Draw on your phone or tablet" });
-		const box = el.createDiv({ cls: "mathlive-draw-qr-box" });
-		const note = el.createDiv({ cls: "mathlive-draw-phone-note" });
-		switch (state.kind) {
-			case "loading":
-				box.addClass("is-loading");
-				note.setText("Making a code…");
-				break;
-			case "code":
-				renderQr(box, state.url);
-				note.setText("Scan with your phone's camera. Nothing to install, no sign-in.");
-				break;
-			case "connected": {
-				box.addClass("is-connected");
-				setIcon(box.createDiv({ cls: "mathlive-draw-connected-icon" }), "smartphone");
-				note.setText("Phone connected. Draw there, or keep drawing here.");
-				break;
+	}
+}
+
+// The phone side of Draw formula: a QR code that pairs a phone, or the phone that's paired.
+// `into` says where the phone's formulas go, such as "this formula".
+export function renderPhonePanel(el: HTMLElement, link: PhoneLink, into: string) {
+	el.empty();
+	el.createDiv({ cls: "mathlive-draw-phone-title", text: "Draw on your phone or tablet" });
+	const box = el.createDiv({ cls: "mathlive-draw-qr-box" });
+	const note = el.createDiv({ cls: "mathlive-draw-phone-note" });
+	const pairing = link.pairing;
+	if (pairing) {
+		box.addClass("is-connected");
+		setIcon(box.createDiv({ cls: "mathlive-draw-connected-icon" }), "smartphone");
+		note.setText(
+			`Paired with ${pairing.device ? `your ${pairing.device}` : "your phone"}. Draw there and tap Insert: it goes into ${into}.`
+		);
+		const actions = el.createDiv({ cls: "mathlive-draw-phone-actions" });
+		const unpair = actions.createEl("button", { text: "Unpair", attr: { type: "button" } });
+		unpair.addEventListener("click", () => void link.unpair());
+		return;
+	}
+	const waiting = link.pendingCode;
+	if (waiting) {
+		renderQr(box, waiting.phoneUrl);
+		note.setText("Scan once with your phone's camera. It stays paired, so next time just draw. Nothing to install.");
+		return;
+	}
+	box.addClass("is-loading");
+	note.setText("Making a code…");
+	link.newCode().then(
+		() => {
+			if (el.isConnected) {
+				renderPhonePanel(el, link, into);
 			}
-			case "ended":
-			case "error": {
-				box.addClass("is-ended");
-				note.setText(state.kind === "ended" ? "This code has ended." : state.message);
-				const again = el.createEl("button", { text: "Show a new code", attr: { type: "button" } });
-				again.addEventListener("click", () => void this.ensureSession().catch(() => null));
-				break;
+		},
+		(error: unknown) => {
+			if (!el.isConnected) {
+				return;
 			}
+			box.removeClass("is-loading");
+			box.addClass("is-ended");
+			note.setText(error instanceof Error ? error.message : "Couldn't make a code. Try again.");
+			const again = el.createEl("button", { text: "Try again", attr: { type: "button" } });
+			again.addEventListener("click", () => renderPhonePanel(el, link, into));
 		}
+	);
+}
+
+// Pairs a phone from the settings, or shows the one paired.
+export class PairPhoneModal extends Modal {
+	private stop: (() => void) | null = null;
+
+	constructor(app: App, private readonly link: PhoneLink) {
+		super(app);
+	}
+
+	onOpen() {
+		this.setTitle("Draw on your phone or tablet");
+		this.modalEl.addClass("mathlive-pair-modal");
+		const panel = this.contentEl.createDiv({ cls: "mathlive-draw-phone" });
+		let wasPaired = this.link.pairing !== null;
+		const render = () => {
+			renderPhonePanel(panel, this.link, "the formula you have open, or at the cursor");
+			const paired = this.link.pairing !== null;
+			if (paired && !wasPaired) {
+				this.contentEl.createDiv({
+					cls: "mathlive-draw-phone-note",
+					text: "Done. On the phone, add the page to your home screen to open it any time.",
+				});
+			}
+			wasPaired = paired;
+		};
+		this.stop = this.link.onChange(render);
+		render();
+	}
+
+	onClose() {
+		this.stop?.();
+		this.contentEl.empty();
 	}
 }
 

@@ -114,7 +114,7 @@ export function startStubScanner(port = 8502) {
 				res.end(JSON.stringify(payload));
 			};
 			const url = new URL(req.url, "http://stub");
-			if (req.url.startsWith("/draw/sessions")) {
+			if (req.url.startsWith("/draw/sessions") || req.url.startsWith("/draw/pairings")) {
 				draw.handle(req, body, apiKey, reply);
 			} else if (req.method === "GET" && url.pathname === "/formulas/search") {
 				const q = url.searchParams.get("q") ?? "";
@@ -267,7 +267,11 @@ function createDrawStub(port) {
 		},
 		// The newest session, as the plugin opened it.
 		latest() {
-			return Array.from(sessions.values()).at(-1) ?? null;
+			return Array.from(sessions.values()).filter((session) => !session.paired).at(-1) ?? null;
+		},
+		// The newest pairing QR code the plugin made.
+		latestPairing() {
+			return Array.from(sessions.values()).filter((session) => session.paired).at(-1) ?? null;
 		},
 		// A stand-in for the phone page: claims the session from its link, then draws and inserts.
 		async phone(session) {
@@ -291,7 +295,7 @@ function createDrawStub(port) {
 		},
 		handle(req, body, apiKey, reply) {
 			const url = new URL(req.url, base);
-			const [, , , id, action] = url.pathname.split("/");
+			const [, , kind, id, action] = url.pathname.split("/");
 			if (!id) {
 				if (apiKey === "no-scans-left") {
 					reply(400, { detail: "No scans left.", code: "no_scans_left" });
@@ -307,10 +311,12 @@ function createDrawStub(port) {
 					events: [],
 					waiters: [],
 					recognized: [],
+					// A pairing (plugin 2.7+) stays until unpaired, like draw.rs's draw_pairings.
+					paired: kind === "pairings",
 				};
 				session.phoneUrl = `https://phone.test/draw/${session.id}#t=${session.token}`;
 				sessions.set(session.id, session);
-				reply(200, { id: session.id, phoneUrl: session.phoneUrl, idleSeconds: 600, previews: 30 });
+				reply(200, { id: session.id, phoneUrl: session.phoneUrl, idleSeconds: 600, claimSeconds: 600, previews: 30 });
 				return;
 			}
 			const session = sessions.get(id);
@@ -337,7 +343,17 @@ function createDrawStub(port) {
 				} else {
 					session.phoneKey = crypto.randomUUID();
 					push({ type: "phone_connected" });
-					reply(200, { phoneKey: session.phoneKey, previews: 30 });
+					if (session.paired) {
+						// One paired phone per plugin: the one before is unpaired.
+						for (const other of sessions.values()) {
+							if (other !== session && other.paired && other.apiKey === session.apiKey && !other.closed) {
+								other.closed = true;
+								other.events.push({ type: "closed" });
+								for (const wake of other.waiters.splice(0)) wake();
+							}
+						}
+					}
+					reply(200, { phoneKey: session.phoneKey, paired: session.paired, previews: 30 });
 				}
 				return;
 			}
@@ -353,6 +369,10 @@ function createDrawStub(port) {
 						events: session.events.slice(after).map((event, index) => ({ ...event, seq: after + index + 1 })),
 						next: Math.max(after, session.events.length),
 						closed: session.closed,
+						paired: session.paired,
+						phoneConnected: session.phoneKey !== null,
+						desktopOnline: true,
+						device: session.phoneKey ? "iPhone" : null,
 					});
 				if (session.events.length > after || session.closed) {
 					answer();
@@ -398,7 +418,7 @@ function createDrawStub(port) {
 				const source = phone ? "phone" : "pad";
 				session.latex = null;
 				push({ type: "inserted", latex, source });
-				if (!phone) close();
+				if (!phone && !session.paired) close();
 				reply(200, { latex });
 				return;
 			}

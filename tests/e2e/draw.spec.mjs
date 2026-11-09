@@ -1,6 +1,7 @@
 import { DRAWN_LATEX, SCANNED_LATEX } from "./stub-scanner.mjs";
 import {
 	expect,
+	focusField,
 	inlineField,
 	inlineWidget,
 	menuItem,
@@ -47,6 +48,11 @@ test.describe("Draw formula", () => {
 	test.beforeEach(async ({ page, scanner }) => {
 		scanner.requests.length = 0;
 		scanner.draw.reset();
+		// Forget a code an earlier test left waiting: the stub no longer knows it.
+		await page.evaluate(() => {
+			window.app.plugins.plugins.mathlive.phoneLink.stop();
+			return true;
+		});
 		await setSettings(page, { useLocalInference: false, apiKey: "device-key", apiKeySource: "device", cloudScannerUrl: CLOUD });
 	});
 
@@ -74,34 +80,34 @@ test.describe("Draw formula", () => {
 		expect(session.closed).toBe(true);
 	});
 
-	test("a phone that scanned the QR code draws, previews on the computer, and inserts", async ({ page, scanner }) => {
+	test("a phone pairs once from the QR code, then its formulas go wherever you are, even after a restart", async ({ page, scanner }) => {
 		await cursorOnEmptyLine(page);
 		await runCommand(page, "mathlive:draw-formula");
 		const qr = drawWindow(page).locator(".mathlive-draw-qr");
 		await expect(qr).toBeVisible();
-		const session = scanner.draw.latest();
-		await expect(qr).toHaveAttribute("data-url", session.phoneUrl);
+		const pairing = scanner.draw.latestPairing();
+		await expect(qr).toHaveAttribute("data-url", pairing.phoneUrl);
 
-		const phone = await scanner.draw.phone(session);
+		const phone = await scanner.draw.phone(pairing);
 		expect(phone.claimed.status).toBe(200);
-		await expect(drawWindow(page).locator(".mathlive-draw-phone-note")).toHaveText(/Phone connected/);
-		// A second phone can't use the same link.
-		expect((await scanner.draw.phone(session)).claimed.status).toBe(409);
+		expect(phone.claimed.body.paired).toBe(true);
+		await expect(drawWindow(page).locator(".mathlive-draw-phone-note")).toHaveText(/Paired with your iPhone/);
+		await expect.poll(() => page.evaluate(() => window.app.plugins.plugins.mathlive.settings.drawPairing?.id)).toBe(pairing.id);
+		// A second phone can't use the same code.
+		expect((await scanner.draw.phone(pairing)).claimed.status).toBe(409);
 
+		// With the window open, the phone's preview shows there and Insert fills the window's formula.
 		expect((await phone.draw()).status).toBe(200);
 		await expect(preview(page)).toHaveJSProperty("value", DRAWN_LATEX);
 		expect(scanner.draw.charged).toBe(0);
-
-		// From Insert on the phone to the formula in the note in under 3 seconds.
 		const started = Date.now();
 		expect((await phone.insert()).status).toBe(200);
 		await expect.poll(() => noteText(page), { timeout: 3000 }).toContain(`$$\n${DRAWN_LATEX}\n$$`);
 		expect(Date.now() - started).toBeLessThan(3000);
 		await expect(drawWindow(page)).toHaveCount(0);
-		await expect(notices(page).filter({ hasText: "Formula from your phone added." })).toBeVisible();
 		expect(scanner.draw.charged).toBe(1);
 
-		// The phone can draw another, which goes to the note too.
+		// No window: the next formula goes in at the note's cursor, with no new code.
 		await page.evaluate(() => {
 			const editor = window.app.workspace.activeEditor.editor;
 			editor.setCursor({ line: editor.lineCount() - 1, ch: editor.getLine(editor.lineCount() - 1).length });
@@ -111,19 +117,140 @@ test.describe("Draw formula", () => {
 		expect((await phone.draw()).status).toBe(200);
 		expect((await phone.insert()).status).toBe(200);
 		await expect.poll(() => noteText(page)).toContain(` and $${DRAWN_LATEX}$`);
-		expect(scanner.draw.charged).toBe(2);
+		await expect(notices(page).filter({ hasText: "Formula from your phone added" }).first()).toBeVisible();
 
-		expect((await phone.done()).status).toBe(204);
+		// Into the formula being edited, at its cursor.
+		await focusField(inlineField(page, 0));
+		await inlineField(page, 0).evaluate((field) => {
+			field.position = field.lastOffset;
+		});
+		const formulaBefore = await inlineField(page, 0).evaluate((field) => field.value);
+		expect((await phone.draw()).status).toBe(200);
+		expect((await phone.insert()).status).toBe(200);
+		// MathLive writes the drawn \frac{1}{2} its own way, as \frac12.
+		await expect.poll(() => inlineField(page, 0).evaluate((field) => field.value)).toMatch(/^x\^2\+y\^2=z\^2\\frac/);
+		const formulaAfter = await inlineField(page, 0).evaluate((field) => field.value);
+		expect(formulaAfter.length).toBeGreaterThan(formulaBefore.replace(/\s/g, "").length);
+		await expect.poll(() => noteText(page)).toContain(`$${formulaAfter}$`);
+		expect(scanner.draw.charged).toBe(3);
+
+		// Obsidian restarts (the plugin turned off and on): still paired, no code to scan.
+		await page.evaluate(() => window.app.plugins.disablePlugin("mathlive").then(() => true));
+		await page.evaluate(() => window.app.plugins.enablePlugin("mathlive").then(() => true));
+		await expect.poll(() => page.evaluate(() => window.app.plugins.plugins.mathlive?.settings.drawPairing?.id)).toBe(pairing.id);
+		await cursorOnEmptyLine(page);
+		const before = await noteText(page);
+		await expect
+			.poll(
+				async () => {
+					// The plugin needs a moment to start listening again.
+					if ((await noteText(page)) === before) {
+						await phone.draw();
+						await phone.insert();
+					}
+					return (await noteText(page)).length > before.length;
+				},
+				{ timeout: 15_000 }
+			)
+			.toBe(true);
+		expect(await noteText(page)).toContain(`$$\n${DRAWN_LATEX}\n$$`);
+
+		// The window shows the paired phone instead of a code.
+		await runCommand(page, "mathlive:draw-formula");
+		await expect(drawWindow(page).locator(".mathlive-draw-phone-note")).toHaveText(/Paired with your iPhone/);
+		await expect(drawWindow(page).locator(".mathlive-draw-qr")).toHaveCount(0);
+
+		// Unpair: the phone's page stops working, and the window offers a new code.
+		await drawWindow(page).getByRole("button", { name: "Unpair" }).click();
+		await expect(drawWindow(page).locator(".mathlive-draw-qr")).toBeVisible();
+		await expect.poll(async () => (await phone.draw()).status).toBe(410);
+		expect(await page.evaluate(() => window.app.plugins.plugins.mathlive.settings.drawPairing)).toBeNull();
 	});
 
-	test("closing the window ends the phone's session", async ({ page, scanner }) => {
+	test("unpairing on the phone tells Obsidian, and a new phone replaces the old one", async ({ page, scanner }) => {
 		await runCommand(page, "mathlive:draw-formula");
 		await expect(drawWindow(page).locator(".mathlive-draw-qr")).toBeVisible();
-		const phone = await scanner.draw.phone(scanner.draw.latest());
+		const first = await scanner.draw.phone(scanner.draw.latestPairing());
+		await expect(drawWindow(page).locator(".mathlive-draw-phone-note")).toHaveText(/Paired/);
+		await page.keyboard.press("Escape");
+
+		// Pairing another phone, from the settings' Pair a phone window, ends the first.
+		await page.evaluate(() => window.app.plugins.plugins.mathlive.phoneLink.newCode().then(() => true));
+		const second = await scanner.draw.phone(scanner.draw.latestPairing());
+		expect(second.claimed.status).toBe(200);
+		await expect.poll(async () => (await first.draw()).status).toBe(410);
+		await expect.poll(() => page.evaluate(() => window.app.plugins.plugins.mathlive.settings.drawPairing?.id)).toBe(
+			scanner.draw.latestPairing().id
+		);
+		await expect(notices(page).filter({ hasText: "Your phone was unpaired" })).toHaveCount(0);
+
+		// The phone unpairs itself: Obsidian forgets it, and says so.
+		expect((await second.done()).status).toBe(204);
+		await expect.poll(() => page.evaluate(() => window.app.plugins.plugins.mathlive.settings.drawPairing)).toBeNull();
+		await expect(notices(page).filter({ hasText: "Your phone was unpaired" })).toBeVisible();
+	});
+
+	test("closing the window ends the pad's session, and its code still pairs a phone", async ({ page, scanner }) => {
+		await runCommand(page, "mathlive:draw-formula");
+		await expect(drawWindow(page).locator(".mathlive-draw-qr")).toBeVisible();
+		await drawOnPad(page);
+		await expect(preview(page)).toHaveJSProperty("value", DRAWN_LATEX);
+		const session = scanner.draw.latest();
+		const pairing = scanner.draw.latestPairing();
 		await page.keyboard.press("Escape");
 		await expect(drawWindow(page)).toHaveCount(0);
-		await expect.poll(async () => (await phone.draw()).status).toBe(410);
+		await expect.poll(() => session.closed).toBe(true);
+		const phone = await scanner.draw.phone(pairing);
+		expect(phone.claimed.status).toBe(200);
+		await expect(notices(page).filter({ hasText: "Phone paired" })).toBeVisible();
 		expect(scanner.draw.charged).toBe(0);
+	});
+
+	test("the settings pair a phone and unpair it", async ({ obsidian, page, scanner }) => {
+		await page.evaluate(() => {
+			window.app.setting.open();
+			window.app.setting.openTabById("mathlive");
+			return true;
+		});
+		// Settings open in a window of their own, or inside the main window.
+		const rowIn = (candidate) => candidate.locator(".setting-item", { hasText: "Draw on your phone" });
+		let settingsWindow;
+		await expect
+			.poll(async () => {
+				for (const candidate of obsidian.context.pages()) {
+					if ((await rowIn(candidate).count()) > 0) {
+						settingsWindow = candidate;
+						return true;
+					}
+				}
+				return false;
+			})
+			.toBe(true);
+		const row = rowIn(settingsWindow);
+		await row.getByRole("button", { name: "Pair a phone" }).click();
+		let modal;
+		await expect
+			.poll(async () => {
+				for (const candidate of obsidian.context.pages()) {
+					if ((await candidate.locator(".mathlive-pair-modal .mathlive-draw-qr").count()) > 0) {
+						modal = candidate.locator(".mathlive-pair-modal");
+						return true;
+					}
+				}
+				return false;
+			})
+			.toBe(true);
+		await scanner.draw.phone(scanner.draw.latestPairing());
+		await expect(modal.locator(".mathlive-draw-phone-note").first()).toHaveText(/Paired with your iPhone/);
+		await modal.page().keyboard.press("Escape");
+		await expect(modal).toHaveCount(0);
+		await expect(row).toContainText("Paired with your iPhone");
+		await row.getByRole("button", { name: "Unpair" }).click();
+		await expect(row.getByRole("button", { name: "Pair a phone" })).toBeVisible();
+		await page.evaluate(() => {
+			window.app.setting.close();
+			return true;
+		});
 	});
 
 	test("out of scans keeps the drawing and offers more scans", async ({ page, scanner }) => {

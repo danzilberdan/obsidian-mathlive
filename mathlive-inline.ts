@@ -21,6 +21,7 @@ import { type App, Menu, setIcon } from "obsidian";
 import {
 	appendLatexFromClipboardImage,
 	mathfieldScanTarget,
+	registerFormulaInserter,
 	type ScanTarget,
 	scanScreenAreaInto,
 	scanPhotoInto,
@@ -222,6 +223,12 @@ class MathLiveWidget extends WidgetType {
 				dispatchChange(value);
 				refocusMathfield();
 			},
+		});
+		// A formula from the paired phone goes in at the cursor while this formula has the focus.
+		registerFormulaInserter(mfe, (latex) => {
+			insertIntoMathfield(mfe, latex);
+			dispatchChange(mfe.value);
+			refocusMathfield();
 		});
 		// A box on the screen on desktop, a photo on phones and tablets.
 		const scanScreenArea = () => {

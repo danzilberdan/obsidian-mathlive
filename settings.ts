@@ -30,6 +30,8 @@ export interface PluginSettings {
 	welcomeShown: boolean;
 	// The tip pointing at help shows once, the first time someone edits a formula.
 	helpTipShown: boolean;
+	// The phone or tablet paired for Draw formula (phone-link.ts), until unpaired.
+	drawPairing: { id: string; device: string | null } | null;
 	// Not in the settings tab: where the cloud scanner and website are, so tests can point the
 	// plugin at stand-ins.
 	cloudScannerUrl: string;
@@ -56,6 +58,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	quickLatexImportOffered: false,
 	welcomeShown: false,
 	helpTipShown: false,
+	drawPairing: null,
 	cloudScannerUrl: `${MATHLIVE_ORIGIN}/ocr`,
 	websiteUrl: MATHLIVE_ORIGIN,
 };

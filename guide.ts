@@ -82,7 +82,7 @@ export class GuideModal extends Modal {
 		section(
 			"pencil-line",
 			"Draw a formula",
-			"Write it by hand with your mouse or pen, or scan the QR code and draw it on your phone. You see the formula as you draw, and it goes in your note when you click Insert.",
+			"Write it by hand with your mouse or pen, or pair your phone once with the QR code and draw on it any time: it goes into the formula you have open. You see the formula as you draw.",
 			{ text: "Draw a formula", run: () => this.actions.drawFormula() }
 		);
 		section(

@@ -51,10 +51,13 @@ import {
 	hideShownMenu,
 	showMenuBelow,
 	noticeWithButton,
+	focusedFormulaTarget,
+	registerFormulaInserter,
 } from "./mathlive-shared";
+import { PhoneLink } from "./phone-link";
 import { type MagicEditBox, openMagicEditPopover } from "./magic-edit";
 import { toMathJaxLatex } from "./mathjax-latex";
-import { endDrawSessions, openDrawWindow } from "./draw";
+import { endDrawSessions, openDrawWindow, PairPhoneModal } from "./draw";
 import { FormulaSearchModal } from "./formula-search";
 import { convertPdfToNotes, isPdf } from "./pdf-notes";
 import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
@@ -86,6 +89,7 @@ export default class MathLivePlugin extends Plugin {
 	account: CloudAccount;
 	// Where a scan from the screen goes when the hotkey is pressed outside a note, like in a PDF.
 	private lastNoteView: MarkdownView | null = null;
+	phoneLink!: PhoneLink;
 	// Switched from a note's ⋮ menu, and not saved.
 	private showRawLatex = false;
 	private pdfViewsWithButton = new WeakSet<View>();
@@ -104,6 +108,12 @@ export default class MathLivePlugin extends Plugin {
 		this.applyShorthands();
 		this.account = new CloudAccount(this);
 		setScanAccount(this.account);
+		this.phoneLink = new PhoneLink({
+			getSettings: () => this.settings,
+			saveSettings: () => this.saveSettings(),
+			phoneTarget: () => this.phoneTarget(),
+		});
+		this.app.workspace.onLayoutReady(() => this.phoneLink.start());
 		void this.account.refreshStatus();
 		// The website sends the browser here after the user approves connecting this device.
 		this.registerObsidianProtocolHandler("mathlive-auth", (params) => {
@@ -296,7 +306,7 @@ export default class MathLivePlugin extends Plugin {
 				openHelp: () => this.openHelp(),
 				formulaFocused: () => this.showHelpTip(),
 				showsRawLatex: () => this.showRawLatex,
-				drawFormula: (target) => void openDrawWindow(this.app, { settings: this.settings, target, fallback: () => this.noteScanTarget() }),
+				drawFormula: (target) => void openDrawWindow(this.app, { settings: this.settings, phoneLink: this.phoneLink, target, fallback: () => this.noteScanTarget() }),
 				findFormula: (insert) => this.openFormulaSearch(insert),
 			})
 		);
@@ -531,6 +541,7 @@ export default class MathLivePlugin extends Plugin {
 
 	onunload() {
 		endDrawSessions();
+		this.phoneLink?.dispose();
 		setScanAccount(null);
 		stopWatchingKeyboardTaps();
 		this.account.cancelConnect();
@@ -565,6 +576,8 @@ export default class MathLivePlugin extends Plugin {
 		if (data.websiteUrl === DEFAULT_SETTINGS.websiteUrl) delete data.websiteUrl;
 		await this.saveData(data);
 		this.applyShorthands();
+		// Listens to the paired phone again, such as after switching back from a self-hosted scanner.
+		this.phoneLink?.start();
 		if (options?.refreshCloudAccessStatus) {
 			this.account.invalidateStatus();
 			void this.account.refreshStatus();
@@ -602,6 +615,17 @@ export default class MathLivePlugin extends Plugin {
 		}
 		const leaf = this.app.workspace.getLeavesOfType("markdown")[0];
 		return leaf?.view instanceof MarkdownView ? leaf.view : null;
+	}
+
+	// Where a formula from the paired phone goes: the formula being edited, else a new formula at
+	// the cursor of the note in use.
+	phoneTarget(): ScanTarget | null {
+		const formula = focusedFormulaTarget(this.settings, this.getOpenDocuments());
+		if (formula) {
+			return formula;
+		}
+		const note = this.noteScanTarget();
+		return note && { ...note, addedMessage: "Formula from your phone added to the note" };
 	}
 
 	// The cursor of the note a scan or drawing goes into, or null when no note is open.
@@ -755,6 +779,7 @@ export default class MathLivePlugin extends Plugin {
 		}
 		await openDrawWindow(this.app, {
 			settings: this.settings,
+			phoneLink: this.phoneLink,
 			target: { ...target, closedMessage: "The note was closed. Open it and draw the formula again." },
 			fallback: () => this.noteScanTarget(),
 		});
@@ -885,6 +910,34 @@ export class MathliveSettingTab extends PluginSettingTab {
 	this.stopListening = null;
   }
 
+  // Pair a phone, or show the paired one with Unpair. Redraws itself when that changes.
+  private addPhoneControls(setting: Setting) {
+	const link = this.plugin.phoneLink;
+	const render = () => {
+		setting.controlEl.empty();
+		const pairing = link.pairing;
+		if (pairing) {
+			setting.setDesc(
+				`Paired with ${pairing.device ? `your ${pairing.device}` : "your phone"}. Open ${this.plugin.settings.websiteUrl.replace(/^https?:\/\//, "")}/draw on it to draw: formulas go into the formula you have open, or at the cursor.`
+			);
+			setting.addButton((button) => button.setButtonText("Unpair").onClick(() => void link.unpair()));
+		} else {
+			setting.setDesc(
+				"Pair a phone or tablet once by scanning a code with its camera. Then draw a formula on it any time Obsidian is open, and it goes into the formula you have open, or at the cursor."
+			);
+			setting.addButton((button) => button.setButtonText("Pair a phone").onClick(() => new PairPhoneModal(this.app, link).open()));
+		}
+	};
+	const stop = link.onChange(() => {
+		if (setting.settingEl.isConnected) {
+			render();
+		} else {
+			stop();
+		}
+	});
+	render();
+  }
+
   private renderAccount(row: SettingRow) {
 	const el = this.accountEl;
 	if (!el?.isConnected) {
@@ -934,6 +987,12 @@ export class MathliveSettingTab extends PluginSettingTab {
 					desc: "",
 					visible: () => !this.plugin.settings.useLocalInference,
 					addControl: setting => this.addAccountControls(setting),
+				},
+				{
+					name: "Draw on your phone",
+					visible: () => !this.plugin.settings.useLocalInference,
+					desc: "Pair a phone or tablet once by scanning a code with its camera. Then draw a formula on it any time Obsidian is open, and it goes into the formula you have open, or at the cursor.",
+					addControl: setting => this.addPhoneControls(setting),
 				},
 				{
 					name: "Scan other apps",
@@ -1228,6 +1287,11 @@ class MathLiveModal extends Modal {
 		// Inline-math mode doesn't scroll long formulas in the modal (#21). The note still gets
 		// inline math, because resultRenderTemplate decides the $ or $$ delimiters.
 		this.mfe.defaultMode = "math";
+		const modalField = this.mfe;
+		registerFormulaInserter(modalField, (latex) => {
+			insertIntoMathfield(modalField, latex);
+			this.renderedResult = resultRenderTemplate(toMathJaxLatex(modalField.value));
+		});
 		this.mfe.addEventListener("keydown", (event: KeyboardEvent) => {
 			if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey)) {
 				return;
@@ -1424,6 +1488,7 @@ class MathLiveModal extends Modal {
 		const target = mathfieldScanTarget(this.scanTarget(this.mfe));
 		await openDrawWindow(this.app, {
 			settings: this.plugin.settings,
+			phoneLink: this.plugin.phoneLink,
 			target: { ...target, closedMessage: "The editor window was closed. Open it and draw the formula again." },
 		});
 	}
