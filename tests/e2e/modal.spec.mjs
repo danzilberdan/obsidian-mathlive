@@ -97,20 +97,20 @@ test.describe("formula editor window", () => {
 		await runCommand(page, "mathlive:open-modal");
 		await waitForModalField(page);
 		const footer = page.locator(".mathlive-modal-root .mathlive-modal-footer");
-		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("First scans free, no account neededGet 10 free scans");
+		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("First tries free, no account neededGet 10 free credits");
 
 		await setSettings(page, { apiKey: "low-key", apiKeySource: "device" });
 		await page.keyboard.press("Escape");
 		await page.evaluate(() => window.app.plugins.plugins.mathlive.account.refreshStatus());
 		await runCommand(page, "mathlive:open-modal");
 		await waitForModalField(page);
-		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("2 free scans leftUpgrade");
+		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("2 free credits leftUpgrade");
 		await footer.getByText("Upgrade").click();
 		await expect.poll(() => openedUrls(page)).toEqual(["http://127.0.0.1:8502/site/pricing?src=plugin_editor"]);
 
 		await footer.getByText("Learn what MathLive can do").click();
 		await expect(page.locator(".mathlive-guide-modal")).toBeVisible();
-		await expect(page.locator(".mathlive-guide-modal")).toContainText("2 free scans left.");
+		await expect(page.locator(".mathlive-guide-modal")).toContainText("2 free credits left.");
 		await page.keyboard.press("Escape");
 		await page.keyboard.press("Escape");
 	});

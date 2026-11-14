@@ -9,6 +9,8 @@ import {
 	createMathfield,
 	ensureCanScan,
 	errorCode,
+	outOfCredits,
+	scanAccountHooks,
 	serverDetail,
 	scanImageToLatex,
 	scannerHeaders,
@@ -19,8 +21,9 @@ import {
 import type { PluginSettings } from "./settings";
 
 // Draw formula: a window with a drawing pad, and beside it a QR code that pairs a phone or tablet
-// (the website's /draw page). Each drawing is read by the scanner's handwriting models as a free
-// preview; inserting the formula costs one scan. The pad reads through a short draw session that
+// (the website's /draw page). Each drawing is read by the scanner's handwriting models as a
+// preview. Reading is charged by the server when it runs: a formula's first read uses a credit,
+// which covers the next reads of it while it's drawn; inserting is free. The pad reads through a short draw session that
 // ends with the window. The phone stays paired (phone-link.ts): while this window is open its
 // previews show here and its formula goes into this window's formula; otherwise into whichever
 // formula is open. With Self-hosted scanner on, there's only the pad, read by the user's own scanner.
@@ -201,7 +204,7 @@ export class DrawModal extends Modal implements PhoneWindow {
 		this.mathfield.addClass("mathlive-draw-field");
 		this.mathfield.addEventListener("input", () => this.updateInsertButton());
 		preview.appendChild(this.mathfield);
-		this.hintEl = main.createDiv({ cls: "mathlive-draw-hint", text: "Draw a formula with your mouse, pen or finger." });
+		this.hintEl = main.createDiv({ cls: "mathlive-draw-hint", text: this.startHint() });
 
 		const actions = main.createDiv({ cls: "mathlive-draw-actions" });
 		const button = (text: string, icon: string, onClick: () => void, cta = false) => {
@@ -350,7 +353,7 @@ export class DrawModal extends Modal implements PhoneWindow {
 		if (this.mathfield) {
 			this.mathfield.value = "";
 		}
-		this.setHint("Draw a formula with your mouse, pen or finger.");
+		this.setHint(this.startHint());
 		this.updateInsertButton();
 	}
 
@@ -367,6 +370,13 @@ export class DrawModal extends Modal implements PhoneWindow {
 			this.readTimer = null;
 			void this.readDrawing();
 		}, READ_AFTER_MS);
+	}
+
+	// What to do, and on a free plan what it costs.
+	private startHint(): string {
+		const cost = this.cloud ? (scanAccountHooks()?.costOf("drawing") ?? "") : "";
+		const note = cost ? ` Each formula uses ${cost} once it's read.` : "";
+		return `Draw a formula with your mouse, pen or finger.${note}`;
 	}
 
 	private setHint(text: string) {
@@ -397,6 +407,10 @@ export class DrawModal extends Modal implements PhoneWindow {
 		this.setHint("Reading…");
 		try {
 			const latex = this.cloud ? await this.recognize(image) : await scanImageToLatex(this.settings, image, "drawing");
+			if (this.cloud && latex !== null) {
+				// The read was charged (or covered by the formula's first one): show the balance.
+				afterCloudScan(this.settings);
+			}
 			if (number === this.readNumber && this.shown && latex !== null) {
 				this.showLatex(latex);
 			}
@@ -405,7 +419,7 @@ export class DrawModal extends Modal implements PhoneWindow {
 				return;
 			}
 			const failure = error instanceof ScanError ? error.failure : "unavailable";
-			if (failure === "auth" || failure === "no_scans_left") {
+			if (failure === "auth" || failure === "no_credits") {
 				this.setHint("");
 				askForAccount(this.settings, failure, () => this.scheduleRead());
 			} else if (failure === "no_math") {
@@ -416,7 +430,7 @@ export class DrawModal extends Modal implements PhoneWindow {
 		}
 	}
 
-	// A free preview from the cloud scanner's handwriting models.
+	// A preview from the cloud scanner's handwriting models. Charged by the server as it runs.
 	private async recognize(image: Blob, retried = false): Promise<string | null> {
 		const session = await this.ensureSession();
 		if (!session) {
@@ -503,10 +517,8 @@ export class DrawModal extends Modal implements PhoneWindow {
 			});
 			const code = errorCode(res);
 			if (res.status === 200 || code === "nothing_to_insert" || res.status === 410) {
-				// Charged, or nothing drawn was read so it's free. The server ended the session.
-				if (res.status === 200) {
-					afterCloudScan(this.settings);
-				} else {
+				// Inserting is free: the reads were charged. The server ended the session.
+				if (res.status !== 200) {
 					this.endSession();
 				}
 				this.session = null;
@@ -514,8 +526,8 @@ export class DrawModal extends Modal implements PhoneWindow {
 				this.close();
 				return;
 			}
-			if (code === "no_scans_left" || code === "invalid_api_key" || code === "missing_api_key") {
-				askForAccount(this.settings, code === "no_scans_left" ? "no_scans_left" : "auth", () => void this.insert());
+			if (outOfCredits(code) || code === "invalid_api_key" || code === "missing_api_key") {
+				askForAccount(this.settings, outOfCredits(code) ? "no_credits" : "auth", () => void this.insert());
 				return;
 			}
 			new Notice(drawFailure(res).message);
@@ -551,8 +563,8 @@ export class DrawModal extends Modal implements PhoneWindow {
 			throw new DrawError("Couldn't reach MathLive. Check your connection.");
 		}
 		const code = errorCode(res);
-		if (code === "no_scans_left" || code === "invalid_api_key" || code === "missing_api_key") {
-			askForAccount(this.settings, code === "no_scans_left" ? "no_scans_left" : "auth", () => {
+		if (outOfCredits(code) || code === "invalid_api_key" || code === "missing_api_key") {
+			askForAccount(this.settings, outOfCredits(code) ? "no_credits" : "auth", () => {
 				if (this.shown) {
 					this.scheduleRead();
 				}
@@ -674,7 +686,8 @@ function drawFailure(res: { status: number; json: unknown }): Error {
 	const code = errorCode(res);
 	switch (code) {
 		case "no_scans_left":
-			return new ScanError("no_scans_left", "No scans left.");
+		case "no_credits_left":
+			return new ScanError("no_credits", "No credits left.");
 		case "invalid_api_key":
 		case "missing_api_key":
 			return new ScanError("auth", "The API key was refused.");

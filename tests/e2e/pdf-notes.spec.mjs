@@ -168,7 +168,7 @@ test.describe("converting a PDF to notes", () => {
 		await page.keyboard.press("Enter");
 		await button(page, "Convert").click();
 
-		await expect(status(page)).toContainText("You've used all your free scans.");
+		await expect(status(page)).toContainText("You've used all your free credits.");
 		await expect(status(page)).toContainText("3 pages are still to do.");
 		await expect(button(page, "Continue")).toBeVisible();
 		expect(await readNote(page, "Lecture.md")).toBeNull();

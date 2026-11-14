@@ -104,9 +104,14 @@ export const CLOUD_OCR_AUTH_NOTICE = "Open Settings → MathLive and click Conne
 // the user to connect when the scanner refuses one. Set by the plugin while it is loaded.
 export interface ScanAccount {
 	ensureKey(resume: () => void): Promise<boolean>;
-	needsAccount(reason: "auth" | "no_scans_left", resume: () => void): void;
+	needsAccount(reason: "auth" | "no_credits", resume: () => void): void;
 	afterScan(): void;
+	// What an action costs this account, like "1 credit", or "" when it costs nothing here.
+	costOf(action: CreditAction): string;
 }
+
+// The AI actions the server charges credits for.
+export type CreditAction = "scan" | "page" | "drawing" | "edit" | "write";
 
 let scanAccount: ScanAccount | null = null;
 
@@ -114,7 +119,7 @@ export function setScanAccount(account: ScanAccount | null) {
 	scanAccount = account;
 }
 
-// For other AI features that cost a scan, like Magic edit.
+// For other AI features that cost credits, like Magic edit.
 export function scanAccountHooks(): ScanAccount | null {
 	return scanAccount;
 }
@@ -577,7 +582,8 @@ function closeMenuFromOutside(mfe: MathfieldElement) {
 }
 
 const SCAN_FAILED_NOTICE = "Couldn't scan the image. Check your connection and try again.";
-export const NO_SCANS_LEFT_NOTICE = "You've used all your free scans. Open Settings → MathLive to upgrade to unlimited scans.";
+export const NO_CREDITS_LEFT_NOTICE =
+	"You've used all your free credits. Open Settings → MathLive to upgrade to unlimited scans, drawings and edits.";
 const NO_MATH_NOTICE = "No math found in this image. Try cropping closer to the formula. Nothing was charged.";
 const EMPTY_CLIPBOARD_NOTICE = "No image found in clipboard.";
 const BAD_IMAGE_NOTICE = "MathLive couldn't read this image. Copy the formula as a screenshot and try again.";
@@ -591,7 +597,7 @@ const SCAN_TIMEOUT_MS = 25000;
 const QUICK_FAILURE_MS = 5000;
 
 // "limited": too many scans in a minute or a day; the message is the server's own.
-type ScanFailure = "auth" | "no_scans_left" | "no_math" | "bad_image" | "limited" | "unavailable";
+type ScanFailure = "auth" | "no_credits" | "no_math" | "bad_image" | "limited" | "unavailable";
 
 export class ScanError extends Error {
 	constructor(readonly failure: ScanFailure, message: string) {
@@ -701,6 +707,12 @@ export function errorCode(res: { json: unknown }): string | null {
 	}
 }
 
+// Whether the server refused for want of credits. It still says `no_scans_left`, from before
+// scans became credits; `no_credits_left` is accepted too so the server can switch later.
+export function outOfCredits(code: string | null): boolean {
+	return code === "no_scans_left" || code === "no_credits_left";
+}
+
 // The server's explanation of an error, if it sent one.
 export function serverDetail(res: { json: unknown }): string | null {
 	try {
@@ -717,7 +729,8 @@ function scanFailure(status: number, code: string | null): ScanFailure {
 		case "invalid_api_key":
 			return "auth";
 		case "no_scans_left":
-			return "no_scans_left";
+		case "no_credits_left":
+			return "no_credits";
 		case "no_math":
 			return "no_math";
 		case "no_image":
@@ -978,17 +991,17 @@ export async function ensureCanScan(settings: PluginSettings, resume: () => void
 	return false;
 }
 
-// When the cloud scanner refuses the key: asks the user to connect or get more scans, and runs
+// When the cloud scanner refuses the key: asks the user to connect or get more credits, and runs
 // `resume` once they have.
-export function askForAccount(settings: PluginSettings, failure: "auth" | "no_scans_left", resume: () => void) {
+export function askForAccount(settings: PluginSettings, failure: "auth" | "no_credits", resume: () => void) {
 	if (!settings.useLocalInference && scanAccount) {
 		scanAccount.needsAccount(failure, resume);
 	} else {
-		showScanFailure(failure === "auth" ? CLOUD_OCR_AUTH_NOTICE : NO_SCANS_LEFT_NOTICE);
+		showScanFailure(failure === "auth" ? CLOUD_OCR_AUTH_NOTICE : NO_CREDITS_LEFT_NOTICE);
 	}
 }
 
-// After a cloud scan was charged: refreshes the scans left, warning when they run low.
+// After a cloud action was charged: refreshes the credits left, warning when they run low.
 export function afterCloudScan(settings: PluginSettings) {
 	if (!settings.useLocalInference) {
 		scanAccount?.afterScan();
@@ -1022,12 +1035,12 @@ async function scanInto(target: ScanTarget, image: Blob, source: ImageSource): P
 				void scanInto(target, image, source);
 			}
 		};
-		if ((failure === "auth" || failure === "no_scans_left") && !settings.useLocalInference && scanAccount) {
+		if ((failure === "auth" || failure === "no_credits") && !settings.useLocalInference && scanAccount) {
 			scanAccount.needsAccount(failure, resume);
 		} else if (failure === "auth" && !settings.useLocalInference) {
 			showScanFailure(CLOUD_OCR_AUTH_NOTICE);
-		} else if (failure === "no_scans_left") {
-			showScanFailure(NO_SCANS_LEFT_NOTICE);
+		} else if (failure === "no_credits") {
+			showScanFailure(NO_CREDITS_LEFT_NOTICE);
 		} else if (failure === "no_math") {
 			showScanFailure(NO_MATH_NOTICE);
 		} else if (failure === "bad_image") {

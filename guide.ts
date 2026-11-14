@@ -76,7 +76,7 @@ export class GuideModal extends Modal {
 		section(
 			"search",
 			"Find a formula",
-			"Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and put one in your note. Free. If it isn't there, ✨ Write it with AI uses one scan.",
+			"Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and put one in your note. Free. If it isn't there, ✨ Write it with AI uses one credit.",
 			{ text: "Find a formula", run: () => this.actions.findFormula() }
 		);
 		section(
@@ -113,7 +113,7 @@ export class GuideModal extends Modal {
 			{ text: "Open help", run: () => this.actions.openHelp() }
 		);
 
-		const plan = section("gem", "Your scans", this.actions.account.planDetail());
+		const plan = section("gem", "Your credits", this.actions.account.planDetail());
 		const next = this.actions.account.planAction("plugin_guide");
 		if (next) {
 			const buttonEl = plan.createEl("button", { text: next.title, cls: "mod-cta" });

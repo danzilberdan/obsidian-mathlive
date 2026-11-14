@@ -1,16 +1,23 @@
 import { App, Modal, Notice, Platform, requestUrl, Setting } from "obsidian";
-import { noticeWithButton } from "./mathlive-shared";
+import { noticeWithButton, type CreditAction } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 import { loadPrices, UpgradeModal, type UpgradePlan } from "./upgrade";
 
-// The plugin's link to a MathLive account, for cloud scans. Connecting opens the website, where
-// the user signs in and clicks Connect; the plugin then picks up a key of its own, so nothing is
-// copied by hand. Before connecting, the first scans run on a free trial key.
+// The plugin's link to a MathLive account, for the cloud's AI actions. Connecting opens the
+// website, where the user signs in and clicks Connect; the plugin then picks up a key of its own,
+// so nothing is copied by hand. Before connecting, the first scans run on a free trial key.
+//
+// Every AI action (a scan, a drawn formula, a magic edit, a formula written with AI, a PDF page on
+// the free plan) uses credits from one balance, charged by the server when it runs.
 
 export interface AccountStatus {
 	hasUnlimitedAccess: boolean;
-	// Missing from scanners older than one-click connect.
+	// Missing from scanners older than one-click connect. Servers before credits only send
+	// `scansLeft`, the same number; `creditsLeft()` reads either.
+	creditsLeft?: number;
 	scansLeft?: number;
+	// What each action costs in credits, from servers with credits.
+	costs?: Partial<Record<"scan" | "page" | "drawing" | "edit" | "write", number>>;
 	trial?: boolean;
 	email?: string;
 	device?: string | null;
@@ -29,10 +36,21 @@ const CONNECT_GIVES_UP_MS = 10 * 60 * 1000;
 // The account status is fetched again when Obsidian regains focus after this long, so a plan
 // bought in the browser shows up without restarting Obsidian.
 const STATUS_FRESH_MS = 30 * 1000;
-// A free account hears that it is running low at this many scans left, at most twice a day.
-const LOW_SCANS = 3;
-const LOW_SCANS_QUIET_MS = 12 * 60 * 60 * 1000;
-const FREE_ACCOUNT_SCANS = "Free accounts get 10 scans, then 5 more every month.";
+// A free account hears that it is running low at this many credits left, at most twice a day.
+const LOW_CREDITS = 3;
+const LOW_CREDITS_QUIET_MS = 12 * 60 * 60 * 1000;
+const FREE_ACCOUNT_CREDITS =
+	"Free accounts get 10 credits, then a top-up to 5 every month. Each scan, drawn formula or magic edit uses one.";
+
+// The credits left in a status, from servers with credits or older ones.
+export function creditsLeft(status: AccountStatus | null | undefined): number | undefined {
+	const left = status?.creditsLeft ?? status?.scansLeft;
+	return typeof left === "number" ? left : undefined;
+}
+
+function credits(n: number): string {
+	return `${n} ${n === 1 ? "credit" : "credits"}`;
+}
 
 function toHex(bytes: ArrayBuffer | Uint8Array): string {
 	return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -49,6 +67,8 @@ interface ClaimReply {
 
 interface TrialReply {
 	apikey?: unknown;
+	credits?: unknown;
+	// What servers before credits call it.
 	scans?: unknown;
 }
 
@@ -333,9 +353,9 @@ export class CloudAccount {
 		}
 		if (typeof trial?.apikey === "string") {
 			await this.useKey(trial.apikey, "trial");
-			const scans =
-				typeof trial.scans === "number" ? `${trial.scans} ${trial.scans === 1 ? "scan" : "scans"}` : "a few scans";
-			new Notice(`Scanning with a free trial: ${scans}, no account needed.`, 8000);
+			const n = typeof trial.credits === "number" ? trial.credits : trial.scans;
+			const amount = typeof n === "number" ? credits(n) : "a few credits";
+			new Notice(`Scanning with a free trial: ${amount}, no account needed.`, 8000);
 			return true;
 		}
 
@@ -343,14 +363,14 @@ export class CloudAccount {
 		return false;
 	}
 
-	// The scanner refused a scan: the key is gone, or there are no scans left.
-	needsAccount(reason: "auth" | "no_scans_left", resume: () => void) {
+	// The server refused an action: the key is gone, or there are no credits left.
+	needsAccount(reason: "auth" | "no_credits", resume: () => void) {
 		this.invalidateStatus();
-		if (reason === "no_scans_left" && this.isTrial()) {
+		if (reason === "no_credits" && this.isTrial()) {
 			new ConnectModal(this.host.app, this, "trial_used", resume).open();
 			return;
 		}
-		if (reason === "no_scans_left") {
+		if (reason === "no_credits") {
 			new UpgradeModal(this.host.app, this, resume).open();
 			return;
 		}
@@ -371,19 +391,19 @@ export class CloudAccount {
 		new ConnectModal(this.host.app, this, "disconnected", resume).open();
 	}
 
-	// After a successful cloud scan: count it, and say so when scans are running low.
+	// After a charged cloud action: count it, and say so when credits are running low.
 	afterScan() {
 		this.invalidateStatus();
 		void this.refreshStatus().then(async (status) => {
-			if (!status || status.hasUnlimitedAccess || typeof status.scansLeft !== "number") {
+			const left = creditsLeft(status);
+			if (!status || status.hasUnlimitedAccess || left === undefined) {
 				return;
 			}
-			const left = status.scansLeft;
-			const recently = Date.now() - this.lowScansWarnedAt < LOW_SCANS_QUIET_MS;
+			const recently = Date.now() - this.lowScansWarnedAt < LOW_CREDITS_QUIET_MS;
 			if (status.trial) {
 				if (left === 1) {
 					noticeWithButton(
-						`1 trial scan left. ${FREE_ACCOUNT_SCANS}`,
+						`1 trial credit left. ${FREE_ACCOUNT_CREDITS}`,
 						"Connect",
 						() => void this.connect(),
 						10000
@@ -391,12 +411,12 @@ export class CloudAccount {
 				}
 				return;
 			}
-			if (left > 0 && left <= LOW_SCANS && !recently) {
+			if (left > 0 && left <= LOW_CREDITS && !recently) {
 				this.lowScansWarnedAt = Date.now();
 				const prices = await loadPrices(this.siteUrl("/prices.json"));
 				const yearly = prices.annualUsd === null ? "" : ` Unlimited is $${prices.annualUsd} a year.`;
 				noticeWithButton(
-					`${left} free ${left === 1 ? "scan" : "scans"} left this month.${yearly}`,
+					`${left} free ${left === 1 ? "credit" : "credits"} left this month.${yearly}`,
 					"Go unlimited",
 					() => window.open(this.pricingUrl("plugin_low")),
 					10000
@@ -470,22 +490,32 @@ export class CloudAccount {
 		return { title: "Connect", run: () => void this.connect() };
 	}
 
-	// A few words on the scans left, for the editor window: "7 free scans left".
+	// What an action costs this account, like "1 credit", or "" when it costs nothing here: on an
+	// unlimited plan, with the self-hosted scanner, or before the status is known.
+	costOf(action: CreditAction): string {
+		if (!this.usesCloud() || !this.status || this.status.hasUnlimitedAccess) {
+			return "";
+		}
+		const cost = this.status.costs?.[action] ?? 1;
+		return cost > 0 ? credits(cost) : "";
+	}
+
+	// A few words on the credits left, for the editor window: "7 free credits left".
 	planLine(): string {
 		if (!this.usesCloud()) {
 			return "Self-hosted scanner";
 		}
-		const left = this.status?.scansLeft;
+		const left = creditsLeft(this.status);
 		const count = (kind: string) =>
-			typeof left === "number" ? `${left} ${kind}${left === 1 ? "scan" : "scans"} left` : "";
+			left !== undefined ? `${left} ${kind}${left === 1 ? "credit" : "credits"} left` : "";
 		if (this.isTrial()) {
-			return count("trial ") || "Trial scans";
+			return count("trial ") || "Trial credits";
 		}
 		if (!this.hasKey()) {
-			return "First scans free, no account needed";
+			return "First tries free, no account needed";
 		}
 		if (this.status?.hasUnlimitedAccess) {
-			return "Unlimited scans";
+			return "Unlimited";
 		}
 		return count("free ") || "Free plan";
 	}
@@ -496,20 +526,20 @@ export class CloudAccount {
 			return "Scans go to your self-hosted scanner, so they're free and unlimited.";
 		}
 		if (this.status?.hasUnlimitedAccess && this.isConnected()) {
-			return "You have unlimited scans. Thank you for supporting MathLive!";
+			return "You have unlimited scans, drawings and magic edits. Thank you for supporting MathLive!";
 		}
 		const now = this.isConnected() || this.isTrial() ? `${this.planLine()}. ` : "Your first scans need no account. ";
-		return `${now}${FREE_ACCOUNT_SCANS} Upgrade for unlimited scans and more PDF pages each month, monthly or once for life.`;
+		return `${now}${FREE_ACCOUNT_CREDITS} Upgrade for unlimited use and more PDF pages each month, monthly or once for life.`;
 	}
 
-	// What to do next about the plan: connect for more free scans, or upgrade. `src` says where
+	// What to do next about the plan: connect for more free credits, or upgrade. `src` says where
 	// the button is, for the upgrade link.
 	planAction(src: "plugin_editor" | "plugin_guide"): { title: string; run: () => void } | undefined {
 		if (!this.usesCloud() || this.isConnecting()) {
 			return undefined;
 		}
 		if (!this.isConnected()) {
-			return { title: "Get 10 free scans", run: () => void this.connect() };
+			return { title: "Get 10 free credits", run: () => void this.connect() };
 		}
 		if (this.status && !this.status.hasUnlimitedAccess) {
 			return { title: "Upgrade", run: () => window.open(this.pricingUrl(src)) };
@@ -524,30 +554,27 @@ export class CloudAccount {
 		}
 		const status = this.status;
 		if (this.isTrial()) {
-			const n = status?.scansLeft;
-			const left = typeof n === "number" ? `${n} trial ${n === 1 ? "scan" : "scans"} left. ` : "";
-			return `${left}Connect a free account to keep scanning. ${FREE_ACCOUNT_SCANS}`;
+			const n = creditsLeft(status);
+			const left = n !== undefined ? `${n} trial ${n === 1 ? "credit" : "credits"} left. ` : "";
+			return `${left}Connect a free account to keep scanning. ${FREE_ACCOUNT_CREDITS}`;
 		}
 		if (!this.hasKey()) {
-			return `Your first scans need no account. After that, connect one: sign in with Google in your browser and Obsidian connects by itself. ${FREE_ACCOUNT_SCANS}`;
+			return `Your first scans need no account. After that, connect one: sign in with Google in your browser and Obsidian connects by itself. ${FREE_ACCOUNT_CREDITS}`;
 		}
 		if (!status) {
 			return this.settings.apiKeySource === "device" ? "Connected." : "Using the API key below.";
 		}
 		const who = status.email ? `Connected as ${status.email}` : "Connected";
-		const scans = status.hasUnlimitedAccess
-			? "unlimited scans"
-			: typeof status.scansLeft === "number"
-				? `${status.scansLeft} ${status.scansLeft === 1 ? "scan" : "scans"} left`
-				: "";
-		return scans ? `${who} · ${scans}.` : `${who}.`;
+		const left = creditsLeft(status);
+		const balance = status.hasUnlimitedAccess ? "unlimited" : left !== undefined ? `${credits(left)} left` : "";
+		return balance ? `${who} · ${balance}.` : `${who}.`;
 	}
 }
 
 type ConnectReason = "trial_used" | "trial_unavailable" | "disconnected";
 
 const CONNECT_TITLES: Record<ConnectReason, string> = {
-	trial_used: "Your trial scans are used up",
+	trial_used: "Your trial credits are used up",
 	trial_unavailable: "Connect MathLive to scan",
 	disconnected: "Connect MathLive again",
 };
@@ -606,7 +633,7 @@ export class ConnectModal extends Modal {
 		contentEl.createEl("p", { text: CONNECT_REASONS[this.reason] });
 		contentEl.createEl("p", {
 			cls: "mathlive-connect-detail",
-			text: `Sign in with Google in your browser and Obsidian connects by itself, with no key to copy. ${FREE_ACCOUNT_SCANS}`,
+			text: `Sign in with Google in your browser and Obsidian connects by itself, with no key to copy. ${FREE_ACCOUNT_CREDITS}`,
 		});
 		new Setting(contentEl)
 			.addButton((button) => button.setButtonText("Not now").onClick(() => this.close()))

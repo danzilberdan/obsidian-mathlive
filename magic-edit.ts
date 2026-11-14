@@ -2,7 +2,7 @@
 // AI rewrite its LaTeX. A box opens under the formula with a text field and a mic; the result
 // replaces the formula, and Undo puts the old one back. Costs a scan only when the formula changes.
 import { Notice, Platform, requestUrl, setIcon } from "obsidian";
-import { ensureCanScan, errorCode, scanAccountHooks, scannerAddress, scannerHeaders } from "./mathlive-shared";
+import { ensureCanScan, errorCode, outOfCredits, scanAccountHooks, scannerAddress, scannerHeaders } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
 const EDIT_TIMEOUT_MS = 45_000;
@@ -443,10 +443,10 @@ export class MagicEditBox {
 			const code = error instanceof EditError ? error.code : "unavailable";
 			console.error("MathLive: magic edit failed:", error);
 			const account = scanAccountHooks();
-			const accountProblem = code === "missing_api_key" || code === "invalid_api_key" || code === "no_scans_left";
+			const accountProblem = code === "missing_api_key" || code === "invalid_api_key" || outOfCredits(code);
 			if (accountProblem && !this.target.settings.useLocalInference && account) {
 				this.showStatus("");
-				account.needsAccount(code === "no_scans_left" ? "no_scans_left" : "auth", resume);
+				account.needsAccount(outOfCredits(code) ? "no_credits" : "auth", resume);
 				return;
 			}
 			this.showStatus(failureMessage(code, error), "error", true);
