@@ -3,6 +3,7 @@ import {
 	afterCloudScan,
 	askForAccount,
 	errorCode,
+	outOfCredits,
 	scannerAddress,
 	scannerHeaders,
 	type ScanTarget,
@@ -154,8 +155,8 @@ export class PhoneLink {
 		}
 		const res = await requestUrl({ url: this.url("/draw/pairings"), method: "POST", headers: this.headers, throw: false });
 		const code = errorCode(res);
-		if (code === "no_scans_left" || code === "invalid_api_key" || code === "missing_api_key") {
-			askForAccount(this.settings, code === "no_scans_left" ? "no_scans_left" : "auth", () => this.changed());
+		if (outOfCredits(code) || code === "invalid_api_key" || code === "missing_api_key") {
+			askForAccount(this.settings, outOfCredits(code) ? "no_credits" : "auth", () => this.changed());
 			throw new Error("Connect your MathLive account to pair a phone.");
 		}
 		const reply = res.status === 200 ? (res.json as { id?: unknown; phoneUrl?: unknown; claimSeconds?: unknown }) : null;
@@ -298,17 +299,20 @@ export class PhoneLink {
 				break;
 			case "preview":
 				if (event.latex) {
+					// The phone's read was charged to this account: show the balance.
+					afterCloudScan(this.settings);
 					this.window?.phonePreview(event.latex);
 				}
 				break;
 			case "inserted":
 				if (event.source !== "pad" && event.latex) {
-					afterCloudScan(this.settings);
 					this.insert(event.latex);
 				}
 				break;
+			// The server's name for it, from before scans became credits.
 			case "out_of_scans":
-				askForAccount(this.settings, "no_scans_left", () => {});
+			case "out_of_credits":
+				askForAccount(this.settings, "no_credits", () => {});
 				break;
 		}
 	}

@@ -1,6 +1,6 @@
 import { App, Notice, SuggestModal, finishRenderMath, loadMathJax, renderMath, requestUrl } from "obsidian";
 import type { CloudAccount } from "./account";
-import { errorCode, startScanProgress } from "./mathlive-shared";
+import { errorCode, outOfCredits, startScanProgress } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
 
 // Find a formula: searches MathLive's formula library by name, description, in any language, or
@@ -136,7 +136,7 @@ export class FormulaSearchModal extends SuggestModal<Suggestion> {
 			title.appendText("” with AI");
 			el.createDiv({
 				cls: "mathlive-formula-meta",
-				text: this.last.length > 1 ? "Not what you need? Uses 1 scan, only if it works." : "Not in the library yet. Uses 1 scan, only if it works.",
+				text: this.last.length > 1 ? "Not what you need? Uses 1 credit, only if it works." : "Not in the library yet. Uses 1 credit, only if it works.",
 			});
 			return;
 		}
@@ -212,8 +212,8 @@ export class FormulaSearchModal extends SuggestModal<Suggestion> {
 			}
 			return;
 		}
-		if (code === "no_scans_left" || code === "missing_api_key" || code === "invalid_api_key" || code === "access_denied") {
-			this.account.needsAccount(code === "no_scans_left" ? "no_scans_left" : "auth", retry);
+		if (outOfCredits(code) || code === "missing_api_key" || code === "invalid_api_key" || code === "access_denied") {
+			this.account.needsAccount(outOfCredits(code) ? "no_credits" : "auth", retry);
 			return;
 		}
 		let detail: unknown;

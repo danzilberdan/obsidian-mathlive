@@ -31,7 +31,7 @@ MathLive replaces the LaTeX in your notes with a visual math editor. Click a for
 - **Editor window.** A focused editor for longer expressions, with `Ctrl/Cmd + Enter` to insert into the note.
 - **Math keyboard.** An on-screen keyboard for fractions, roots, integrals, Greek letters and symbols.
 - **Scan formulas into LaTeX.** Draw a box around a formula anywhere in Obsidian, such as a PDF you have open, or scan a screenshot from your clipboard. Uses the MathLive cloud scanner or your own self-hosted one.
-- **Find a formula.** Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and insert one in a click. Free, no account needed. If the library doesn't have it, **Write it with AI** writes it for one scan.
+- **Find a formula.** Search thousands of formulas from every science by name, by what they do, in your language, or by a bit of LaTeX, and insert one in a click. Free, no account needed. If the library doesn't have it, **Write it with AI** writes it for one credit.
 - **Draw a formula.** Write it by hand on a drawing pad, or pair your phone or tablet once with a QR code and draw on it any time: what you draw goes into the formula you have open. You see the formula as you draw. Uses the MathLive cloud scanner.
 - **Turn PDFs into notes.** Convert lecture slides, papers or scanned handwritten notes into a Markdown note, with every formula as editable LaTeX. Uses the MathLive cloud scanner.
 - **Magic edit.** Pick Magic edit in ✨ AI fill, next to a formula or in the editor window, and type or say what to change, like "square the denominator" or "make it a cube root". An AI rewrites the formula, and Undo puts it back. Uses the MathLive cloud scanner.
@@ -93,11 +93,11 @@ Check the result and fix anything the scanner got wrong.
 
 Put the cursor where the formula should go and run **MathLive: Find a formula** (or right-click in the note, or choose **Find a formula** from ✨ in the left ribbon, a formula's ✨ menu or the editor window). Type its name ("ideal gas law"), what it does ("energy of a moving object"), its name in your language ("Satz des Pythagoras"), or part of it in LaTeX (`E=mc^2`). Press `Enter` to insert the highlighted formula: as a math block on an empty line, as inline math in a line of text, or into the formula you opened it from. If you selected some words first, the search starts with them.
 
-Searching is free and needs no account. The library comes from [Wikidata](https://www.wikidata.org)'s formulas, with clean LaTeX, names, variables and descriptions written and checked with AI, and it grows from the searches that find nothing. When nothing fits, the last choice is **✨ Write it with AI**: Claude writes the formula for one scan, charged only when it comes back as valid LaTeX (free on paid plans).
+Searching is free and needs no account. The library comes from [Wikidata](https://www.wikidata.org)'s formulas, with clean LaTeX, names, variables and descriptions written and checked with AI, and it grows from the searches that find nothing. When nothing fits, the last choice is **✨ Write it with AI**: Claude writes the formula for one credit, charged only when it comes back as valid LaTeX (free on paid plans).
 
 ## Drawing a formula
 
-Put the cursor where the formula should go, click ✨ in the left ribbon and pick **Draw formula** (or run **MathLive: Draw formula**). The editor window and a formula's ✨ menu have **Draw formula** too, which adds the drawing to that formula. Write the formula on the pad with your mouse, pen or finger; a moment after you lift the pen, the formula appears under the pad, where you can still fix it. **Insert** puts it in the note and uses one scan. Reading the drawing while you draw is free.
+Put the cursor where the formula should go, click ✨ in the left ribbon and pick **Draw formula** (or run **MathLive: Draw formula**). The editor window and a formula's ✨ menu have **Draw formula** too, which adds the drawing to that formula. Write the formula on the pad with your mouse, pen or finger; a moment after you lift the pen, the formula appears under the pad, where you can still fix it. It uses one credit when MathLive first reads the formula, which also covers redrawing it a few times; **Insert** puts it in the note for free. Reading the drawing while you draw is free.
 
 To draw on a phone or tablet instead, scan the QR code beside the pad with its camera, once. A drawing page opens in its browser, with nothing to install and no sign-in, and the phone stays paired with this Obsidian: across formulas, notes and restarts, until you unpair it. From then on, draw on the phone whenever Obsidian is open and tap **Insert**: the formula goes into the formula you're editing, or into your note at the cursor as a new one (with the Draw formula window open, into that window's formula, and you see it there as you draw). To get back to the drawing page later, open `mathlive.danz.blog/draw` on the phone, or add the page to its home screen. The page shows whether Obsidian is open; while it's closed, Insert waits and nothing is charged. Only the first browser to open a code can use it, and pairing a new phone replaces the one before. To pair a phone without opening Draw formula, or to unpair it, use **Draw on your phone** in MathLive's settings, or **Unpair** on the phone. With **Self-hosted scanner** on, the pad is read by your scanner and there is no QR code.
 
@@ -105,14 +105,14 @@ To draw on a phone or tablet instead, scan the QR code beside the pad with its c
 
 Open a PDF and click **Convert to notes** at its top right. You can also click ✨ in the left ribbon and pick **Convert a PDF to notes**, or right-click a PDF in the file list. Pick the pages you want and click **Convert**. MathLive reads the pages one by one into a new note next to the PDF: text as Markdown, formulas as `$...$` and `$$...$$` you can edit, and a link back to each page of the PDF. The note fills in as pages finish. You can close the window; MathLive tells you when it's done.
 
-On the free plan each page uses one scan. Paid plans include a number of pages each month (500 on Monthly, 300 on Lifetime), and you can buy more pages when you need them. Blank pages and pages that can't be read are free. Before converting, MathLive shows how many pages you have left; if the PDF is longer, it converts the first pages that fit and you can get more pages for the rest. A page that can't be read gets a warning in the note, and **Retry failed pages** fills it in later. Your self-hosted scanner can do this too if it answers `/pages/` the way the MathLive scanner does.
+On the free plan each page uses one credit. Paid plans include a number of pages each month (500 on Monthly, 300 on Lifetime), and you can buy more pages when you need them. Blank pages and pages that can't be read are free. Before converting, MathLive shows how many pages you have left; if the PDF is longer, it converts the first pages that fit and you can get more pages for the rest. A page that can't be read gets a warning in the note, and **Retry failed pages** fills it in later. Your self-hosted scanner can do this too if it answers `/pages/` the way the MathLive scanner does.
 
 You can scan with either of these:
 
 | | Cloud scanner | Self-hosted scanner |
 | --- | --- | --- |
-| Setup | None for your first 3 scans. Then click **Connect** in **Settings → MathLive** (or when a scan asks), sign in with Google in your browser, and Obsidian connects by itself | Run a compatible server such as [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR), then turn on **Self-hosted scanner** |
-| Cost | 3 trial scans, then 10 free scans per account and 5 more each month, or a paid plan for unlimited scans | Free |
+| Setup | None for your first 3 credits. Then click **Connect** in **Settings → MathLive** (or when a scan asks), sign in with Google in your browser, and Obsidian connects by itself | Run a compatible server such as [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR), then turn on **Self-hosted scanner** |
+| Cost | 3 trial credits, then 10 free credits per account and a top-up to 5 each month (each scan, drawn formula or magic edit uses one), or a paid plan for unlimited use | Free |
 | Best for | Most people | People already comfortable running local services |
 
 The self-hosted scanner uses `http://localhost:8502` unless you set another address in **Self-hosted scanner address**.
@@ -121,7 +121,7 @@ The self-hosted scanner uses `http://localhost:8502` unless you set another addr
 
 | Setting | What it does |
 | --- | --- |
-| Account | Connect or disconnect your MathLive account, see who you're connected as and how many scans are left |
+| Account | Connect or disconnect your MathLive account, see who you're connected as and how many credits are left |
 | API key (Advanced) | Paste a key from your account page instead of connecting |
 | Self-hosted scanner, Self-hosted scanner address (Advanced) | Send scans to your own server instead |
 | Enable inline editor mode | Turn formulas in the note into editors |
@@ -137,8 +137,8 @@ The self-hosted scanner uses `http://localhost:8502` unless you set another addr
 
 Obsidian asks plugins to state the following up front.
 
-- **Payment.** The visual editor and formula search are free. Cloud scanning includes 3 trial scans, then 10 free scans per account and 5 more each month; unlimited scanning requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
-- **Account.** After 3 trial scans, cloud scanning requires a MathLive account (sign-in with Google). The editor and self-hosted scanning need no account.
+- **Payment.** The visual editor and formula search are free. Cloud scanning, drawing and Magic edit use credits: 3 trial credits, then 10 free credits per account and a top-up to 5 each month, with each action using one credit when it runs; unlimited use requires a paid plan from [mathlive.danz.blog](https://mathlive.danz.blog). Self-hosted scanning is free.
+- **Account.** After 3 trial credits, cloud scanning requires a MathLive account (sign-in with Google). The editor and self-hosted scanning need no account.
 - **Network use.** The plugin only connects to the internet for cloud scanning and finding formulas, and only after you start a scan, search for a formula or click Connect:
   - `https://mathlive.danz.blog/ocr/trial` gives a trial key on your first cloud scan when you have none.
   - `https://mathlive.danz.blog/ocr/predict/` receives the image you chose to scan, with your key, and returns LaTeX.
@@ -147,7 +147,7 @@ Obsidian asks plugins to state the following up front.
   - Draw formula opens a drawing session at `https://mathlive.danz.blog/ocr/draw/sessions` with your key and sends each drawing there to be read. The QR code is made on your computer and links the phone to `https://mathlive.danz.blog/draw/...`. While a phone is paired, the plugin keeps one request open there at a time (from `https://mathlive.danz.blog/ocr/draw/sessions/<id>/wait`), so the phone's formulas reach you while Obsidian is open; unpair it to stop. The server keeps only fingerprints of the keys of a pairing, and the kind of phone (such as "iPhone"), never what you draw.
   - `https://mathlive.danz.blog/ocr/formulas/search` receives what you type in **Find a formula**, without your key, and returns matching formulas. It always goes to MathLive's server, also with **Self-hosted scanner** on. The server keeps the text of searches that found nothing (without your key or address) for 180 days, to add the missing formulas.
   - `https://mathlive.danz.blog/ocr/formulas/write` receives your search text, with your key, when you choose **Write it with AI**, and returns the formula. Claude by Anthropic writes it.
-  - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, scans left, and pages left before converting a PDF.
+  - `https://mathlive.danz.blog/ocr/access-status` is checked with your key to show your account, credits left, and pages left before converting a PDF.
   - Connecting opens `https://mathlive.danz.blog/connect` in your browser with this device's name (your vault's name and operating system). While you approve, the plugin asks `https://mathlive.danz.blog/ocr/connect/claim` every 2 seconds for up to 10 minutes. Disconnecting tells `https://mathlive.danz.blog/ocr/connect/forget` to delete this device's key.
   - Requests to MathLive's scanner also say what kind of device sent them (such as iPhone, Android or macOS), the plugin's version, and where a scanned image came from (clipboard, screen, photo, an image in the note, or a drawing), so we can tell which devices and features need work. These are logged with the scan, never with what was scanned.
   - With `Self-hosted scanner` on, scans go to the address you set (by default `http://localhost:8502`) instead of MathLive's servers.

@@ -11,7 +11,7 @@ export interface Prices {
 	lifetimeUsd: number;
 	annualUsd: number | null;
 	monthlyUsd: number | null;
-	monthlyFreeScans: number;
+	monthlyFreeCredits: number;
 	lifetimePages: number;
 }
 
@@ -20,7 +20,7 @@ const FALLBACK_PRICES: Prices = {
 	lifetimeUsd: 69,
 	annualUsd: 39,
 	monthlyUsd: 6,
-	monthlyFreeScans: 5,
+	monthlyFreeCredits: 5,
 	lifetimePages: 300,
 };
 
@@ -49,13 +49,15 @@ export async function loadPrices(siteUrl: string): Promise<Prices> {
 	try {
 		const response = await requestUrl({ url: siteUrl, throw: false });
 		if (response.status === 200) {
-			const live = response.json as Partial<Prices>;
+			// `monthlyFreeScans` is what the website called it before credits.
+			const live = response.json as Partial<Prices> & { monthlyFreeScans?: unknown };
 			const number = (value: unknown, fallback: number | null) => (typeof value === "number" ? value : fallback);
 			const prices: Prices = {
 				lifetimeUsd: number(live.lifetimeUsd, FALLBACK_PRICES.lifetimeUsd) ?? FALLBACK_PRICES.lifetimeUsd,
 				annualUsd: number(live.annualUsd, null),
 				monthlyUsd: number(live.monthlyUsd, null),
-				monthlyFreeScans: number(live.monthlyFreeScans, FALLBACK_PRICES.monthlyFreeScans) ?? 5,
+				monthlyFreeCredits:
+					number(live.monthlyFreeCredits ?? live.monthlyFreeScans, FALLBACK_PRICES.monthlyFreeCredits) ?? 5,
 				lifetimePages: number(live.lifetimePages, FALLBACK_PRICES.lifetimePages) ?? 300,
 			};
 			cachedPrices = { prices, at: Date.now() };
@@ -85,7 +87,7 @@ export class UpgradeModal extends Modal {
 
 	onOpen() {
 		this.modalEl.addClass("mathlive-upgrade-modal");
-		this.setTitle("You're out of free scans");
+		this.setTitle("You're out of free credits");
 		this.stopListening = this.account.onChange(() => {
 			if (this.account.status?.hasUnlimitedAccess) {
 				this.finish();
@@ -129,12 +131,12 @@ export class UpgradeModal extends Modal {
 		}
 
 		contentEl.createEl("p", {
-			text: `You've used all your free scans. Your next ${prices.monthlyFreeScans} arrive on ${date}.`,
+			text: `You've used all your free credits. You're topped up to ${prices.monthlyFreeCredits} again on ${date}.`,
 		});
 		contentEl.createEl("p", {
 			text: this.resume
 				? "Go unlimited and this scan finishes as soon as you're back:"
-				: "Go unlimited and never count scans again:",
+				: "Go unlimited and never count credits again:",
 		});
 		const list = contentEl.createEl("ul", { cls: "mathlive-upgrade-list" });
 		list.createEl("li", { text: "Unlimited scans, drawings and magic edits" });

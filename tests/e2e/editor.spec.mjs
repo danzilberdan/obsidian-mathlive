@@ -418,10 +418,10 @@ test.describe("formulas in the note", () => {
 			"Math keyboard",
 			"Turn a PDF into notes",
 			"New to LaTeX? Help with typing math",
-			"Your scans",
+			"Your credits",
 		]);
-		await expect(guide).toContainText("Free accounts get 10 scans");
-		await expect(guide.getByRole("button", { name: "Get 10 free scans" })).toBeVisible();
+		await expect(guide).toContainText("Free accounts get 10 credits");
+		await expect(guide.getByRole("button", { name: "Get 10 free credits" })).toBeVisible();
 		await guide.getByRole("button", { name: "Add a formula now" }).click();
 		await expect(guide).toHaveCount(0);
 		await expect(page.locator(".mathlive-modal-title")).toHaveText("Edit math block");

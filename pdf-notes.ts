@@ -14,7 +14,7 @@ import {
 	buildMultipartBody,
 	ensureCanScan,
 	errorCode,
-	NO_SCANS_LEFT_NOTICE,
+	NO_CREDITS_LEFT_NOTICE,
 	scannerAddress,
 	scannerHeaders,
 } from "./mathlive-shared";
@@ -59,7 +59,7 @@ interface PdfPage {
 
 type PageFailure =
 	| "auth"
-	| "no_scans_left"
+	| "no_credits"
 	| "page_limit"
 	| "unsupported"
 	| "rate_limited"
@@ -74,7 +74,7 @@ class PageError extends Error {
 
 // These stop the whole conversion: every other page would fail the same way.
 function isFatal(failure: PageFailure): boolean {
-	return failure === "auth" || failure === "no_scans_left" || failure === "page_limit" || failure === "unsupported";
+	return failure === "auth" || failure === "no_credits" || failure === "page_limit" || failure === "unsupported";
 }
 
 function pageFailure(status: number, code: string | null): PageFailure {
@@ -83,7 +83,8 @@ function pageFailure(status: number, code: string | null): PageFailure {
 		case "invalid_api_key":
 			return "auth";
 		case "no_scans_left":
-			return "no_scans_left";
+		case "no_credits_left":
+			return "no_credits";
 		case "page_limit":
 			return "page_limit";
 		case "pages_unavailable":
@@ -109,7 +110,7 @@ function pageFailure(status: number, code: string | null): PageFailure {
 export interface PageQuota {
 	// free, monthly or lifetime
 	plan: string;
-	// Pages a month the plan includes; null on the free plan, which pays for pages with scans.
+	// Pages a month the plan includes; null on the free plan, which pays for pages with credits.
 	included: number | null;
 	// Pages that can be read now.
 	left: number;
@@ -512,18 +513,18 @@ export class PdfToNotesModal extends Modal {
 				cost.setText(
 					this.settings.useLocalInference
 						? `Reads ${plural(pages, "page", "pages")} with your self-hosted scanner.`
-						: `Uses up to ${plural(pages, "scan", "scans")}, one per page. Blank pages are free.`
+						: `Uses up to ${plural(pages, "credit", "credits")}, one per page. Blank pages are free.`
 				);
 			} else {
 				const free = quota.included === null;
 				const left = free
-					? `You have ${plural(quota.left, "scan", "scans")} left.`
+					? `You have ${plural(quota.left, "credit", "credits")} left.`
 					: `You have ${plural(quota.left, "page", "pages")} left this month.`;
 				const resets = resetDate(quota);
 				if (pages <= quota.left) {
 					cost.setText(
 						free
-							? `Uses up to ${plural(pages, "scan", "scans")}, one per page. Blank pages are free. ${left}`
+							? `Uses up to ${plural(pages, "credit", "credits")}, one per page. Blank pages are free. ${left}`
 							: `Reads ${plural(pages, "page", "pages")}. Blank pages are free. ${left}`
 					);
 				} else {
@@ -629,8 +630,8 @@ export class PdfToNotesModal extends Modal {
 					? `Stopping after the pages being read… ${conversion.finished} of ${conversion.total} done.`
 					: `Reading page ${Math.min(conversion.finished + 1, conversion.total)} of ${conversion.total}…`
 			);
-		} else if (conversion.stopReason === "no_scans_left") {
-			this.statusEl.setText(`${NO_SCANS_LEFT_NOTICE} ${pending} ${pending === 1 ? "page is" : "pages are"} still to do.`);
+		} else if (conversion.stopReason === "no_credits") {
+			this.statusEl.setText(`${NO_CREDITS_LEFT_NOTICE} ${pending} ${pending === 1 ? "page is" : "pages are"} still to do.`);
 		} else if (conversion.stopReason === "page_limit") {
 			this.statusEl.setText(
 				`${PAGE_LIMIT_NOTICE} ${pending} ${pending === 1 ? "page is" : "pages are"} still to do. Get more pages, or continue when your pages start again.`
@@ -712,8 +713,8 @@ export class PdfToNotesModal extends Modal {
 	private noticeWhenClosed(conversion: PdfConversion) {
 		const failed = conversion.count("failed") + conversion.count("pending");
 		const message =
-			conversion.stopReason === "no_scans_left"
-				? NO_SCANS_LEFT_NOTICE
+			conversion.stopReason === "no_credits"
+				? NO_CREDITS_LEFT_NOTICE
 				: conversion.stopReason === "page_limit"
 					? `${PAGE_LIMIT_NOTICE} ${failed} ${failed === 1 ? "page" : "pages"} of ${this.pdfFile.name} ${failed === 1 ? "is" : "are"} still to do.`
 					: failed > 0

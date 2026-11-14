@@ -112,7 +112,7 @@ test.describe("scanning a formula image", () => {
 		await setSettings(page, { apiKey: "no-scans-left" });
 		await runCommand(page, "mathlive:open-modal");
 		await modalAiAction(page, "Scan clipboard image");
-		const notice = notices(page).filter({ hasText: /used all your free scans/ });
+		const notice = notices(page).filter({ hasText: /used all your free credits/ });
 		await expect(notice).toBeVisible();
 		await expect(notice.getByRole("button", { name: "Retry" })).toHaveCount(0);
 		expect(scanner.requests).toHaveLength(1);

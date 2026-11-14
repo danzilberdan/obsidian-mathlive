@@ -50,7 +50,7 @@ test.describe("account", () => {
 
 	test("the first scan starts a free trial without an account", async ({ page, scanner }) => {
 		await scanInEditorWindow(page);
-		await expect(notices(page).filter({ hasText: "free trial: 3 scans, no account needed" })).toBeVisible();
+		await expect(notices(page).filter({ hasText: "free trial: 3 credits, no account needed" })).toBeVisible();
 		await expect(modalField(page)).toHaveJSProperty("value", SCANNED_LATEX);
 		expect(await pluginSettings(page)).toMatchObject({ apiKey: "trial-key", apiKeySource: "trial" });
 		expect(scanner.requests.filter((request) => request.url === "/predict/").map((request) => request.apiKey)).toEqual(["trial-key"]);
@@ -60,7 +60,7 @@ test.describe("account", () => {
 		await setSettings(page, { apiKey: "trial-used", apiKeySource: "trial" });
 		await scanInEditorWindow(page);
 		const dialog = page.locator(".mathlive-connect-modal");
-		await expect(dialog.locator(".modal-title")).toHaveText("Your trial scans are used up");
+		await expect(dialog.locator(".modal-title")).toHaveText("Your trial credits are used up");
 		await dialog.getByRole("button", { name: "Connect" }).click();
 		await expect(dialog).toContainText("Finish in your browser");
 
@@ -114,7 +114,7 @@ test.describe("account", () => {
 		// The stub answers this key's status as an account with 2 scans left.
 		await setSettings(page, { apiKey: "low-key", apiKeySource: "device" });
 		await scanInEditorWindow(page);
-		const notice = notices(page).filter({ hasText: "2 free scans left this month. Unlimited is $39 a year." });
+		const notice = notices(page).filter({ hasText: "2 free credits left this month. Unlimited is $39 a year." });
 		await expect(notice).toBeVisible();
 		await notice.getByRole("button", { name: "Go unlimited" }).click();
 		expect(await openedUrls(page)).toContain(`${SITE}/pricing?src=plugin_low`);
@@ -124,8 +124,8 @@ test.describe("account", () => {
 		await setSettings(page, { apiKey: "out-key", apiKeySource: "device" });
 		await scanInEditorWindow(page);
 		const dialog = page.locator(".mathlive-upgrade-modal");
-		await expect(dialog.locator(".modal-title")).toHaveText("You're out of free scans");
-		await expect(dialog).toContainText("Your next 5 arrive on");
+		await expect(dialog.locator(".modal-title")).toHaveText("You're out of free credits");
+		await expect(dialog).toContainText("You're topped up to 5 again on");
 		// Unlimited shows yearly first, with a switch to monthly, and Lifetime beside it.
 		const unlimited = dialog.locator(".mathlive-upgrade-plan.is-featured");
 		await expect(unlimited).toContainText("Unlimited");
@@ -195,7 +195,7 @@ test.describe("account", () => {
 		const opened = new URL(await settingsWindow.evaluate(() => window.__e2eOpenedUrls[0]));
 		scanner.account.approve(opened.searchParams.get("state"));
 
-		await expect(row).toContainText("Connected as ada@example.com · 9 scans left.", { timeout: 15_000 });
+		await expect(row).toContainText("Connected as ada@example.com · 9 credits left.", { timeout: 15_000 });
 		await row.getByRole("button", { name: "Disconnect" }).click();
 		await expect(row.getByRole("button", { name: "Connect" })).toBeVisible();
 		// The key is forgotten on the server in the background, after the row already shows Connect.

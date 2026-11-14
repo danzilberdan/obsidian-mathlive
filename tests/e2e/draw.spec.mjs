@@ -260,7 +260,7 @@ test.describe("Draw formula", () => {
 		await expect(preview(page)).toHaveJSProperty("value", DRAWN_LATEX);
 		await drawWindow(page).getByRole("button", { name: "Insert" }).click();
 		const upgrade = page.locator(".mathlive-upgrade-modal");
-		await expect(upgrade.locator(".modal-title")).toHaveText("You're out of free scans");
+		await expect(upgrade.locator(".modal-title")).toHaveText("You're out of free credits");
 		await upgrade.getByRole("button", { name: /^Wait until / }).click();
 		await expect(upgrade).toHaveCount(0);
 		await expect(drawWindow(page)).toBeVisible();
