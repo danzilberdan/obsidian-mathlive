@@ -157,12 +157,27 @@ export async function setBlockFormula(page, latex) {
 		editor.setCursor({ line: 0, ch: 0 });
 		return true;
 	}, latex);
-	await expect(blockField(page)).toHaveJSProperty("value", `\n${latex}\n`);
+	// The field keeps the line breaks around most formulas. It drops them around a \displaylines root.
+	await expect.poll(() => blockField(page).evaluate((element) => element.value.trim())).toBe(latex);
 	await waitForStableWidgets(page);
 }
 
 // The lines a formula draws for \hline, and the red boxes it draws for unknown commands.
 export const drawnLines = (field) => field.evaluate((element) => element.shadowRoot.querySelectorAll(".ML__hline").length);
+// Where each line is in its table: 0 is the table's top edge and 1 is its bottom edge.
+export const linePositions = (field) =>
+	field.evaluate((element) =>
+		[...element.shadowRoot.querySelectorAll(".ML__hline")].map((line) => {
+			// The box of an array's table is smaller than what it draws, so measure the drawn content.
+			const content = [...line.closest(".ML__mtable").querySelectorAll("*")]
+				.filter((child) => !child.classList.contains("ML__hline"))
+				.map((child) => child.getBoundingClientRect())
+				.filter((rect) => rect.width > 0 && rect.height > 0);
+			const top = Math.min(...content.map((rect) => rect.top));
+			const bottom = Math.max(...content.map((rect) => rect.bottom));
+			return Math.round(((line.getBoundingClientRect().top - top) / (bottom - top)) * 100) / 100;
+		})
+	);
 export const unknownCommands = (field) => field.evaluate((element) => element.shadowRoot.querySelectorAll(".ML__error").length);
 
 // A formula's buttons show while the mouse is over it, so point at the formula first.

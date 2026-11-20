@@ -1,4 +1,4 @@
-// Adds \hline to the arrays of the bundled MathLive library.
+// Adds \hline to the arrays and to \displaylines in the bundled MathLive library.
 //
 // MathLive 0.111 has no \hline (https://github.com/arnog/mathlive/issues/1151). It shows the
 // command as an unknown red command in the next cell. This script patches
@@ -52,19 +52,16 @@ const patches = [
         if (count === 0) continue;
         const y = b === 0 ? body[0].pos - body[0].height - offset : body[b - 1].pos + body[b - 1].depth - offset;
         for (let k = 0; k < count; k++) {
-          // An empty inline box at the boundary gives the line its height. The line is absolute
-          // with left and right 0, so it spans the whole table.
+          // The table's top edge is "offset" above the baseline. The line is absolute in the table,
+          // so it does not use vertical-align: the \\displaylines table is a flex box, and a flex box
+          // ignores vertical-align. Left and right 0 make the line span the whole table.
           const rule = new Box(null, { classes: "ML__hline" });
           rule.setStyle("position", "absolute");
           rule.setStyle("left", "0");
           rule.setStyle("right", "0");
+          rule.setStyle("top", y + offset + k * (doubleRuleSep + arrayRuleWidth), "em");
           rule.setStyle("border-top", \`\${arrayRuleWidth}em solid currentColor\`);
-          const anchor = new Box([rule], { classes: "ML__hline-anchor" });
-          anchor.setStyle("display", "inline-block");
-          anchor.setStyle("width", "0");
-          anchor.setStyle("height", "0");
-          anchor.setStyle("vertical-align", -(y + k * (doubleRuleSep + arrayRuleWidth)), "em");
-          cols.push(anchor);
+          cols.push(rule);
         }
       }
     }
@@ -75,6 +72,22 @@ const patches = [
 	},
 	{
 		name: "serialize writes hlines",
+		find: `    if (this.environmentName === "lines" && this._rows.length > 1)
+      result.push(\`\\\\displaylines{\`);`,
+		replace: `    // One line with a rule under it still needs \\displaylines{…}.
+    const wrapLines = this.environmentName === "lines" && (this._rows.length > 1 || this.hlines.some(Boolean));
+    if (wrapLines)
+      result.push(\`\\\\displaylines{\`);`,
+	},
+	{
+		name: "serialize closes \\displaylines with hlines",
+		find: `    if (this.environmentName === "lines" && this._rows.length > 1)
+      result.push(\`}\`);`,
+		replace: `    if (wrapLines)
+      result.push(\`}\`);`,
+	},
+	{
+		name: "serialize writes hlines in the rows",
 		find: `    for (let row = 0; row < this._rows.length; row++) {
       for (let col = 0; col < this._rows[row].length; col++) {
         if (col > 0) result.push(" & ");
@@ -212,12 +225,67 @@ const patches = [
     return arrayAtom;`,
 	},
 	{
+		name: "\\displaylines parser reads hlines",
+		find: `    if (parser.mathlist.length > 0) lines.push([parser.mathlist]);
+    parser.beginContext({ tabular: true, root: true });
+    do {
+      if (parser.end() || parser.match("<}>")) break;
+      if (parser.matchColumnSeparator() || parser.matchRowSeparator()) {
+        lines.push([line]);
+        line = [];
+      } else {`,
+		replace: `    if (parser.mathlist.length > 0) lines.push([parser.mathlist]);
+    parser.beginContext({ tabular: true, root: true });
+    const hlines = [];
+    const scanHlines = () => {
+      parser.skipWhitespace();
+      while (parser.match("\\\\hline")) {
+        hlines[lines.length] = (hlines[lines.length] ?? 0) + 1;
+        parser.skipWhitespace();
+      }
+    };
+    scanHlines();
+    do {
+      if (parser.end() || parser.match("<}>")) break;
+      if (parser.matchColumnSeparator() || parser.matchRowSeparator()) {
+        lines.push([line]);
+        line = [];
+        scanHlines();
+      } else {`,
+	},
+	{
+		name: "\\displaylines parser attaches hlines",
+		find: `    parser.endContext();
+    lines.push([line]);
+    const rhs = parser.scan();
+    if (rhs.length > 0) lines.push([rhs]);
+    return lines;`,
+		replace: `    parser.endContext();
+    lines.push([line]);
+    // In "\\\\\\\\ \\\\hline}", LaTeX draws the line under the last line. It adds no empty line.
+    const lastLine = lines.length - 1;
+    if (lastLine > 0 && hlines[lastLine] && lines[lastLine][0].length === 0) lines.pop();
+    const rhs = parser.scan();
+    if (rhs.length > 0) lines.push([rhs]);
+    // createAtom gets this array as options.args.
+    lines.hlines = Array.from({ length: lines.length + 1 }, (_, b) => hlines[b] ?? 0);
+    return lines;`,
+	},
+	{
+		name: "\\displaylines atom keeps hlines",
+		find: `  createAtom: (options) => new ArrayAtom("lines", options.args, [], {
+    // arraystretch: 1.2,`,
+		replace: `  createAtom: (options) => new ArrayAtom("lines", options.args, [], {
+    hlines: options.args.hlines,
+    // arraystretch: 1.2,`,
+	},
+	{
 		name: "toggleHlineAbove and toggleHlineBelow commands",
 		find: `function placeholderCell() {`,
-		replace: `// The innermost table cell around the caret, as [table, row]. \\displaylines is not a table.
+		replace: `// The innermost table cell around the caret, as [table, row]. A \\displaylines line is a row too.
 function tableRowAtCaret(model) {
   let atom = model.at(model.position);
-  while (atom && !(atom.parent instanceof ArrayAtom && isCellBranch(atom.parentBranch) && atom.parent.environmentName !== "lines"))
+  while (atom && !(atom.parent instanceof ArrayAtom && isCellBranch(atom.parentBranch)))
     atom = atom.parent;
   return atom ? [atom.parent, atom.parentBranch[0]] : null;
 }
