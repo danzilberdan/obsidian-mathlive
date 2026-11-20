@@ -1,4 +1,5 @@
 import type { MathfieldElement } from "mathlive";
+import { addTableMenuItems } from "./table-menu";
 import { type App, type Menu, Notice, Platform, requestUrl, setIcon } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
@@ -494,6 +495,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	mfe.value = config.initialValue;
 	mfe.addEventListener("mount", () => {
 		styleMathfieldInPopout(mfe);
+		addTableMenuItems(mfe);
 		if (!config.inline && !config.id) {
 			keepTogglesInRow(mfe);
 		}
