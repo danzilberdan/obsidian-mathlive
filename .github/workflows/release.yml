@@ -58,7 +58,7 @@ jobs:
 
       - name: Attest build provenance
         if: ${{ !inputs.dry_run }}
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             main.js
