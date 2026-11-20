@@ -141,6 +141,13 @@
 			"url": "https://mathlive.io/mathfield/matrix/#changing-the-shape-of-a-matrix"
 		},
 		{
+			"id": "table",
+			"title": "Make a table with lines",
+			"answer": "Pick Insert array… in the ☰ menu (or right-click in the formula) and set the columns, such as c|rrr, where | draws a vertical line. Insert table has synthetic division and tabular integration by parts. For a horizontal line, type \\hline at the start of a row, or right-click a row and pick Line above this row or Line below this row.",
+			"latex": "\\begin{array}{c|rr} & x^1 & x^0 \\\\ \\hline -6 & 15 & 4 \\end{array}",
+			"keywords": "table array hline horizontal line vertical line rule border synthetic division tabular integration by parts di method"
+		},
+		{
 			"id": "multiline",
 			"title": "Write several lines or align equations",
 			"answer": "In a full-line formula, press Enter for a new line. MathLive keeps the lines in one aligned block.",

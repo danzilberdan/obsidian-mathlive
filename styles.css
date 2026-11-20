@@ -1319,3 +1319,13 @@ body.mathlive-editing-inline .cm-editor div.callout .math-inline .MathJax {
   display: inline-block;
   margin-top: var(--size-2-2);
 }
+
+.mathlive-table-preview {
+  display: flex;
+  justify-content: center;
+  min-height: 4em;
+  padding: var(--size-4-3);
+  overflow-x: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}

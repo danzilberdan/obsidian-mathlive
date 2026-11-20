@@ -1,4 +1,5 @@
 import type { MathfieldElement } from "mathlive";
+import { addTableMenuItems } from "./table-menu";
 import { type App, type Menu, Notice, Platform, requestUrl, setIcon } from "obsidian";
 import { FONT_FILES } from "./mathlive-fonts";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
@@ -491,6 +492,7 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	mfe.value = config.initialValue;
 	mfe.addEventListener("mount", () => {
 		styleMathfieldInPopout(mfe);
+		addTableMenuItems(mfe);
 		if (!config.inline && !config.id) {
 			keepTogglesInRow(mfe);
 		}
@@ -500,13 +502,24 @@ export function createMathfield(config: MathfieldConfig): MathfieldElement {
 	keepFocusOnKeyboardTaps(mfe);
 
 	if (!config.inline) {
+		// In LaTeX mode, Enter ends the command typed after a backslash. MathLive leaves LaTeX
+		// mode before the listener below runs, so the mode is read before MathLive gets the key.
+		let enterEndsCommand = false;
+		mfe.addEventListener(
+			"keydown",
+			(event: KeyboardEvent) => {
+				enterEndsCommand = event.key === "Enter" && mfe.mode === "latex";
+			},
+			{ capture: true }
+		);
 		mfe.addEventListener("keydown", (event: KeyboardEvent) => {
 			if (
 				event.key !== "Enter" ||
 				event.ctrlKey ||
 				event.metaKey ||
 				event.altKey ||
-				event.shiftKey
+				event.shiftKey ||
+				enterEndsCommand
 			) {
 				return;
 			}
