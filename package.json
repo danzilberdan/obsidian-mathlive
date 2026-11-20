@@ -4,6 +4,7 @@
 	"description": "Visual math editor and formula image scanner for Obsidian",
 	"main": "main.js",
 	"scripts": {
+		"postinstall": "node scripts/patch-mathlive.mjs",
 		"build": "webpack",
 		"dev": "webpack --watch",
 		"link-vault": "node scripts/link-vault.mjs",
