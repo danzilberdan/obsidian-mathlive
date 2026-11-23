@@ -7,6 +7,13 @@ import type { CloudAccount } from "./account";
 
 export type UpgradePlan = "annual" | "lifetime" | "monthly";
 
+// Why the window opened: an action was refused for credits, the user pressed an Upgrade button,
+// or PDF to notes needs more pages than the free credits cover.
+export type UpgradeReason = "out" | "upgrade" | "pages";
+
+// The upgrade buttons in the plugin, as the website counts them. The plugin itself sends nothing.
+export type UpgradeSource = "plugin_out" | "plugin_low" | "plugin_settings" | "plugin_editor" | "plugin_guide" | "plugin_pdf";
+
 export interface Prices {
 	lifetimeUsd: number;
 	annualUsd: number | null;
@@ -80,14 +87,22 @@ export class UpgradeModal extends Modal {
 	constructor(
 		app: App,
 		private readonly account: CloudAccount,
-		private readonly resume?: () => void
+		private readonly resume?: () => void,
+		private readonly reason: UpgradeReason = "out",
+		private readonly src: UpgradeSource = "plugin_out"
 	) {
 		super(app);
 	}
 
 	onOpen() {
 		this.modalEl.addClass("mathlive-upgrade-modal");
-		this.setTitle("You're out of free credits");
+		this.setTitle(
+			this.reason === "out"
+				? "You're out of free credits"
+				: this.reason === "pages"
+					? "Get more PDF pages"
+					: "Upgrade MathLive"
+		);
 		this.stopListening = this.account.onChange(() => {
 			if (this.account.status?.hasUnlimitedAccess) {
 				this.finish();
@@ -130,9 +145,15 @@ export class UpgradeModal extends Modal {
 			return;
 		}
 
-		contentEl.createEl("p", {
-			text: `You've used all your free credits. You're topped up to ${prices.monthlyFreeCredits} again on ${date}.`,
-		});
+		if (this.reason === "out") {
+			contentEl.createEl("p", {
+				text: `You've used all your free credits. You're topped up to ${prices.monthlyFreeCredits} again on ${date}.`,
+			});
+		} else if (this.reason === "pages") {
+			contentEl.createEl("p", {
+				text: "On the free plan each PDF page costs a credit. A plan comes with pages every month.",
+			});
+		}
 		contentEl.createEl("p", {
 			text: this.resume
 				? "Go unlimited and this scan finishes as soon as you're back:"
@@ -187,14 +208,14 @@ export class UpgradeModal extends Modal {
 			.addEventListener("click", () => void this.checkout("lifetime"));
 
 		new Setting(contentEl).addButton((button) =>
-			button.setButtonText(`Wait until ${date}`).onClick(() => this.close())
+			button.setButtonText(this.reason === "out" ? `Wait until ${date}` : "Not now").onClick(() => this.close())
 		);
 	}
 
 	private async checkout(plan: UpgradePlan) {
 		this.opened = plan;
 		this.render();
-		window.open(await this.account.checkoutUrl(plan, "plugin_out"));
+		window.open(await this.account.checkoutUrl(plan, this.src));
 		this.watch();
 	}
 

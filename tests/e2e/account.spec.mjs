@@ -117,7 +117,15 @@ test.describe("account", () => {
 		const notice = notices(page).filter({ hasText: "2 free credits left this month. Unlimited is $39 a year." });
 		await expect(notice).toBeVisible();
 		await notice.getByRole("button", { name: "Go unlimited" }).click();
-		expect(await openedUrls(page)).toContain(`${SITE}/pricing?src=plugin_low`);
+		// The plans open in Obsidian, with a one-click checkout: no website sign-in on the way.
+		const dialog = page.locator(".mathlive-upgrade-modal");
+		await expect(dialog.locator(".modal-title")).toHaveText("Upgrade MathLive");
+		await expect(dialog).not.toContainText("You've used all your free credits");
+		await dialog.locator(".mathlive-upgrade-plan.is-featured").getByRole("button", { name: "Go unlimited" }).click();
+		await expect.poll(() => openedUrls(page)).toContain("https://checkout.example/go?plan=annual&src=plugin_low");
+		expect(await openedUrls(page)).not.toContain(`${SITE}/pricing?src=plugin_low`);
+		await dialog.getByRole("button", { name: "Close" }).click();
+		await expect(dialog).toHaveCount(0);
 	});
 
 	test("out of scans offers the plans, and buying one finishes the refused scan", async ({ page, scanner }) => {

@@ -1183,7 +1183,7 @@ export class MathliveSettingTab extends PluginSettingTab {
 	} else if (account.isConnected()) {
 		if (account.status && !account.status.hasUnlimitedAccess) {
 			setting.addButton((button) =>
-				button.setButtonText("Upgrade").onClick(() => window.open(account.pricingUrl("plugin_settings")))
+				button.setButtonText("Upgrade").onClick(() => account.upgrade("plugin_settings"))
 			);
 		}
 		setting
