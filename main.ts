@@ -64,6 +64,7 @@ import { DEFAULT_SETTINGS, PluginSettings } from "./settings";
 import { GuideModal } from "./guide";
 import { HelpModal } from "./help";
 import { WelcomeModal } from "./welcome";
+import { setTableMenuApp } from "./table-menu";
 import {
 	LATEX_SUITE_ID,
 	PRESET_SHORTHANDS,
@@ -108,6 +109,7 @@ export default class MathLivePlugin extends Plugin {
 		this.applyShorthands();
 		this.account = new CloudAccount(this);
 		setScanAccount(this.account);
+		setTableMenuApp(this.app);
 		this.phoneLink = new PhoneLink({
 			getSettings: () => this.settings,
 			saveSettings: () => this.saveSettings(),
@@ -543,6 +545,7 @@ export default class MathLivePlugin extends Plugin {
 		endDrawSessions();
 		this.phoneLink?.dispose();
 		setScanAccount(null);
+		setTableMenuApp(null);
 		stopWatchingKeyboardTaps();
 		this.account.cancelConnect();
 		for (const doc of this.getOpenDocuments()) {
