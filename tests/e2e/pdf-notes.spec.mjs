@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PAGE_MARKDOWN } from "./stub-scanner.mjs";
-import { expect, runCommand, setSettings, test } from "./fixtures.mjs";
+import { expect, openedUrls, recordOpenedUrls, runCommand, setSettings, test } from "./fixtures.mjs";
 
 const PDF = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "Lecture.pdf"));
 
@@ -200,6 +200,38 @@ test.describe("converting a PDF to notes", () => {
 		await expect(status(page)).toHaveText("Read 1 of 2 pages. 1 blank, not charged.", { timeout: 30_000 });
 		expect(scanner.requests.filter((request) => request.url === "/pages/")).toHaveLength(2);
 		expect(await readNote(page, "Lecture.md")).toBe(`---\nsource: "[[Lecture.pdf]]"\n---\n\n${pageSection(1)}`);
+	});
+
+	test("get more pages buys a pack for a plan, and offers the plans to a free account", async ({ page }) => {
+		await recordOpenedUrls(page);
+		await setSettings(page, {
+			useLocalInference: false,
+			cloudScannerUrl: "http://127.0.0.1:8502",
+			websiteUrl: "http://127.0.0.1:8502/site",
+			apiKey: "two-pages-left",
+			apiKeySource: "device",
+		});
+		await runCommand(page, "mathlive:convert-pdf-to-notes");
+		await page.keyboard.type("Lecture");
+		await page.keyboard.press("Enter");
+		await button(page, "Get more pages").click();
+		await expect.poll(() => openedUrls(page)).toEqual(["https://checkout.example/go?plan=pages&src=plugin_pdf"]);
+		await button(page, "Cancel").click();
+
+		await recordOpenedUrls(page);
+		await setSettings(page, { apiKey: "two-credits-left" });
+		await runCommand(page, "mathlive:convert-pdf-to-notes");
+		await page.keyboard.type("Lecture");
+		await page.keyboard.press("Enter");
+		await expect(modal(page).locator(".mathlive-pdf-cost")).toHaveText("These are 3 pages. You have 2 credits left.");
+		await button(page, "Get more pages").click();
+		const upgrade = page.locator(".mathlive-upgrade-modal");
+		await expect(upgrade.locator(".modal-title")).toHaveText("Get more PDF pages");
+		await expect(upgrade).toContainText("300 PDF pages a month");
+		await upgrade.getByRole("button", { name: "Go unlimited" }).click();
+		await expect.poll(() => openedUrls(page)).toEqual(["https://checkout.example/go?plan=annual&src=plugin_pdf"]);
+		await upgrade.getByRole("button", { name: "Close" }).click();
+		await button(page, "Cancel").click();
 	});
 
 	test("running out of pages stops the conversion and offers more", async ({ page }) => {

@@ -16,13 +16,20 @@ import {
 	errorCode,
 	NO_CREDITS_LEFT_NOTICE,
 	scannerAddress,
+	scanAccountHooks,
 	scannerHeaders,
 } from "./mathlive-shared";
 import { DEFAULT_SETTINGS, type PluginSettings } from "./settings";
 
-// Where the pack of extra pages is sold.
-function buyPagesUrl(settings: PluginSettings) {
-	return (settings.websiteUrl || DEFAULT_SETTINGS.websiteUrl).replace(/\/+$/, "") + "/checkout?plan=pages&src=plugin_pdf";
+// "Get more pages": the account picks a plan or a page pack, with one-click checkout. Without one
+// (the plugin is unloading), the website's page pack checkout.
+function getMorePages(settings: PluginSettings, planIncludesPages: boolean) {
+	const account = scanAccountHooks();
+	if (account) {
+		account.morePages(planIncludesPages);
+		return;
+	}
+	window.open((settings.websiteUrl || DEFAULT_SETTINGS.websiteUrl).replace(/\/+$/, "") + "/checkout?plan=pages&src=plugin_pdf");
 }
 
 // The scanner reads pages up to 2048 px on the longest side, so render them at that size.
@@ -593,7 +600,9 @@ export class PdfToNotesModal extends Modal {
 			})
 			.addButton((button) => {
 				moreButton = button;
-				button.setButtonText("Get more pages").onClick(() => window.open(buyPagesUrl(this.settings)));
+				button
+					.setButtonText("Get more pages")
+					.onClick(() => getMorePages(this.settings, quota !== null && quota.included !== null));
 			})
 			.addButton((button) => button.setButtonText("Cancel").onClick(() => this.close()));
 		updateCost();
@@ -674,7 +683,8 @@ export class PdfToNotesModal extends Modal {
 			);
 			if (conversion.stopReason === "page_limit") {
 				setting.addButton((button) =>
-					button.setButtonText("Get more pages").onClick(() => window.open(buyPagesUrl(this.settings)))
+					// Only a plan's included pages run out like this; free credits stop with no_credits.
+					button.setButtonText("Get more pages").onClick(() => getMorePages(this.settings, true))
 				);
 			}
 		}

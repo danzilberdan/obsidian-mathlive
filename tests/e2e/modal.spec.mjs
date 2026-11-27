@@ -106,7 +106,12 @@ test.describe("formula editor window", () => {
 		await waitForModalField(page);
 		await expect(footer.locator(".mathlive-modal-plan")).toHaveText("2 free credits leftUpgrade");
 		await footer.getByText("Upgrade").click();
-		await expect.poll(() => openedUrls(page)).toEqual(["http://127.0.0.1:8502/site/pricing?src=plugin_editor"]);
+		const upgrade = page.locator(".mathlive-upgrade-modal");
+		await expect(upgrade.locator(".modal-title")).toHaveText("Upgrade MathLive");
+		await upgrade.getByRole("button", { name: "Pay once" }).click();
+		await expect.poll(() => openedUrls(page)).toEqual(["https://checkout.example/go?plan=lifetime&src=plugin_editor"]);
+		await upgrade.getByRole("button", { name: "Close" }).click();
+		await expect(upgrade).toHaveCount(0);
 
 		await footer.getByText("Learn what MathLive can do").click();
 		await expect(page.locator(".mathlive-guide-modal")).toBeVisible();

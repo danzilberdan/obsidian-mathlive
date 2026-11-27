@@ -1,7 +1,7 @@
 import { App, Modal, Notice, Platform, requestUrl, Setting } from "obsidian";
 import { noticeWithButton, type CreditAction } from "./mathlive-shared";
 import type { PluginSettings } from "./settings";
-import { loadPrices, UpgradeModal, type UpgradePlan } from "./upgrade";
+import { loadPrices, UpgradeModal, type UpgradePlan, type UpgradeSource } from "./upgrade";
 
 // The plugin's link to a MathLive account, for the cloud's AI actions. Connecting opens the
 // website, where the user signs in and clicks Connect; the plugin then picks up a key of its own,
@@ -111,7 +111,7 @@ export class CloudAccount {
 
 	// A link straight to Polar's checkout for this account, signed by the scanner, so there's no
 	// sign-in on the way. Falls back to the website's checkout page when the scanner can't make one.
-	async checkoutUrl(plan: UpgradePlan, src: string): Promise<string> {
+	async checkoutUrl(plan: UpgradePlan | "pages", src: string): Promise<string> {
 		const fallback = this.siteUrl(`/checkout?plan=${plan}&src=${src}`);
 		const key = this.settings.apiKey?.trim();
 		if (!this.usesCloud() || !key) {
@@ -418,7 +418,7 @@ export class CloudAccount {
 				noticeWithButton(
 					`${left} free ${left === 1 ? "credit" : "credits"} left this month.${yearly}`,
 					"Go unlimited",
-					() => window.open(this.pricingUrl("plugin_low")),
+					() => this.upgrade("plugin_low"),
 					10000
 				);
 			}
@@ -532,6 +532,26 @@ export class CloudAccount {
 		return `${now}${FREE_ACCOUNT_CREDITS} Upgrade for unlimited use and more PDF pages each month, monthly or once for life.`;
 	}
 
+	// The plans, in the plugin, with one-click checkout: no website sign-in on the way to paying.
+	// Without a connected account there's nothing to charge, so it's the pricing page.
+	upgrade(src: UpgradeSource, reason: "upgrade" | "pages" = "upgrade") {
+		if (!this.usesCloud() || !this.isConnected()) {
+			window.open(this.pricingUrl(src));
+			return;
+		}
+		new UpgradeModal(this.host.app, this, undefined, reason, src).open();
+	}
+
+	// "Get more pages" in PDF to notes. A free account pays pages with credits, so a plan is
+	// what gets it pages; a plan that includes pages buys a pack straight away.
+	morePages(planIncludesPages: boolean) {
+		if (planIncludesPages) {
+			void this.checkoutUrl("pages", "plugin_pdf").then((url) => window.open(url));
+			return;
+		}
+		this.upgrade("plugin_pdf", "pages");
+	}
+
 	// What to do next about the plan: connect for more free credits, or upgrade. `src` says where
 	// the button is, for the upgrade link.
 	planAction(src: "plugin_editor" | "plugin_guide"): { title: string; run: () => void } | undefined {
@@ -542,7 +562,7 @@ export class CloudAccount {
 			return { title: "Get 10 free credits", run: () => void this.connect() };
 		}
 		if (this.status && !this.status.hasUnlimitedAccess) {
-			return { title: "Upgrade", run: () => window.open(this.pricingUrl(src)) };
+			return { title: "Upgrade", run: () => this.upgrade(src) };
 		}
 		return undefined;
 	}

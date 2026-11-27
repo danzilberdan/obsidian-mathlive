@@ -85,6 +85,15 @@ export function startStubScanner(port = 8502) {
 	const STATUS = {
 		"trial-key": { hasUnlimitedAccess: false, scansLeft: 2, trial: true, email: "", device: "Trial" },
 		"low-key": { hasUnlimitedAccess: false, scansLeft: 2, trial: false, email: "ada@example.com", device: null },
+		// A free account that pays PDF pages with its 2 credits.
+		"two-credits-left": {
+			hasUnlimitedAccess: false,
+			scansLeft: 2,
+			trial: false,
+			email: "ada@example.com",
+			device: null,
+			pages: { plan: "free", included: null, used: 0, credits: 0, left: 2, resetsAt: null, costCeilingReached: false },
+		},
 		"device-key": { hasUnlimitedAccess: false, scansLeft: 9, trial: false, email: "ada@example.com", device: "vault on Linux" },
 	};
 	const draw = createDrawStub(port);
@@ -202,7 +211,7 @@ export function startStubScanner(port = 8502) {
 				reply(200, { lifetimeUsd: 69, annualUsd: 39, monthlyUsd: 6, monthlyFreeScans: 5, lifetimePages: 300, checkoutOpen: true });
 			} else if (req.method === "POST" && req.url === "/checkout-link") {
 				const { plan, src } = JSON.parse(body.toString() || "{}");
-				if (apiKey === "out-key" || apiKey === "device-key" || apiKey === "low-key") {
+				if (["out-key", "device-key", "low-key", "two-pages-left", "two-credits-left"].includes(apiKey)) {
 					reply(200, { url: `https://checkout.example/go?plan=${plan}&src=${src}` });
 				} else {
 					reply(401, { detail: "Invalid API key.", code: "access_denied" });

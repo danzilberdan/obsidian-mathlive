@@ -108,6 +108,9 @@ export interface ScanAccount {
 	afterScan(): void;
 	// What an action costs this account, like "1 credit", or "" when it costs nothing here.
 	costOf(action: CreditAction): string;
+	// "Get more pages" in PDF to notes: a page pack when the account's plan includes pages, the
+	// plans when it pays pages with free credits.
+	morePages(planIncludesPages: boolean): void;
 }
 
 // The AI actions the server charges credits for.
